@@ -1,0 +1,26 @@
+ ◆ PSEUDOSCOPE  shapes.pscope ▸ Square                                ▐ Mappa ▌▸▐ Codice ▌▸▐ Java ▌
+                                         Traduzione in Java
+╭─ Pseudocodice ─────────────────────────────────╮╭─ Java ─────────────────────────────────────────╮
+│ ▶  28 class Square extends Rectangle implemen… ││  static class Square extends Rectangle impleme │
+│    29     procedure side(in s: real)           ││      void side(double s) {                     │
+│    30     begin                                ││          w = s;                                │
+│    31         w := s                           ││          h = s;                                │
+│    32         h := s                           ││      }                                         │
+│    33     end side                             ││                                                │
+│    34     procedure describe()                 ││      void describe() {                         │
+│    35     begin                                ││          System.out.println(4);                │
+│    36         print(4)                         ││          super.describe();                     │
+│    37         super.describe()                 ││      }                                         │
+│    38     end describe                         ││                                                │
+│    39     function label(): integer            ││      public int label() {                      │
+│    40     begin                                ││          int label_result_ = 0;                │
+│    41         label := 400 + id                ││          label_result_ = 400 + id;             │
+│    42     end label                            ││          return label_result_;                 │
+│    43 end Square                               ││      }                                         │
+│                                                ││  }                                             │
+│                                                ││                                                │
+│                                                ││                                                │
+│                                                ││                                                │
+╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────╯
+
+  ↑↓  scorri   Invio  più dettaglio   Esc  meno dettaglio   r  esegui   E  modifica   ?  aiuto

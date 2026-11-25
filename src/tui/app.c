@@ -213,7 +213,9 @@ int run_ui(const UiOptions *options) {
     App app = {.config = options->config, .headless = options->keys != NULL, .target = (Lang)options->target};
     ui_italian = options->italian;
     struct stat st;
-    if (stat(options->path, &st) != 0) {
+    char file[1024];
+    block_number(options->path, file, sizeof file); /* "notes.md#2": the second program in the notes */
+    if (stat(file, &st) != 0) {
         fprintf(stderr, "pseudoscope: cannot open '%s'\n", options->path);
         return 3;
     }

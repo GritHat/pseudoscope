@@ -48,6 +48,7 @@ holds, under the headings they are found at, and of its outline, which is a tree
 pseudoscope ast notes.md              # its outline, and what it holds
 pseudoscope check notes.md            # everything it holds
 pseudoscope exec notes.md#2           # the second thing it holds
+pseudoscope ui notes.md#2             # the same, in the interface
 pseudoscope run --to=python paper.tex # the only program of a paper
 ```
 

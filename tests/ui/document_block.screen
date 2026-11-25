@@ -1,0 +1,26 @@
+ ◆ PSEUDOSCOPE  lesson.md#2 ▸ main                                       ▐ Mappa ▌▸▐ Codice ▌▸▐ C ▌
+
+╭─ main ───────────────────────────────────────────────────────────────────────────────────────────╮
+│ ▶  40 procedure main()                                                                           │
+│    41 var a: array [1..7] of integer                                                             │
+│    42 var i: integer                                                                             │
+│    43 begin                                                                                      │
+│    44     for i := 1 to 7 do                                                                     │
+│    45         a[i] := i * 3                                                                      │
+│    46     endfor                                                                                 │
+│    47     print(search(7, a, 12), search(7, a, 13))                                              │
+│    48 end main                                                                                   │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+  ↑↓  scorri   Invio  più dettaglio   Esc  meno dettaglio   r  esegui   E  modifica   ?  aiuto

@@ -469,14 +469,18 @@ static void draw_translation(App *app, int w, int h) {
     draw_box(0, 2, half, h - 4, C_BORDER, L("Pseudocodice", "Pseudocode"));
     draw_item_code(app, 2, 3, half - 4, h - 6);
     if (item->record) {
-        int top = (h - 4) / 2;
+        /* bytes and offsets are those of C: the other languages lay objects out their own way */
+        bool layout = app->target == LANG_C;
+        int top = layout ? (h - 4) / 2 : h - 4;
         draw_box(half, 2, w - half, top, C_BORDER, lang_name(app->target));
         if (!draw_problem(app, half + 1, 3, w - half - 3, top - 2)) {
             translate_record(app->doc->program, &app->doc->config, &arena, app->target, item->record, &c);
             draw_c_code(half + 1, 3, w - half - 3, top - 2, c.data, 0, -1, -1);
         }
-        draw_box(half, 2 + top, w - half, h - 4 - top, C_BORDER, L("In memoria", "In memory"));
-        draw_layout(app, item->record, half + 2, 3 + top, w - half - 4, h - 6 - top);
+        if (layout) {
+            draw_box(half, 2 + top, w - half, h - 4 - top, C_BORDER, L("In memoria", "In memory"));
+            draw_layout(app, item->record, half + 2, 3 + top, w - half - 4, h - 6 - top);
+        }
     } else {
         draw_box(half, 2, w - half, h - 4, C_BORDER, lang_name(app->target));
         if (draw_problem(app, half + 1, 3, w - half - 3, h - 6)) {
