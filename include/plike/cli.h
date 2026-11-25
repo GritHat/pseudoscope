@@ -2,6 +2,7 @@
 #define PLIKE_CLI_H
 
 #include "plike/config.h"
+#include "plike/target.h"
 
 #define PLIKE_VERSION "3.0.0"
 
@@ -16,7 +17,9 @@ typedef struct {
     Config config;
     const char *input;     /* "-" is the standard input */
     const char *output;    /* NULL: standard output, or a default name */
-    const char *cc;
+    const char *cc;        /* the compiler, or what runs the program */
+    Lang target;           /* the language to translate to */
+    bool target_given;
     ColorMode color;
     bool quiet;            /* no warnings */
     bool werror;

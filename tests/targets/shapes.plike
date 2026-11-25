@@ -1,0 +1,107 @@
+// Shapes: an abstract class, classes that extend it, and one with two parents.
+abstract class Shape
+    var name: integer
+    abstract function area(): real
+    function twice(): real
+    begin
+        twice := 2 * area()
+    end twice
+    procedure describe()
+    begin
+        print(name, area())
+    end describe
+end Shape
+
+class Rectangle extends Shape
+    var w, h: real
+    function area(): real
+    begin
+        area := w * h
+    end area
+end Rectangle
+
+class Square extends Rectangle
+    procedure side(in s: real)
+    begin
+        w := s
+        h := s
+    end side
+    procedure describe()
+    begin
+        print(4)
+        super.describe()
+    end describe
+end Square
+
+class Circle extends Shape
+    var r: real
+    function area(): real
+    begin
+        area := 3 * r * r
+    end area
+end Circle
+
+interface Named
+    function label(): integer
+end Named
+
+class Tagged
+    var tag: integer
+    function label(): integer
+    begin
+        label := tag
+    end label
+end Tagged
+
+class Sticker extends Circle, Tagged implements Named
+    function label(): integer
+    begin
+        label := Tagged.label() + 100
+    end label
+end Sticker
+
+procedure show(inout s: Shape)
+begin
+    s.describe()
+    print(s.twice())
+end show
+
+function total(in n: integer, in all: array [1..n] of Shape*): real
+var i: integer
+begin
+    total := 0
+    for i := 1 to n do
+        total := total + all[i].area()
+    endfor
+end total
+
+procedure main()
+var r: Rectangle
+var q: Square
+var c: Circle
+var k: Sticker
+var all: array [1..4] of Shape*
+var t: Tagged*
+begin
+    r.name := 1
+    r.w := 2
+    r.h := 3
+    q.name := 2
+    q.side(2)
+    c.name := 3
+    c.r := 1
+    k.name := 4
+    k.r := 2
+    k.tag := 7
+    show(r)
+    show(q)
+    show(c)
+    show(k)
+    all[1] := &r
+    all[2] := &q
+    all[3] := &c
+    all[4] := &k
+    print(total(4, all))
+    t := &k
+    print(t.label(), t.tag, k.label())
+end main

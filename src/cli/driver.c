@@ -70,13 +70,28 @@ static int execute(const char *const *args) {
     return WEXITSTATUS(status);
 }
 
-static bool compile_c(const Options *options, const char *source, const char *executable) {
-    const char *cc = options->cc ? options->cc : getenv("CC");
-    if (!cc || !*cc) cc = "cc";
-    const char *const args[] = {cc, "-std=c11", "-O1", "-o", executable, source, "-lm", NULL};
-    if (options->verbose) fprintf(stderr, "pseudoscope: compiling with %s\n", cc);
-    if (execute(args) == 0) return true;
-    fputs("pseudoscope: the C compiler failed\n", stderr);
+/* The command that compiles, or runs, programs in a language. */
+static const char *tool_for(const Options *options, Lang lang, Arena *arena) {
+    static const char *const VARIABLES[LANG_COUNT] = {"CC", "CXX", "JAVA", "RUSTC", "NODE", "NODE", "PYTHON"};
+    static const char *const DEFAULTS[LANG_COUNT] = {"cc", "c++", "java", "rustc", "node", "node", "python3"};
+    const char *tool = options->cc ? options->cc : getenv(VARIABLES[lang]);
+    if (tool && *tool) return tool;
+    if (lang == LANG_RUST && system("command -v rustc > /dev/null 2>&1") != 0) { /* rustup does not always reach the PATH */
+        const char *home = getenv("HOME");
+        char *cargo = arena_printf(arena, "%s/.cargo/bin/rustc", home ? home : "");
+        if (access(cargo, X_OK) == 0) return cargo;
+    }
+    return DEFAULTS[lang];
+}
+
+static bool compile_source(const Options *options, Lang lang, const char *source, const char *executable, Arena *arena) {
+    const char *tool = tool_for(options, lang, arena);
+    const char *const c[] = {tool, "-std=c11", "-O1", "-o", executable, source, "-lm", NULL};
+    const char *const cpp[] = {tool, "-std=c++17", "-O1", "-o", executable, source, NULL};
+    const char *const rust[] = {tool, "--edition=2021", "-A", "warnings", "-o", executable, source, NULL};
+    if (options->verbose) fprintf(stderr, "pseudoscope: compiling with %s\n", tool);
+    if (execute(lang == LANG_C ? c : lang == LANG_CPP ? cpp : rust) == 0) return true;
+    fprintf(stderr, "pseudoscope: the %s compiler failed\n", lang_name(lang));
     return false;
 }
 
@@ -95,20 +110,47 @@ static int no_main(void) {
     return EXIT_PROBLEMS;
 }
 
-static int build_and_run(const Options *options, const StrBuf *code, Arena *arena) {
+static bool is_compiled(Lang lang) { return lang == LANG_C || lang == LANG_CPP || lang == LANG_RUST; }
+
+/* `argument`: given to the program, or NULL. */
+static int build_and_run(const Options *options, Lang lang, const StrBuf *code, Arena *arena, const char *class_name,
+                         const char *argument) {
     const char *base = getenv("TMPDIR");
     char *dir = arena_printf(arena, "%s/pseudoscope-XXXXXX", base && *base ? base : "/tmp");
     if (!mkdtemp(dir)) {
         fprintf(stderr, "pseudoscope: cannot create a temporary directory: %s\n", strerror(errno));
         return EXIT_IO;
     }
-    char *source = arena_printf(arena, "%s/program.c", dir);
+    char *source = lang == LANG_JAVA ? arena_printf(arena, "%s/%s.java", dir, class_name)
+                                     : arena_printf(arena, "%s/program%s", dir, lang_extension(lang));
     char *executable = arena_printf(arena, "%s/program", dir);
     int status = EXIT_IO;
 
-    if (write_file(source, code) && compile_c(options, source, executable)) {
-        if (options->command == CMD_RUN) {
-            const char *const args[] = {executable, NULL};
+    if (!write_file(source, code)) {
+        /* reported */
+    } else if (lang == LANG_TS && !options->cc && system("command -v tsc > /dev/null 2>&1") == 0) {
+        /* checked and turned into JavaScript by its compiler */
+        char *script = arena_printf(arena, "%s/program.js", dir);
+        const char *const tsc[] = {"tsc", "--target", "es2022", "--module", "commonjs", "--strict", "--outDir", dir, source, NULL};
+        const char *const node[] = {tool_for(options, LANG_JS, arena), script, argument, NULL};
+        if (options->verbose) fputs("pseudoscope: compiling with tsc\n", stderr);
+        if (execute(tsc) != 0) {
+            fputs("pseudoscope: the TypeScript compiler failed\n", stderr);
+        } else {
+            status = execute(node);
+            if (status < 0) status = EXIT_IO;
+        }
+        unlink(script);
+    } else if (!is_compiled(lang)) {
+        const char *tool = tool_for(options, lang, arena);
+        const char *const plain[] = {tool, source, argument, NULL};
+        const char *const stripped[] = {tool, "--no-warnings", "--experimental-strip-types", source, argument, NULL};
+        if (options->verbose) fprintf(stderr, "pseudoscope: running with %s\n", tool);
+        status = execute(lang == LANG_TS && !options->cc ? stripped : plain);
+        if (status < 0) status = EXIT_IO;
+    } else if (compile_source(options, lang, source, executable, arena)) {
+        if (options->command != CMD_BUILD) {
+            const char *const args[] = {executable, argument, NULL};
             if (options->verbose) fputs("pseudoscope: running\n", stderr);
             status = execute(args);
             if (status < 0) status = EXIT_IO;
@@ -126,6 +168,19 @@ static int build_and_run(const Options *options, const StrBuf *code, Arena *aren
     unlink(executable);
     rmdir(dir);
     return status;
+}
+
+/* The name of the class that Java wants around a program: that of the file. */
+static const char *class_name_for(const Options *options, Arena *arena) {
+    const char *path = options->command == CMD_TRANSLATE ? options->output : NULL;
+    if (!path) return "Main";
+    const char *slash = strrchr(path, '/'), *start = slash ? slash + 1 : path, *dot = strrchr(start, '.');
+    size_t length = dot ? (size_t)(dot - start) : strlen(start);
+    bool ok = length > 0 && ((start[0] >= 'A' && start[0] <= 'Z') || (start[0] >= 'a' && start[0] <= 'z') || start[0] == '_');
+    for (size_t i = 0; ok && i < length; i++)
+        ok = (start[i] >= 'A' && start[i] <= 'Z') || (start[i] >= 'a' && start[i] <= 'z') || (start[i] >= '0' && start[i] <= '9') ||
+             start[i] == '_';
+    return ok ? arena_strndup(arena, start, length) : "Main";
 }
 
 /* Runs on the virtual machine, reading input only when it is asked for. */
@@ -249,18 +304,24 @@ static int translate(const Options *options, const Source *source, Arena *arena,
     }
     if (options->command == CMD_CHECK) return EXIT_OK;
 
-    if (options->command == CMD_TEST) return run_tests(program, options, diag.italian);
-    if (has_components(program) && options->command != CMD_EXEC) {
-        fputs("pseudoscope: components live only in exec, test and ui: they are not translated to C\n", stderr);
-        return EXIT_PROBLEMS;
-    }
+    Lang lang = options->target, found;
+    if (!options->target_given && options->command == CMD_TRANSLATE && options->output && lang_from_path(options->output, &found))
+        lang = found;
+    if (options->command == CMD_TEST && !options->target_given) return run_tests(program, options, diag.italian);
     if (options->command == CMD_EXEC) {
         step(options, "executing");
         return has_main(program) || has_components(program) ? interpret(program, options) : no_main();
     }
+    if (!translatable(program, &options->config, lang, &diag)) return EXIT_PROBLEMS;
+    if (options->command == CMD_BUILD && !is_compiled(lang)) {
+        fprintf(stderr, "pseudoscope: build makes an executable, and %s programs are run as they are: use translate, or run\n",
+                lang_name(lang));
+        return EXIT_USAGE;
+    }
 
-    step(options, "generating C");
-    generate(program, &options->config, arena, out);
+    step(options, "translating");
+    const char *class_name = class_name_for(options, arena);
+    translate_program(program, &options->config, arena, lang, class_name, out);
     if (options->command == CMD_TRANSLATE) {
         if (options->output && same_file(options->input, options->output)) {
             fputs("pseudoscope: the output would overwrite the input\n", stderr);
@@ -268,8 +329,15 @@ static int translate(const Options *options, const Source *source, Arena *arena,
         }
         return write_file(options->output, out) ? EXIT_OK : EXIT_IO;
     }
-    if (!has_main(program)) return no_main();
-    return build_and_run(options, out, arena);
+    if (options->command == CMD_TEST) {
+        if (!has_tests(program)) {
+            fputs("pseudoscope: there are no tests in this program\n", stderr);
+            return EXIT_PROBLEMS;
+        }
+        return build_and_run(options, lang, out, arena, class_name, "test");
+    }
+    if (!has_main(program) && !has_components(program)) return no_main();
+    return build_and_run(options, lang, out, arena, class_name, NULL);
 }
 
 static int start_ui(const Options *options) {

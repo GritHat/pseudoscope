@@ -658,7 +658,9 @@ static int add_life(Vm *vm, Life life) {
     return vm->s.life_count++;
 }
 
-static const Class *class_at(const Vm *vm, Pointer p) {
+/* The class of the object there; with `wanted`, the one that is of that class
+ * or extends it (an object may begin with another). */
+static const Class *class_at(const Vm *vm, Pointer p, const Class *wanted) {
     const Object *object = object_of(vm, p);
     if (!object || !object->type) return NULL;
     const Type *type = object->type;
@@ -670,7 +672,8 @@ static const Class *class_at(const Vm *vm, Pointer p) {
             offset %= per;
             type = type->base;
         } else if (type->kind == TY_RECORD) {
-            if (offset == 0 && type->record->klass) return type->record->klass;
+            if (offset == 0 && type->record->klass && (!wanted || derives_from(type->record->klass, wanted)))
+                return type->record->klass;
             const VarDecl *f = type->record->fields;
             while (f && offset >= vm_slots(vm->config, f->symbol->type)) {
                 offset -= vm_slots(vm->config, f->symbol->type);
@@ -687,7 +690,7 @@ static const Class *class_at(const Vm *vm, Pointer p) {
 /* klass tells apart an object from its own first field. */
 static int life_of(Vm *vm, Pointer at, const Class *klass) {
     if (!object_of(vm, at)) return 0;
-    if (!klass) klass = class_at(vm, at);
+    if (!klass) klass = class_at(vm, at, NULL);
     for (int i = 1; i < vm->s.life_count; i++) {
         const Life *l = &vm->lives[i];
         if (l->klass == klass && l->at.object == at.object && l->at.offset == at.offset && l->at.serial == at.serial)
@@ -742,7 +745,10 @@ static void enter_function(Vm *vm, const Function *function, const Expr *expr, i
                    .objects = s->objects.count, .bounds = s->bounds.count, .stack = first_arg,
                    .evals = s->evals.count, .return_pc = return_pc, .node = s->node,
                    .life = s->frames.items[s->frames.count - 1].life, .message = -1};
-    if (function->owner) frame.life = life_of(vm, s->stack.items[first_arg].as.p, function->owner);
+    if (function->owner) {
+        const Class *real = class_at(vm, s->stack.items[first_arg].as.p, function->owner);
+        frame.life = life_of(vm, s->stack.items[first_arg].as.p, real ? real : function->owner);
+    }
     else if (!vm->has_classes && strcmp(function->name, "main") != 0) frame.life = function_life(vm, function);
     PUSH(s->frames, frame);
     RESERVE(s->vars, vars + 1);
@@ -1251,7 +1257,7 @@ static void loop(Vm *vm, const Instr *in) {
     s->pc--;
     vm->event = LEVEL_SYSTEM;
 
-    const Class *klass = class_at(vm, e.to);
+    const Class *klass = class_at(vm, e.to, NULL);
     const Function *handler = NULL;
     for (const Function *f = vm->program->functions; f && !handler && !e.lost; f = f->next)
         if (f->owner == klass && f->is_handler && strcmp(f->name, e.name) == 0 && guarded(vm, f, e.to)) handler = f;
@@ -1496,7 +1502,13 @@ static void step(Vm *vm) {
                 fail(vm, "null pointer");
                 break;
             }
-            v.as.p.offset += in->a;
+            int slot = in->a;
+            if (in->b) { /* where the class of this object keeps it */
+                const Class *klass = in->type->record->klass, *real = class_at(vm, v.as.p, klass);
+                for (const VarDecl *f = real && real != klass ? real->record->fields : NULL; f; f = f->next)
+                    if (strcmp(f->name, in->symbol->name) == 0) slot = f->symbol->slot;
+            }
+            v.as.p.offset += slot;
             push(vm, v);
             break;
         }
@@ -1532,7 +1544,21 @@ static void step(Vm *vm) {
             break;
         }
         case OP_POP: pop(vm); break;
-        case OP_CALL: enter_function(vm, in->symbol->function, in->expr, s->pc); break;
+        case OP_CALL: {
+            const Function *function = in->symbol->function;
+            if (function->is_virtual && !in->b) { /* the object chooses */
+                Value receiver = s->stack.items[s->stack.count - in->a];
+                const Class *real = receiver.kind == V_POINTER ? class_at(vm, receiver.as.p, function->owner) : NULL;
+                const Function *chosen = real ? find_method(vm->program, real, function->name, false) : NULL;
+                if (chosen && !chosen->is_abstract && chosen->symbol) function = chosen;
+            }
+            if (function->is_abstract) {
+                fail(vm, "this method is abstract: there is nothing to execute");
+                break;
+            }
+            enter_function(vm, function, in->expr, s->pc);
+            break;
+        }
         case OP_RETURN: leave_function(vm, in->type); break;
         case OP_ENTER: announce_call(vm); break;
         case OP_PARAM_BOUNDS: param_bounds(vm, in->symbol); break;

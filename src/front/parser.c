@@ -23,6 +23,7 @@ typedef struct {
     Link **links_tail;
     Class *klass;   /* being parsed */
     bool in_test;
+    bool signature_only; /* the next method is abstract */
 
     /* other dialects */
     Function *function;         /* being read */
@@ -682,6 +683,11 @@ static Function *parse_function(Parser *p, bool is_procedure, TypeSpec *result) 
         if (!function->result) return function;
     }
     match(p, TOK_SEMICOLON);
+    if (p->signature_only) {
+        function->is_abstract = true;
+        function->last_line = p->tokens[p->pos > 0 ? p->pos - 1 : 0].loc.line;
+        return function;
+    }
 
     VarDecl **tail = &function->locals;
     while (!p->panic) {
@@ -721,9 +727,31 @@ static void parse_states(Parser *p, Class *klass) {
 /* class Name / component Name ... end Name */
 static void parse_class(Parser *p) {
     Class *klass = ARENA_NEW(p->arena, Class);
+    if (is_word(cur(p), "abstract")) {
+        advance(p);
+        klass->is_abstract = true;
+    }
+    klass->is_interface = is_word(cur(p), "interface");
+    if (klass->is_interface) klass->is_abstract = true;
     klass->is_component = is_word(advance(p), "component");
     klass->loc = cur(p)->loc;
     klass->name = advance(p)->text;
+    BaseName **bases = &klass->bases;
+    while (!p->panic && (is_word(cur(p), "extends") || is_word(cur(p), "implements") || is_word(cur(p), "inherits")) &&
+           peek(p, 1)->kind == TOK_IDENT) {
+        advance(p);
+        do {
+            if (!check(p, TOK_IDENT)) {
+                syntax_error(p, "the name of a class");
+                break;
+            }
+            BaseName *base = ARENA_NEW(p->arena, BaseName);
+            base->loc = cur(p)->loc;
+            base->name = advance(p)->text;
+            *bases = base;
+            bases = &base->next;
+        } while (match(p, TOK_COMMA));
+    }
     klass->record = ARENA_NEW(p->arena, Record);
     klass->record->loc = klass->loc;
     klass->record->name = klass->name;
@@ -742,6 +770,12 @@ static void parse_class(Parser *p) {
     while (!p->panic && !check(p, TOK_END) && !check(p, TOK_EOF)) {
         if (match(p, TOK_SEMICOLON)) continue;
         int before = p->pos;
+        p->signature_only = klass->is_interface;
+        if (is_word(cur(p), "abstract") && peek(p, 1)->kind != TOK_COLON && peek(p, 1)->kind != TOK_COMMA &&
+            peek(p, 1)->kind != TOK_ASSIGN) {
+            advance(p);
+            p->signature_only = true;
+        }
         if (klass->is_component && is_word(cur(p), "states") && peek(p, 1)->kind == TOK_IDENT) {
             advance(p);
             parse_states(p, klass);
@@ -766,7 +800,9 @@ static void parse_class(Parser *p) {
         }
         if (!p->panic && p->pos == before) /* nothing here that we can read */
             syntax_error(p, "a variable, a procedure or a function of the class");
+        p->signature_only = false;
     }
+    p->signature_only = false;
     p->klass = NULL;
     if (p->panic || !expect(p, TOK_END, "'end'")) return;
     if (check(p, TOK_IDENT)) {
@@ -1230,7 +1266,9 @@ static void parse_declaration(Parser *p) {
         default:
             if (check(p, TOK_IDENT)) {
                 TokenKind next = peek(p, 1)->kind;
-                if ((is_word(cur(p), "class") || is_word(cur(p), "component")) && next == TOK_IDENT) {
+                bool abstract = is_word(cur(p), "abstract") && is_word(peek(p, 1), "class") && peek(p, 2)->kind == TOK_IDENT;
+                if (((is_word(cur(p), "class") || is_word(cur(p), "component") || is_word(cur(p), "interface")) && next == TOK_IDENT) ||
+                    abstract) {
                     parse_class(p);
                     return;
                 }

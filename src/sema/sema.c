@@ -82,6 +82,8 @@ static Type *pointer_to(Sema *s, Type *base) {
     return type;
 }
 
+static void check_concrete(Sema *s, const Type *type, Loc loc);
+
 static bool same_type(const Type *a, const Type *b) {
     if (a->kind != b->kind) return false;
     switch (a->kind) {
@@ -97,6 +99,12 @@ static bool is_zero(const Expr *expr) {
     return expr->kind == EX_INT && const_int(expr, &value) && value == 0;
 }
 
+/* An object of a class is also one of the classes it extends. */
+static bool is_a(const Type *type, const Type *base) {
+    return type->kind == TY_RECORD && base->kind == TY_RECORD && type->record->klass && base->record->klass &&
+           derives_from(type->record->klass, base->record->klass);
+}
+
 /* Can a value of this type be stored where `to` is wanted? */
 static bool assignable(const Type *to, const Type *from, const Expr *value) {
     if (is_error(to) || is_error(from)) return true;
@@ -108,7 +116,7 @@ static bool assignable(const Type *to, const Type *from, const Expr *value) {
             return from->dims.count == 1 && same_type(to->base, from->base);
         if (from->kind == TY_POINTER && from->base->kind == TY_VOID) /* the sender */
             return to->base->kind == TY_RECORD && to->base->record->klass;
-        return same_type(to, from);
+        return same_type(to, from) || (from->kind == TY_POINTER && is_a(from->base, to->base));
     }
     if (to->kind == TY_STRING) return from->kind == TY_STRING;
     return to->kind == TY_RECORD && same_type(to, from);
@@ -133,11 +141,31 @@ bool has_tests(const Program *program) {
     return false;
 }
 
+bool derives_from(const Class *klass, const Class *base) {
+    if (klass == base) return true;
+    for (const BaseName *b = klass->bases; b; b = b->next)
+        if (b->klass && derives_from(b->klass, base)) return true;
+    return false;
+}
+
+bool has_inheritance(const Program *program) {
+    for (const Class *c = program->classes; c; c = c->next)
+        if (c->bases || c->is_abstract) return true;
+    return false;
+}
+
+/* With more than one class to inherit from, the method that wins is the one
+ * of the class that extends the others; with none such, the first. */
 const Function *find_method(const Program *program, const Class *klass, const char *name, bool handler) {
     for (const Function *f = program->functions; f; f = f->next)
         if (f->owner && (!klass || f->owner == klass) && f->is_handler == handler && strcmp(f->name, name) == 0)
             return f;
-    return NULL;
+    const Function *found = NULL;
+    for (const BaseName *b = klass ? klass->bases : NULL; b; b = b->next) {
+        const Function *f = b->klass ? find_method(program, b->klass, name, handler) : NULL;
+        if (f && (!found || (f != found && derives_from(f->owner, found->owner)))) found = f;
+    }
+    return found;
 }
 
 /* ---- constants ---- */
@@ -410,6 +438,7 @@ static void resolve_record(Sema *s, Record *record) {
         sym->loc = field->loc;
         sym->type = resolve_decl_type(s, field, field->spec, false);
         field->symbol = sym;
+        check_concrete(s, sym->type, field->loc);
         check_fixed_size(s, sym->type, field->loc, "an array inside a record");
         Type *inner = sym->type;
         while (inner->kind == TY_ARRAY) inner = inner->base;
@@ -586,15 +615,15 @@ static void check_argument(Sema *s, Symbol *callee, int index, Expr *arg) {
             ok = want->base->kind == TY_CHAR && want->dims.count == 1 && param->mode == MODE_IN && arg->kind == EX_STRING;
     } else if (param->by_reference) {
         if (arg->kind == EX_UNARY && arg->op == TOK_AMP) { /* swap(&a, &b) */
-            ok = type->kind == TY_POINTER && same_type(type->base, want);
+            ok = type->kind == TY_POINTER && (same_type(type->base, want) || is_a(type->base, want));
         } else if (arg->kind == EX_UNARY && arg->op == TOK_AT) {
-            ok = type->kind == TY_POINTER && same_type(type->base, want);
+            ok = type->kind == TY_POINTER && (same_type(type->base, want) || is_a(type->base, want));
         } else if (!is_lvalue(arg)) {
             diag_error(s->diag, arg->loc, "'%s' is an %s parameter: it needs a variable",
                        param->name, param->mode == MODE_OUT ? "out" : "in/out");
             return;
         } else {
-            ok = same_type(type, want);
+            ok = same_type(type, want) || is_a(type, want);
         }
     } else {
         ok = assignable(want, type, arg);
@@ -741,7 +770,50 @@ static Type *check_method(Sema *s, Expr *expr, Expr *receiver, const Function *m
     return check_call(s, expr, method->symbol);
 }
 
+/* super.m, Base.m: the method of a class this one extends, on this object. */
+static const Function *static_method(Sema *s, const Expr *field) {
+    const Expr *base = field->base;
+    if (base->kind != EX_NAME || !s->function || !s->function->function || !s->function->function->owner) return NULL;
+    const Class *owner = s->function->function->owner;
+    bool super = equals_ignore_case(base->text, "super");
+    const Class *named = NULL;
+    for (const Class *c = s->program->classes; c && !super; c = c->next)
+        if (strcmp(c->name, base->text) == 0) named = c;
+    if ((!super && !named) || lookup(s, base->text, base->loc)) return NULL;
+    const Function *found = NULL;
+    if (named && derives_from(owner, named)) found = find_method(s->program, named, field->text, false);
+    for (const BaseName *b = super ? owner->bases : NULL; b && !found; b = b->next)
+        if (b->klass) found = find_method(s->program, b->klass, field->text, false);
+    if (!found) {
+        if (super) diag_error(s->diag, field->loc, "no class that '%s' extends has '%s'", owner->name, field->text);
+        else diag_error(s->diag, field->loc, "'%s' has no '%s' that '%s' could use", base->text, field->text, owner->name);
+    } else if (found->is_abstract) {
+        diag_error(s->diag, field->loc, "'%s' is abstract: there is nothing to call", found->full_name);
+        found = NULL;
+    }
+    return found;
+}
+
+static bool is_static_receiver(Sema *s, const Expr *field) {
+    const Expr *base = field->base;
+    if (base->kind != EX_NAME || !s->function || !s->function->function || !s->function->function->owner) return false;
+    if (lookup(s, base->text, base->loc)) return false;
+    if (equals_ignore_case(base->text, "super")) return true;
+    for (const Class *c = s->program->classes; c; c = c->next)
+        if (strcmp(c->name, base->text) == 0) return true;
+    return false;
+}
+
 static Type *check_field(Sema *s, Expr *expr) {
+    if (is_static_receiver(s, expr)) { /* a call without parentheses */
+        const Function *method = static_method(s, expr);
+        if (!method) return &T_ERROR;
+        Expr *self = self_expr(s, expr->loc);
+        check_expr(s, self);
+        expr->base = NULL;
+        expr->is_static = true;
+        return check_method(s, expr, self, method);
+    }
     Type *type = check_value(s, expr->base);
     if (is_error(type)) return type;
     if (type->kind == TY_POINTER && type->base->kind == TY_RECORD) type = type->base;
@@ -914,6 +986,15 @@ static Type *check_name(Sema *s, Expr *expr) {
 
 static Type *check_apply(Sema *s, Expr *expr, bool needs_value) {
     if (expr->is_method) return check_call(s, expr, expr->symbol); /* seen before */
+    if (expr->base->kind == EX_FIELD && is_static_receiver(s, expr->base)) {
+        const Function *method = static_method(s, expr->base);
+        for (int i = 0; i < expr->args.count && !method; i++) check_value(s, expr->args.items[i]);
+        if (!method) return &T_ERROR;
+        Expr *self = self_expr(s, expr->loc);
+        check_expr(s, self);
+        expr->is_static = true;
+        return check_method(s, expr, self, method);
+    }
     if (expr->base->kind == EX_FIELD) {
         Type *type = check_value(s, expr->base->base);
         const Class *klass = class_of(type);
@@ -973,6 +1054,7 @@ static void declare_variables(Sema *s, VarDecl *decl) {
     for (; decl; decl = decl->next) {
         Type *type = resolve_decl_type(s, decl, decl->spec, false);
         decl->symbol = declare(s, SYM_VAR, decl->name, decl->loc, type);
+        check_concrete(s, type, decl->loc);
         const Type *base = type;
         while (base->kind == TY_ARRAY) base = base->base;
         if (s->scope->parent && base->kind == TY_RECORD && base->record->klass && base->record->klass->is_component)
@@ -1336,6 +1418,7 @@ static void resolve_signature(Sema *s, Function *function, Scope *scope) {
             if (is_array != (pass == 1)) continue;
             p->type = resolve_decl_type(s, param, param->spec, true);
             p->by_reference = !is_array && p->mode != MODE_IN;
+            if (!p->by_reference && !is_array) check_concrete(s, p->type, param->loc);
         }
     }
     for (i = 0; i < sym->param_count; i++) {
@@ -1382,6 +1465,128 @@ static void resolve_signature(Sema *s, Function *function, Scope *scope) {
     s->scope = scope->parent;
 }
 
+/* ---- inheritance ---- */
+
+/* The variables of the classes it extends come first, each class once even
+ * when it is reached along two ways. */
+static void inherit(Sema *s, Class *c) {
+    if (c->mark == 2) return;
+    if (c->mark == 1) {
+        diag_error(s->diag, c->loc, "class '%s' ends up extending itself", c->name);
+        return;
+    }
+    c->mark = 1;
+    VarDecl *first = NULL, **tail = &first;
+    for (BaseName *b = c->bases; b; b = b->next) {
+        Class *base = NULL;
+        for (Class *k = s->program->classes; k; k = k->next)
+            if (strcmp(k->name, b->name) == 0) base = k;
+        for (const BaseName *other = c->bases; other != b && base; other = other->next) {
+            if (other->klass != base) continue;
+            diag_error(s->diag, b->loc, "'%s' is extended twice", b->name);
+            base = NULL;
+        }
+        if (!base) {
+            bool twice = false;
+            for (const BaseName *other = c->bases; other != b; other = other->next) twice |= strcmp(other->name, b->name) == 0;
+            if (!twice) diag_error(s->diag, b->loc, "there is no class '%s'", b->name);
+            continue;
+        }
+        if (base->is_component || c->is_component) {
+            diag_error(s->diag, b->loc, "components do not extend, and are not extended: only classes");
+            continue;
+        }
+        if (c->is_interface && !base->is_interface) {
+            diag_error(s->diag, b->loc, "an interface can only extend interfaces, and '%s' is a class", b->name);
+            continue;
+        }
+        inherit(s, base);
+        if (base->mark != 2) continue; /* a circle, already reported */
+        b->klass = base;
+        base->has_derived = true;
+        for (const VarDecl *f = base->record->fields; f; f = f->next) {
+            const VarDecl *origin = f->origin ? f->origin : f;
+            bool have = false;
+            for (const VarDecl *g = first; g; g = g->next) have |= g->origin == origin;
+            if (have) continue;
+            VarDecl *copy = ARENA_NEW(s->arena, VarDecl);
+            *copy = *f;
+            copy->origin = origin;
+            copy->from = f->from ? f->from : base;
+            copy->symbol = NULL;
+            copy->next = NULL;
+            *tail = copy;
+            tail = &copy->next;
+        }
+    }
+    if (c->is_interface && c->record->fields)
+        diag_error(s->diag, c->record->fields->loc, "an interface has no variables: only what its classes must be able to do");
+    *tail = c->record->fields;
+    c->record->fields = first;
+    c->mark = 2;
+}
+
+/* What is abstract and has not been written by this class or one it extends. */
+static void find_pending(Sema *s, Class *c) {
+    for (const Function *f = s->program->functions; f && !c->pending; f = f->next) {
+        if (!f->is_abstract || !f->owner || !derives_from(c, f->owner)) continue;
+        const Function *mine = find_method(s->program, c, f->name, false);
+        if (mine && mine->is_abstract) c->pending = mine;
+    }
+}
+
+/* Objects of an abstract class cannot exist: only pointers to them. */
+static void check_concrete(Sema *s, const Type *type, Loc loc) {
+    while (type->kind == TY_ARRAY) type = type->base;
+    const Class *c = type->kind == TY_RECORD ? type->record->klass : NULL;
+    if (!c || (!c->is_abstract && !c->pending)) return;
+    if (c->pending)
+        diag_error(s->diag, loc, "there can be no '%s': nobody has written '%s' (use a class that extends it, or a pointer)",
+                   c->name, c->pending->full_name);
+    else
+        diag_error(s->diag, loc, "there can be no '%s': it is %s (use a class that extends it, or a pointer)", c->name,
+                   c->is_interface ? "an interface" : "abstract");
+}
+
+/* A method that replaces one must be usable in its place. */
+static void check_overrides(Sema *s, Class *c) {
+    for (Function *f = s->program->functions; f; f = f->next) {
+        if (f->owner != c || f->is_handler || !f->symbol) continue;
+        for (const BaseName *b = c->bases; b; b = b->next) {
+            Function *old = b->klass ? (Function *)find_method(s->program, b->klass, f->name, false) : NULL;
+            if (!old || !old->symbol) continue;
+            f->is_virtual = old->is_virtual = true;
+            const Symbol *mine = f->symbol, *theirs = old->symbol;
+            bool same = mine->param_count == theirs->param_count && same_type(mine->type, theirs->type);
+            for (int i = 1; same && i < mine->param_count; i++)
+                same = mine->params[i]->mode == theirs->params[i]->mode && same_type(mine->params[i]->type, theirs->params[i]->type);
+            if (!same)
+                diag_error(s->diag, f->loc, "'%s' replaces '%s': it must take and give the same", f->full_name, old->full_name);
+        }
+    }
+    /* two classes that give the same thing, and nothing to choose with */
+    for (const BaseName *a = c->bases; a; a = a->next) {
+        for (const BaseName *b = a->next; b && a->klass; b = b->next) {
+            if (!b->klass) continue;
+            for (const Function *f = s->program->functions; f; f = f->next) {
+                if (!f->owner || f->is_handler || !derives_from(b->klass, f->owner)) continue;
+                const Function *one = find_method(s->program, a->klass, f->name, false);
+                const Function *two = find_method(s->program, b->klass, f->name, false);
+                if (!one || !two || one == two || one->is_abstract || two->is_abstract) continue;
+                if (derives_from(one->owner, two->owner) || derives_from(two->owner, one->owner)) continue;
+                const Function *mine = find_method(s->program, c, f->name, false);
+                if (mine && mine->owner == c) continue;
+                diag_error(s->diag, a->loc, "'%s' gets '%s' from both '%s' and '%s': it must have its own", c->name, f->name,
+                           one->owner->name, two->owner->name);
+                return;
+            }
+        }
+    }
+    /* what it leaves abstract makes those that are replaced be chosen by the object too */
+    for (Function *f = s->program->functions; f; f = f->next)
+        if (f->is_abstract && f->owner == c) f->is_virtual = true;
+}
+
 static Scope *class_scope(Sema *s, const Class *klass) {
     int i = 0;
     for (const Class *c = s->program->classes; c && c != klass; c = c->next) i++;
@@ -1417,8 +1622,10 @@ static void fill_class_scope(Sema *s, Class *klass, Scope *scope) {
         sym->next = scope->symbols;
         scope->symbols = sym;
     }
-    for (Function *f = s->program->functions; f; f = f->next) {
-        if (f->owner != klass || f->is_handler || !f->symbol) continue;
+    for (Function *g = s->program->functions; g; g = g->next) {
+        if (!g->owner || !derives_from(klass, g->owner) || g->is_handler) continue;
+        const Function *f = find_method(s->program, klass, g->name, false); /* its own, or the nearest */
+        if (!f || !f->symbol) continue;
         Symbol *copy = ARENA_NEW(s->arena, Symbol);
         *copy = *f->symbol;
         if (find_local(scope, f->name)) continue;
@@ -1503,6 +1710,8 @@ bool analyze(Program *program, const Config *config, Arena *arena, Diag *diag) {
         state->next = c->record->fields;
         c->record->fields = state;
     }
+    for (Class *c = program->classes; c; c = c->next) inherit(s, c);
+    for (Class *c = program->classes; c; c = c->next) find_pending(s, c);
     for (TypeDecl *t = program->types; t; t = t->next) add_record(s, t->name, t->record, t->loc);
     /* "var origin: record ... end" also names the type of other variables */
     for (VarDecl *g = program->globals; g; g = g->next) {
@@ -1549,6 +1758,7 @@ bool analyze(Program *program, const Config *config, Arena *arena, Diag *diag) {
     for (Class *c = program->classes; c; c = c->next) {
         fill_class_scope(s, c, class_scope(s, c));
         check_handlers(s, c);
+        check_overrides(s, c);
     }
     check_links(s);
     if (program->seed) check_expr(s, program->seed);

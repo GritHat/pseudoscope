@@ -48,7 +48,11 @@ bool has_tests(const Program *program);
 
 /* The class of a type, also through a pointer; NULL if none. */
 const Class *class_of(const Type *type);
+/* Its own, or the one it inherits. */
 const Function *find_method(const Program *program, const Class *klass, const char *name, bool handler);
+/* Whether klass is base, or extends it, however far. */
+bool derives_from(const Class *klass, const Class *base);
+bool has_inheritance(const Program *program);
 
 /* Value of a constant integer expression. */
 bool const_int(const Expr *expr, long long *value);
