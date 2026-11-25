@@ -798,6 +798,9 @@ static void announce_call(Vm *vm) {
     vm->event = LEVEL_CALL;
     const Frame *caller = vm->s.frames.count > 1 ? &vm->s.frames.items[vm->s.frames.count - 2] : NULL;
     bool shown = frame->function->owner || (!vm->has_classes && strcmp(frame->function->name, "main") != 0);
+    /* what a component does on its own is its business */
+    const Class *owner = frame->function->owner;
+    if (owner && owner->is_component && caller && caller->life == frame->life) shown = false;
     if (shown && !frame->function->is_handler && !frame->function->is_test && caller) {
         SequenceRow m = {.kind = MSG_CALL, .from = caller->life, .to = frame->life, .name = frame->function->name};
         format_call(vm, frame->function, m.args, sizeof m.args);

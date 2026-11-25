@@ -68,6 +68,7 @@ successo.
 | Un protocollo | `examples/systems/stop_and_wait.plike` | che cosa succede quando i pacchetti si perdono |
 | End to end | `examples/systems/login.plike` | una prova, mentre gira |
 | Consenso | `examples/systems/election.plike` | Tempi: chi comanda, e quando |
+| Trova l'errore | `examples/exercises/two_leaders.plike` | quale regola manca? Le prove lo mostrano |
 | UML | `examples/uml` | diagrammi da percorrere |
 
 I componenti si scambiano messaggi su collegamenti che li ritardano e li perdono; le prove

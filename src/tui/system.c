@@ -109,11 +109,12 @@ static void draw_live_sequence(App *app, int x, int y, int w, int h) {
     }
     SequenceFlying flying[12];
     char names[12][60];
-    int flying_count = 0, room = h / 3;
+    int flying_count = 0, room = h / 4, queued = vm_queue_count(vm);
     if (room > 12) room = 12;
-    for (int i = 0; i < vm_queue_count(vm) && flying_count < room; i++) {
-        const Event *e = vm_queued(vm, i);
-        if (strcmp(e->name, "start") == 0) continue;
+    /* messages first, then timers */
+    for (int k = 0; k < 2 * queued && flying_count < room; k++) {
+        const Event *e = vm_queued(vm, k % queued);
+        if (strcmp(e->name, "start") == 0 || (e->from_life == e->to_life) != (k >= queued)) continue;
         double span = (double)(e->time - e->sent);
         snprintf(names[flying_count], sizeof names[0], "%.50s", e->name);
         flying[flying_count] = (SequenceFlying){e->from_life - skip, e->to_life - skip, names[flying_count],

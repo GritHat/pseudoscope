@@ -17,15 +17,15 @@
 │  ■ name_nodes                    ││                        │ wait_for_leader()    │                        │
 │  ƒ leader                        ││                        │ step_down()          │                        │
 │  ƒ leaders                       ││                        ╰──────────────────────╯                        │
-│  ■ main  si parte da qui         ││                                                                        │
-│                                  ││  I suoi stati                                                          │
-│ Dati condivisi                   ││  ╭───────────╮                                                         │
-│  ● variabili globali             ││  │ Follower  │── Timeout ──▶ Candidate                                 │
-│                                  ││  ╰───────────╯                                                         │
-│ Prove                            ││  ╭───────────╮── Timeout ──▶ Candidate                                 │
-│  ✓ one leader, and another one … ││  │ Candidate │── RequestVote ──▶ Follower                              │
-│                                  ││  ╰───────────╯── Vote ──▶ Leader                                       │
-│                                  ││               ── Heartbeat ──▶ Follower                                │
+│  ƒ clashes                       ││                                                                        │
+│  ■ main  si parte da qui         ││  I suoi stati                                                          │
+│                                  ││  ╭───────────╮                                                         │
+│ Dati condivisi                   ││  │ Follower  │── Timeout ──▶ Candidate                                 │
+│  ● variabili globali             ││  ╰───────────╯                                                         │
+│                                  ││  ╭───────────╮── Timeout ──▶ Candidate                                 │
+│ Prove                            ││  │ Candidate │── RequestVote ──▶ Follower                              │
+│  ✓ one leader, and another one … ││  ╰───────────╯── Vote ──▶ Leader                                       │
+│  ✓ never two leaders in the sam… ││               ── Heartbeat ──▶ Follower                                │
 │                                  ││                                                                        │
 │                                  ││                                                                        │
 │                                  ││                                                                        │

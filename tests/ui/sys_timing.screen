@@ -1,19 +1,19 @@
  ◆ PSEUDOSCOPE  election.plike                        ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
-  ‖ fermo   one leader, and another one when it crashes ▸ Node.Heartbeat ▸ Node.wait_for_leader
-  Sequenza   Componenti   Stati   Tempi   Comunicazione   Verifiche                               tempo t = 18
+  ‖ fermo   one leader, and another one when it crashes ▸ Node.Beat
+  Sequenza   Componenti   Stati   Tempi   Comunicazione   Verifiche                               tempo t = 28
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │               0              5              10             15             20             25             30           │
-│               ╷              ╷              ╷              ╷           │  ╷              ╷              ╷            │
-│ nodes[1]      Follower                                        Leader   │                                             │
-│                                                                        │                                             │
-│ nodes[2]      Follower                                                 │                                             │
-│                                                                        │                                             │
-│ nodes[3]      Follower                                  Candidate      │                                             │
-│                                                                        │                                             │
-│ nodes[4]      Follower                                                 │                                             │
-│                                                                        │                                             │
-│ nodes[5]      Follower                                                 │                                             │
-│                                                                        │                                             │
+│               ╷              ╷              ╷              ╷              ╷              ╷           │  ╷            │
+│ nodes[1]      Follower                                        Leader                                 │               │
+│                                                                                                      │               │
+│ nodes[2]      Follower                                                                               │               │
+│                                                                                                      │               │
+│ nodes[3]      Follower                                  Candidate   Follower                         │               │
+│                                                                                                      │               │
+│ nodes[4]      Follower                                                                               │               │
+│                                                                                                      │               │
+│ nodes[5]      Follower                                                                               │               │
+│                                                                                                      │               │
 │                                                                                                                      │
 │ Node   Follower   Candidate   Leader                                                                                 │
 │                                                                                                                      │
@@ -27,8 +27,8 @@
 │                                                                                                                      │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Cosa è successo ────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ▷ nodes[2] manda  Timeout  a nodes[2]                                                                                │
-│ ▶  Heartbeat(1)  arriva a nodes[3]                                                                                   │
-│ ◆ nodes[3] passa a  Follower   prima era Candidate                                                                   │
+│ ▷ nodes[1] manda  Heartbeat  a nodes[4]                                                                              │
+│ ▷ nodes[1] manda  Heartbeat  a nodes[5]                                                                              │
+│ ▷ nodes[1] manda  Beat  a nodes[1]                                                                                   │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
   →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   Tab  altra vista   g  alla fine   ?  aiuto

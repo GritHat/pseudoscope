@@ -1,8 +1,8 @@
  ◆ PSEUDOSCOPE  election.plike                                            ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
-  ‖ fermo   one leader, and another one when it crashes ▸ Node.RequestVote
-  Sequenza   Componenti   Stati   Tempi   Comunicazione   Verifiche                                                   tempo t = 15
+  ‖ fermo   one leader, and another one when it crashes ▸ Node.Heartbeat ▸ Node.wait_for_leader
+  Sequenza   Componenti   Stati   Tempi   Comunicazione   Verifiche                                                   tempo t = 17
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│  nodes[1]  Candidate    nodes[2]  Follower    nodes[3]  Candidate    nodes[4]  Follower    nodes[5]  Follower                            │
+│  nodes[1]  Leader    nodes[2]  Follower    nodes[3]  Candidate    nodes[4]  Follower    nodes[5]  Follower                               │
 │                                                                                                                                          │
 │  nodes[1]  Node                                                    │ nodes[2]  Node                                                      │
 │                                                                    │                                                                     │
@@ -29,8 +29,8 @@
 │                                                                    │                                                                     │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Cosa è successo ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ▷ nodes[5] manda  Vote  a nodes[1]                                                                                                       │
+│ ⊘ Vote non interessa a nodes[1], che è in Leader                                                                                         │
+│ ▶  Heartbeat(1)  arriva a nodes[5]                                                                                                       │
 │ ▷ nodes[5] manda  Timeout  a nodes[5]                                                                                                    │
-│ ▶  RequestVote(1, 3)  arriva a nodes[1]                                                                                                  │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
   →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   Tab  altra vista   g  alla fine   ?  aiuto

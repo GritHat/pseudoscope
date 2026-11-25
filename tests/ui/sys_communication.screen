@@ -25,8 +25,8 @@
 │                                                                                                            │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Cosa è successo ──────────────────────────────────────────────────────────────────────────────────────────╮
-│  ✓  server -> database: Find                                                                               │
-│  ✓  database -> server: Found                                                                              │
 │  ✓  server -> client: Welcome                                                                              │
+│ ● and the client is in                                                                                     │
+│  ✓  client.state = LoggedIn                                                                                │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
   →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   Tab  altra vista   ?  aiuto

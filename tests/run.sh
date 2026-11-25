@@ -110,7 +110,10 @@ done
 cd "$here/../examples" || exit 1
 for file in */*.plike; do
     grep -q '^ *test ' "$file" || continue
-    if "$plike" test "$file" > "$tmp/out" 2> "$tmp/err"; then pass; else fail "examples/$file" "$tmp/out"; fi
+    "$plike" test "$file" > "$tmp/out" 2> "$tmp/err"
+    got=$? want=0
+    case $file in exercises/*) want=1 ;; esac # what is wrong in them is found
+    if [ "$got" = "$want" ]; then pass; else fail "examples/$file" "$tmp/out"; fi
 done
 for file in uml/*; do
     "$plike" ast "$file" > "$tmp/out" 2>&1

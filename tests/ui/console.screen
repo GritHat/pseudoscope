@@ -1,5 +1,5 @@
  ♦ PSEUDOSCOPE  login.plike         Sistema  ►  Programma  ►  Funzione  ►  Istruzione  ►  Memoria  
-  ║ fermo   the right password logs in ► Database.Find ► Database.matches
+  ║ fermo   the right password logs in ► Database.Find
   Sequenza   Componenti   Stati   Tempi   Comunicazione   Verifiche           tempo t = 5
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                ┌──────┐             ┌────────┐            ┌────────┐           ┌──────────┐      │
@@ -11,7 +11,6 @@
 │ t=1                │                     ♦ Waiting             │                     │           │
 │ t=4                │                     │── Login(2, 2222) ──►║                     │           │
 │ t=5                │                     │                     │─── Find(2, 2222) ──►║           │
-│ t=5                │                     │                     │                     ║«  match~  │
 │                    │                     │                     │                     ║           │
 │                    │                     │                     │                     ║           │
 │                    │                     │                     │                     ║           │
@@ -21,10 +20,11 @@
 │                    │                     │                     │                     ║           │
 │                    │                     │                     │                     ║           │
 │                    │                     │                     │                     ║           │
+│ →6                 │                     │                     │··············· Found            │
 └──────────────────────────────────────────────────────────────────────────────────────────────────┘
 ┌─ Cosa è successo ────────────────────────────────────────────────────────────────────────────────┐
-│ ►  Login(2, 2222)  arriva a server                                                               │
 │ ► server manda  Find  a database                                                                 │
 │ ►  Find(2, 2222)  arriva a database                                                              │
+│ ► database manda  Found  a server                                                                │
 └──────────────────────────────────────────────────────────────────────────────────────────────────┘
   →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   ?  aiuto

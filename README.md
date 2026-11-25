@@ -66,6 +66,7 @@ have generated. Every access is checked, and errors say what happened.
 | A protocol | `examples/systems/stop_and_wait.plike` | what happens when packets get lost |
 | End to end | `examples/systems/login.plike` | a test, while it runs |
 | Consensus | `examples/systems/election.plike` | Timing: who leads, and when |
+| Find the mistake | `examples/exercises/two_leaders.plike` | which rule is missing? The tests show it |
 | UML | `examples/uml` | diagrams, walked through |
 
 Components exchange messages over links that delay and lose them; tests say what must
