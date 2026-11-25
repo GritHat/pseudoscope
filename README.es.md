@@ -223,4 +223,4 @@ repositorio donde se comparte su enlace.
 
 ## Licencia
 
-MIT
+[Apache License 2.0](LICENSE). Copyright 2024-2026 GritHat.

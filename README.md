@@ -219,4 +219,4 @@ repository where its link is shared.
 
 ## License
 
-MIT
+[Apache License 2.0](LICENSE). Copyright 2024-2026 GritHat.
