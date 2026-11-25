@@ -461,14 +461,20 @@ static void draw_machine(App *app, int w, int h) {
     const Vm *vm = r->vm;
     const Frame *f = vm_frame(vm, vm_frame_count(vm) - 1);
     int bottom = h - 6, left = w - 66 < 40 ? w - w * 58 / 100 : w - 66;
-    draw_box(0, 2, left, bottom - 2, C_BORDER, L("Tradotto in C", "Translated to C"));
-    if (f->function) {
+    char title[60];
+    snprintf(title, sizeof title, "%s %s", L("Tradotto in", "Translated to"), lang_name(app->target));
+    draw_box(0, 2, left, bottom - 2, C_BORDER, title);
+    const char *problem = translation_problem(app);
+    if (problem) {
+        print_wrapped(2, 4, left - 4, bottom - 6, S(C_FOCUS, C_DEFAULT, 0), "%s", problem);
+        print_at(2, bottom - 2, left - 4, S_DIM, M_KEY " T " M_RESET " %s", L("un altro linguaggio", "another language"));
+    } else if (f->function) {
         if (r->c_function != f->function) {
             arena_free(&r->c_arena);
             r->map = (LineMap){0};
             r->c_code.length = 0;
             strbuf_puts(&r->c_code, "");
-            generate_function(app->doc->program, &app->doc->config, &r->c_arena, f->function, &r->c_code, &r->map);
+            translate_function(app->doc->program, &app->doc->config, &r->c_arena, app->target, f->function, &r->c_code, &r->map);
             r->c_function = f->function;
         }
         int hot = -1, last = -1, total = 0, rows = bottom - 4;

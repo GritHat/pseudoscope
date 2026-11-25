@@ -408,7 +408,7 @@ static int start_ui(const Options *options) {
     UiOptions ui = {.config = options->config, .path = options->input,
                     .italian = italian(options, true), .keys = options->keys,
                     .width = options->width, .height = options->height,
-                    .colors = options->color == COLOR_ALWAYS};
+                    .colors = options->color == COLOR_ALWAYS, .target = (int)options->target};
     return run_ui(&ui);
 }
 

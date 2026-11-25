@@ -4,6 +4,7 @@
 #include "plike/codegen.h"
 #include "plike/uml.h"
 #include "plike/blocks.h"
+#include "plike/target.h"
 #include "plike/vm.h"
 #include "screen.h"
 
@@ -258,7 +259,14 @@ typedef struct {
     Tests tests;
     UmlWalk walk;
     char notice[160];
+    Lang target;             /* the language translations are shown in: T changes it */
+    char problem[240];       /* why the program cannot be said in it; empty if it can */
+    const Document *problem_doc;
+    Lang problem_target;
 } App;
+
+/* Why what is open cannot be translated to the chosen language, or NULL. */
+const char *translation_problem(App *app);
 
 void files_open(App *app, const char *directory);
 /* Back to where a document was chosen from. */

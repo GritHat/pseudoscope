@@ -169,7 +169,17 @@ static void class_card(const App *app, const Item *item, int x, int y, int w, in
     const Class *c = item->klass;
     print_at(x, y, w, S_TEXT, M_TYPE M_BOLD "%s" M_RESET "  " M_DIM "%s", c->name,
              c->is_component ? L("componente: vive da solo e scambia messaggi", "component: lives on its own and exchanges messages")
+             : c->is_interface ? L("interfaccia: ciò che le sue classi devono saper fare", "interface: what its classes must be able to do")
+             : c->is_abstract || c->pending ? L("classe astratta: la completano quelle che la estendono", "abstract class: those that extend it complete it")
                              : L("classe: dati e operazioni insieme", "class: data and operations together"));
+    if (c->bases) { /* what it extends, and so what it also is */
+        char bases[200] = "";
+        for (const BaseName *b = c->bases; b; b = b->next) {
+            size_t n = strlen(bases);
+            snprintf(bases + n, sizeof bases - n, "%s%s", n ? ", " : "", b->name);
+        }
+        print_at(x, y + 1, w, S_TEXT, M_DIM "%s " M_RESET M_TYPE "%s", L("estende", "extends"), bases);
+    }
     Names in = {0}, out = {0}, methods = {0};
     int fields = 0;
     for (const VarDecl *f = c->record->fields; f; f = f->next) fields += !f->symbol->type->states;
@@ -423,6 +433,32 @@ static void draw_layout(const App *app, const Record *record, int x, int y, int 
         print_at(x, row, w, S_FAINT, "%4d  ┄┄ %s", offset, L("spazio vuoto (allineamento)", "padding"));
 }
 
+static void first_problem(void *context, Loc loc, bool warning, const char *message) {
+    App *app = context;
+    if (!warning && !app->problem[0]) snprintf(app->problem, sizeof app->problem, "%s %d: %s", L("riga", "line"), loc.line, message);
+}
+
+const char *translation_problem(App *app) {
+    if (!app->doc || !app->doc->ok || !app->doc->program) return NULL;
+    if (app->problem_doc != app->doc || app->problem_target != app->target) {
+        Diag diag = {.source = &app->doc->source, .out = stderr, .sink = first_problem, .italian = ui_italian, .sink_context = app};
+        app->problem[0] = '\0';
+        app->problem_doc = app->doc;
+        app->problem_target = app->target;
+        translatable(app->doc->program, &app->doc->config, app->target, &diag);
+    }
+    return app->problem[0] ? app->problem : NULL;
+}
+
+/* Instead of a translation that would be wrong: why there is none. */
+static bool draw_problem(App *app, int x, int y, int w, int h) {
+    const char *problem = translation_problem(app);
+    if (!problem) return false;
+    print_wrapped(x + 1, y + 1, w - 2, h - 4, S(C_FOCUS, C_DEFAULT, 0), "%s", problem);
+    print_at(x + 1, y + h - 2, w - 2, S_DIM, M_KEY " T " M_RESET " %s", L("un altro linguaggio", "another language"));
+    return true;
+}
+
 static void draw_translation(App *app, int w, int h) {
     const Item *item = selected_item(app);
     Arena arena = {0};
@@ -434,14 +470,21 @@ static void draw_translation(App *app, int w, int h) {
     draw_item_code(app, 2, 3, half - 4, h - 6);
     if (item->record) {
         int top = (h - 4) / 2;
-        draw_box(half, 2, w - half, top, C_BORDER, "C");
-        generate_record(app->doc->program, &app->doc->config, &arena, item->record, &c);
-        draw_c_code(half + 1, 3, w - half - 3, top - 2, c.data, 0, -1, -1);
+        draw_box(half, 2, w - half, top, C_BORDER, lang_name(app->target));
+        if (!draw_problem(app, half + 1, 3, w - half - 3, top - 2)) {
+            translate_record(app->doc->program, &app->doc->config, &arena, app->target, item->record, &c);
+            draw_c_code(half + 1, 3, w - half - 3, top - 2, c.data, 0, -1, -1);
+        }
         draw_box(half, 2 + top, w - half, h - 4 - top, C_BORDER, L("In memoria", "In memory"));
         draw_layout(app, item->record, half + 2, 3 + top, w - half - 4, h - 6 - top);
     } else {
-        draw_box(half, 2, w - half, h - 4, C_BORDER, "C");
-        generate_function(app->doc->program, &app->doc->config, &arena, item->function, &c, &map);
+        draw_box(half, 2, w - half, h - 4, C_BORDER, lang_name(app->target));
+        if (draw_problem(app, half + 1, 3, w - half - 3, h - 6)) {
+            strbuf_free(&c);
+            arena_free(&arena);
+            return;
+        }
+        translate_function(app->doc->program, &app->doc->config, &arena, app->target, item->function, &c, &map);
         const Stmt *stmt = statement_at(item->function->body, app->explore.line);
         int first = -1, last = -1, total = 0;
         for (size_t i = 0; i < c.length; i++) total += c.data[i] == '\n';
@@ -501,7 +544,7 @@ void explore_draw(App *app) {
         draw_footer(hints, 5);
         return;
     }
-    const char *levels[] = {L("Mappa", "Map"), L("Codice", "Code"), "C"};
+    const char *levels[] = {L("Mappa", "Map"), L("Codice", "Code"), lang_name(app->target)};
     draw_header(path, levels, 3, app->explore.level, C_READ);
     const Item *item = selected_item(app);
     if (app->explore.level == 0 || !item) {

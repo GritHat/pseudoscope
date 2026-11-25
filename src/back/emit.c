@@ -1736,7 +1736,7 @@ static void for_loop(Gen *g, const Stmt *s) {
             if (step != 1) putf(g, ").step_by(%lld)", step);
         }
         block(g, s->body);
-        put(g, "\n");
+        if (!PY) put(g, "\n");
         return;
     }
     if (PY || RUST) { /* as a while: the variable keeps its meaning after the loop */
@@ -1780,7 +1780,7 @@ static void for_loop(Gen *g, const Stmt *s) {
         }
         end(g);
         close(g);
-        put(g, "\n");
+        if (!PY) put(g, "\n");
         return;
     }
     put(g, "for (");

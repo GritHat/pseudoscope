@@ -74,6 +74,7 @@ static void draw_help(const App *app) {
         {"Mappa", "cosa c'è nel programma", "what the program contains"},
         {"Codice", "com'è scritto", "how it is written"},
         {"C", "come diventa C, e in memoria", "how it becomes C, and memory"},
+        {"T", "in un altro linguaggio", "in another language"},
     };
     if (app->view == VIEW_RUN) help_column(RUN, sizeof RUN / sizeof RUN[0], 2, 3, half - 4);
     else help_column(EXPLORE, sizeof EXPLORE / sizeof EXPLORE[0], 2, 3, half - 4);
@@ -165,6 +166,10 @@ static void handle(App *app, int key) {
         app->overlay = OVERLAY_HELP;
     } else if (key == 'E' && (app->view == VIEW_EXPLORE || app->view == VIEW_UML)) {
         edit(app);
+    } else if (key == 'T' && (app->view == VIEW_EXPLORE || (app->view == VIEW_RUN && vm_status(app->run.vm) != VM_NEEDS_INPUT))) {
+        app->target = (Lang)((app->target + 1) % LANG_COUNT); /* another language */
+        app->run.c_function = NULL;
+        snprintf(app->notice, sizeof app->notice, "%s %s", L("Traduzione in", "Translation to"), lang_name(app->target));
     } else {
         switch (app->view) {
             case VIEW_FILES: files_key(app, key); break;
@@ -205,7 +210,7 @@ static void open_path(App *app, const char *path) {
 }
 
 int run_ui(const UiOptions *options) {
-    App app = {.config = options->config, .headless = options->keys != NULL};
+    App app = {.config = options->config, .headless = options->keys != NULL, .target = (Lang)options->target};
     ui_italian = options->italian;
     struct stat st;
     if (stat(options->path, &st) != 0) {
