@@ -48,9 +48,14 @@ def mutate(rng):
 def run(i):
     rng = random.Random(SEED * 1000003 + i)
     text = mutate(rng)
-    args = [PLIKE, rng.choice(["translate", "translate", "ast", "tokens"]), "-"]
+    args = [PLIKE, rng.choice(["translate", "translate", "exec", "exec", "ast", "tokens"]), "-"]
     args += rng.choice([[], ["-b"], ["--indexing=zero"], ["--assignment=equals"],
                         ["--operators=dotted"], ["--mixed-arrays=false"]])
+    if args[1] == "exec":
+        args += ["--steps=300000"]
+        result = subprocess.run(args, input=text, capture_output=True, timeout=60)
+        bad = b"Sanitizer" in result.stderr or b"runtime error:" in result.stderr or result.returncode < 0
+        return (text, result.stderr.decode(errors="replace")[:1500]) if bad else None
     with tempfile.NamedTemporaryFile(suffix=".c") as output:
         try:
             result = subprocess.run(args + ["-o", output.name], input=text,

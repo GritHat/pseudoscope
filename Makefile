@@ -9,7 +9,7 @@ PREFIX   ?= /usr/local
 BUILD    ?= build
 PLIKE    ?= bin/plike
 
-LIB       = $(wildcard src/util/*.c src/front/*.c src/sema/*.c src/back/*.c)
+LIB       = $(wildcard src/util/*.c src/front/*.c src/sema/*.c src/back/*.c src/vm/*.c)
 CLI       = $(wildcard src/cli/*.c)
 UNIT      = $(wildcard tests/unit/*.c)
 
@@ -23,10 +23,10 @@ all: $(PLIKE)
 
 $(PLIKE): $(LIB_OBJ) $(CLI_OBJ)
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ -lm
 
 $(BUILD)/unit: $(LIB_OBJ) $(UNIT_OBJ)
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ -lm
 
 $(BUILD)/%.o: %.c
 	@mkdir -p $(@D)
@@ -35,7 +35,7 @@ $(BUILD)/%.o: %.c
 test: unit e2e syntax
 
 unit: $(BUILD)/unit
-	$(BUILD)/unit
+	$(BUILD)/unit tests/programs/*.plike
 
 e2e: $(PLIKE)
 	PLIKE=$(PLIKE) tests/run.sh

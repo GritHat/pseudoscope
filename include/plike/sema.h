@@ -13,6 +13,8 @@ struct Symbol {
     Type *type;           /* for functions: the result, TY_VOID for procedures */
     Symbol *next;         /* in the scope; for externals, in the program list */
 
+    int slot;             /* for the virtual machine: place in the frame, or in
+                             the record for a field */
     bool is_global;
     bool indexed;         /* some array access goes through it */
 

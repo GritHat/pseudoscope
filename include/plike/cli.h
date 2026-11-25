@@ -6,7 +6,7 @@
 #define PLIKE_VERSION "2.0.0"
 
 typedef enum {
-    CMD_TRANSLATE, CMD_CHECK, CMD_BUILD, CMD_RUN, CMD_TOKENS, CMD_AST
+    CMD_TRANSLATE, CMD_CHECK, CMD_BUILD, CMD_RUN, CMD_EXEC, CMD_TOKENS, CMD_AST
 } Command;
 
 typedef enum { COLOR_AUTO, COLOR_ALWAYS, COLOR_NEVER } ColorMode;
@@ -22,6 +22,7 @@ typedef struct {
     bool werror;
     bool verbose;
     bool dot;
+    long max_steps;        /* exec; 0: no limit */
 } Options;
 
 enum { EXIT_OK = 0, EXIT_PROBLEMS = 1, EXIT_USAGE = 2, EXIT_IO = 3 };

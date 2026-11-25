@@ -33,6 +33,16 @@ for file in *.plike; do
     else
         compare "programs/$name" "$name.out" "$tmp/out"
     fi
+    # the virtual machine must behave like the compiled program
+    # shellcheck disable=SC2086
+    "$plike" exec $opts "$file" < "$input" > "$tmp/out" 2> "$tmp/err"
+    got=$?
+    if [ "$got" != "$want" ]; then
+        echo "exit status $got, expected $want" >> "$tmp/err"
+        fail "programs/$name (exec)" "$tmp/err"
+    else
+        compare "programs/$name (exec)" "$name.out" "$tmp/out"
+    fi
 done
 
 cd "$here/accept" || exit 1

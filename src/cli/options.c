@@ -2,6 +2,7 @@
 
 #include <getopt.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static const struct {
@@ -9,7 +10,7 @@ static const struct {
     Command command;
 } COMMANDS[] = {
     {"translate", CMD_TRANSLATE}, {"check", CMD_CHECK}, {"build", CMD_BUILD},
-    {"run", CMD_RUN}, {"tokens", CMD_TOKENS}, {"ast", CMD_AST},
+    {"run", CMD_RUN}, {"exec", CMD_EXEC}, {"tokens", CMD_TOKENS}, {"ast", CMD_AST},
 };
 
 static void print_help(FILE *out) {
@@ -23,6 +24,7 @@ static void print_help(FILE *out) {
         "  check       only report errors and warnings\n"
         "  build       translate and compile to an executable\n"
         "  run         build in a temporary directory and execute\n"
+        "  exec        execute without a C compiler, checking every access\n"
         "  tokens      list the tokens\n"
         "  ast         print the syntax tree\n"
         "\n"
@@ -39,6 +41,7 @@ static void print_help(FILE *out) {
         "                            build: executable (default: FILE without extension)\n"
         "  -b, --bounds-check        stop with an error on array indices out of bounds\n"
         "      --cc=COMPILER         C compiler for build and run (default: $CC or cc)\n"
+        "      --steps=N             exec: stop after N steps\n"
         "      --dot                 ast: Graphviz format\n"
         "\n"
         "Messages:\n"
@@ -65,7 +68,7 @@ static int choose(const char *option, const char *value, const char *const *choi
     return -1;
 }
 
-enum { OPT_OPERATORS = 256, OPT_CC, OPT_DOT, OPT_COLOR };
+enum { OPT_OPERATORS = 256, OPT_CC, OPT_DOT, OPT_COLOR, OPT_STEPS };
 
 bool parse_options(int argc, char **argv, Options *options, int *status) {
     static const struct option LONG[] = {
@@ -79,6 +82,7 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
         {"cc", required_argument, NULL, OPT_CC},
         {"dot", no_argument, NULL, OPT_DOT},
         {"color", required_argument, NULL, OPT_COLOR},
+        {"steps", required_argument, NULL, OPT_STEPS},
         {"quiet", no_argument, NULL, 'q'},
         {"werror", no_argument, NULL, 'W'},
         {"verbose", no_argument, NULL, 'v'},
@@ -139,6 +143,15 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
             case 'o': options->output = optarg; break;
             case 'b': options->config.bounds_check = true; break;
             case OPT_CC: options->cc = optarg; break;
+            case OPT_STEPS: {
+                char *end;
+                options->max_steps = strtol(optarg, &end, 10);
+                if (*end || end == optarg || options->max_steps <= 0) {
+                    fprintf(stderr, "plike: invalid value '%s' for --steps\n", optarg);
+                    return false;
+                }
+                break;
+            }
             case OPT_DOT: options->dot = true; break;
             case 'q': options->quiet = true; break;
             case 'W': options->werror = true; break;

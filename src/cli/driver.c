@@ -3,6 +3,7 @@
 #include "plike/codegen.h"
 #include "plike/dump.h"
 #include "plike/parser.h"
+#include "plike/vm.h"
 
 #include <errno.h>
 #include <stdlib.h>
@@ -87,6 +88,11 @@ static char *default_executable(Arena *arena, const char *input) {
     return arena_printf(arena, "%s.out", input);
 }
 
+static int no_main(void) {
+    fputs("plike: there is nothing to run: declare a procedure 'main' without parameters\n", stderr);
+    return EXIT_PROBLEMS;
+}
+
 static int build_and_run(const Options *options, const StrBuf *code, Arena *arena) {
     const char *base = getenv("TMPDIR");
     char *dir = arena_printf(arena, "%s/plike-XXXXXX", base && *base ? base : "/tmp");
@@ -117,6 +123,45 @@ static int build_and_run(const Options *options, const StrBuf *code, Arena *aren
     unlink(source);
     unlink(executable);
     rmdir(dir);
+    return status;
+}
+
+/* Runs on the virtual machine, reading input only when it is asked for. */
+static int interpret(const Program *program, const Options *options) {
+    Vm *vm = vm_create(program, &options->config);
+    size_t shown = 0, length;
+    vm_start(vm);
+    long left = options->max_steps;
+    for (;;) {
+        long chunk = options->max_steps && left < 100000 ? left : 100000;
+        vm_run(vm, LEVEL_NONE, chunk);
+        left -= chunk;
+        const char *output = vm_output(vm, &length);
+        fwrite(output + shown, 1, length - shown, stdout);
+        shown = length;
+        if (vm_status(vm) == VM_NEEDS_INPUT) {
+            char line[4096];
+            fflush(stdout);
+            if (fgets(line, sizeof line, stdin)) vm_give_input(vm, line);
+            else vm_end_input(vm);
+        } else if (vm_status(vm) != VM_READY || (options->max_steps && left <= 0)) {
+            break;
+        }
+    }
+    fflush(stdout);
+    if (vm_status(vm) == VM_READY) {
+        fputs("plike: too many steps, stopped\n", stderr);
+        vm_destroy(vm);
+        return EXIT_PROBLEMS;
+    }
+    if (vm_status(vm) == VM_FAILED) {
+        const Frame *frame = vm_frame(vm, vm_frame_count(vm) - 1);
+        fprintf(stderr, "runtime error");
+        if (frame->stmt) fprintf(stderr, " at line %d", frame->stmt->loc.line);
+        fprintf(stderr, ": %s\n", vm_message(vm));
+    }
+    int status = vm_exit_status(vm);
+    vm_destroy(vm);
     return status;
 }
 
@@ -155,6 +200,11 @@ static int translate(const Options *options, const Source *source, Arena *arena,
     }
     if (options->command == CMD_CHECK) return EXIT_OK;
 
+    if (options->command == CMD_EXEC) {
+        step(options, "executing");
+        return has_main(program) ? interpret(program, options) : no_main();
+    }
+
     step(options, "generating C");
     generate(program, &options->config, arena, out);
     if (options->command == CMD_TRANSLATE) {
@@ -164,11 +214,7 @@ static int translate(const Options *options, const Source *source, Arena *arena,
         }
         return write_file(options->output, out) ? EXIT_OK : EXIT_IO;
     }
-    if (!has_main(program)) {
-        fputs("plike: there is nothing to run: declare a procedure 'main' without parameters\n",
-              stderr);
-        return EXIT_PROBLEMS;
-    }
+    if (!has_main(program)) return no_main();
     return build_and_run(options, out, arena);
 }
 

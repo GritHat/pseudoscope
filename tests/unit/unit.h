@@ -6,6 +6,8 @@
 
 extern int unit_checks;
 extern int unit_failures;
+extern int unit_argc; /* programs to travel through */
+extern char **unit_argv;
 
 #define CHECK(condition)                                                       \
     do {                                                                       \
@@ -31,5 +33,6 @@ extern int unit_failures;
 void test_util(void);
 void test_lexer(void);
 void test_parser(void);
+void test_vm(void);
 
 #endif
