@@ -923,6 +923,9 @@ static void infer_uses(Infer *in, const Expr *e) {
                 param->inferred = true;
                 infer_changed = true;
             }
+            /* what a procedure fills in exists from then on, and is what the procedure makes of it */
+            if (param->mode != MODE_IN && !param->has_dims && e->args.items[i]->kind == EX_NAME && !function_named(in->p, e->args.items[i]->text))
+                infer_store(in, e->args.items[i], spec_kind(param->spec));
             /* what is handed on as an array is one, even where nobody looks inside it */
             if (param->has_dims && e->args.items[i]->kind == EX_NAME) {
                 VarDecl *mine = find_decl(in->function->params, e->args.items[i]->text);

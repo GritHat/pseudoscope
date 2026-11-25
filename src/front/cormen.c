@@ -13,6 +13,15 @@ typedef struct {
     bool value; /* a procedure that gives back a value */
 } Open;
 
+/* What a first reading tells of each procedure. */
+typedef struct {
+    char name[64];
+    char params[12][32];
+    int param_count;
+    unsigned lengths;    /* the arrays it takes whose length it asks for (A.length, for each) */
+    int values;          /* how many values its "return" gives back */
+} Proc;
+
 typedef struct {
     Arena *arena;
     Diag *diag;
@@ -24,6 +33,13 @@ typedef struct {
     char zero[16][32];   /* the arrays of this procedure that begin at 0, */
     unsigned zero_dims[16]; /* and which of their dimensions do */
     int zero_count;
+    char sized[16][32];  /* the arrays made here, and how long each is */
+    const char *sizes[16];
+    int sized_count;
+    Proc procs[64];
+    int proc_count;
+    const Proc *proc;    /* the one being read; NULL outside them all */
+    const char *targets; /* (a, b) = F(x): where what F gives back goes */
 } Rewriter;
 
 static bool is_word(char c) { return isalnum((unsigned char)c) || c == '_'; }
@@ -43,11 +59,27 @@ static void problem(Rewriter *r, const char *format, const char *what) {
 
 static const char *SYMBOLS[][2] = {
     {"\xe2\x89\xa4", "<="}, {"\xe2\x89\xa5", ">="}, {"\xe2\x89\xa0", "<>"}, {"\xe2\x86\x90", "<-"}, {"\xe2\x88\x9e", "1000000000"},
-    {"\xe2\x8c\x8a", "trunc("}, {"\xe2\x8c\x8b", ")"}, {"\xc2\xb7", "*"}, {"\xc3\x97", "*"}, {"\xe2\x88\xa7", " Y "},
+    {"\xe2\x8c\x8a", "trunc(floor("}, {"\xe2\x8c\x8b", "))"}, {"\xe2\x8c\x88", "trunc(ceil("}, {"\xe2\x8c\x89", "))"},
+    {"\xcf\x80", "@pi"}, {"\xc2\xb7", "*"}, {"\xc3\x97", "*"}, {"\xe2\x88\xa7", " Y "},
     {"\xe2\x88\xa8", " O "}, {"\xc2\xac", " NO "}, {"\xe2\x88\x92", "-"}, {"==", "="}, {"!=", "<>"},
 };
 
 static const char *expression(Rewriter *r, const char *s, size_t n);
+
+static const Proc *proc_named(const Rewriter *r, const char *name) {
+    for (int i = 0; i < r->proc_count; i++)
+        if (strcmp(r->procs[i].name, name) == 0) return &r->procs[i];
+    return NULL;
+}
+
+/* How long an array is: it was made here, or it came in with its length beside it. */
+static const char *length_of(Rewriter *r, const char *name) {
+    for (int i = 0; i < r->sized_count; i++)
+        if (strcmp(r->sized[i], name) == 0) return r->sizes[i];
+    for (int i = 0; r->proc && i < r->proc->param_count; i++)
+        if (strcmp(r->proc->params[i], name) == 0 && (r->proc->lengths & (1u << i))) return arena_printf(r->arena, "@%s_length", name);
+    return NULL;
+}
 
 /* The end of what the bracket at `s` opens. */
 static const char *closing(const char *s, const char *end) {
@@ -96,9 +128,19 @@ static const char *expression(Rewriter *r, const char *s, size_t n) {
             const char *name = s + 1;
             size_t length = 0;
             while (name + length < end && (is_word(name[length]) || (name[length] == '-' && isalpha((unsigned char)name[length + 1])))) length++;
-            if (length == 6 && strncmp(name, "length", 6) == 0)
-                problem(r, "the length of an array is not kept: pass it to the procedure, as in 'SORT(A, n)'%.0s", "");
-            else problem(r, "objects with attributes, as in '%s', are not read yet: only numbers, texts and arrays", arena_strndup(r->arena, s, length + 1));
+            if (length == 6 && strncmp(name, "length", 6) == 0) { /* A.length: in place of the name, already written */
+                size_t back = out.length;
+                while (back && (is_word(out.data[back - 1]) || out.data[back - 1] == '@')) back--;
+                const char *array = arena_strndup(r->arena, out.data + back + (out.data[back] == '@'), out.length - back - (out.data[back] == '@'));
+                const char *known = length_of(r, array);
+                if (!known) problem(r, "the length of '%s' is not known here: it is neither made here nor taken by the procedure", array);
+                out.length = back;
+                out.data[back] = '\0';
+                strbuf_printf(&out, "(%s)", known ? known : "0");
+            } else { /* an attribute of an object */
+                strbuf_puts(&out, ".@");
+                for (size_t i = 0; i < length; i++) strbuf_append(&out, name[i] == '-' ? "_" : name + i, 1);
+            }
             s = name + length;
             continue;
         }
@@ -128,8 +170,37 @@ static const char *expression(Rewriter *r, const char *s, size_t n) {
         const char *said = word;
         for (size_t i = 0; i < sizeof WORDS / sizeof WORDS[0]; i++)
             if (strcmp(word, WORDS[i][0]) == 0) said = WORDS[i][1];
-        if (strcmp(word, "NIL") == 0 || strcmp(word, "nil") == 0)
-            problem(r, "objects with attributes, as in '%s', are not read yet: only numbers, texts and arrays", "NIL");
+        bool ours = said != word;
+        if (strcmp(word, "NIL") == 0 || strcmp(word, "nil") == 0) said = "nil_", ours = true;
+        /* a procedure that asks for the length of what it takes, or gives back more than one value */
+        const Proc *called = s < end && *s == '(' ? proc_named(r, word) : NULL;
+        const char *shut = called && (called->lengths || called->values > 1) ? closing(s, end) : NULL;
+        if (shut) {
+            strbuf_printf(&out, "@%s(", word);
+            const char *from = s + 1, *lengths = "";
+            int depth = 0, index = 0;
+            for (const char *c = s + 1; c <= shut; c++) {
+                if (*c == '[' || *c == '(') depth++;
+                else if ((*c == ']' || *c == ')') && c < shut) depth--;
+                if (c < shut && !(*c == ',' && depth == 0)) continue;
+                while (from < c && *from == ' ') from++;
+                if (c > from) strbuf_printf(&out, "%s%s", index ? ", " : "", expression(r, from, (size_t)(c - from)));
+                if (called->lengths & (1u << index)) {
+                    size_t n2 = (size_t)(c - from);
+                    while (n2 && from[n2 - 1] == ' ') n2--;
+                    const char *array = arena_strndup(r->arena, from, n2), *known = length_of(r, array);
+                    if (!known) problem(r, "the length of '%s' is not known here: it is neither made here nor taken by the procedure", array);
+                    lengths = arena_printf(r->arena, "%s, %s", lengths, known ? known : "0");
+                }
+                from = c + 1;
+                index++;
+            }
+            strbuf_printf(&out, "%s%s%s)", lengths, r->targets ? ", " : "", r->targets ? r->targets : "");
+            r->targets = NULL;
+            s = shut + 1;
+            continue;
+        }
+        if (!ours) strbuf_puts(&out, "@"); /* a name of the writer's, whatever word of ours it looks like */
         strbuf_puts(&out, said);
         /* an array that begins at 0 is kept from 1: its indices move by one */
         int zero = -1;
@@ -209,15 +280,21 @@ static const char *let(Rewriter *r, const char *s) {
         size_t length = 0;
         while (is_word(s[length]) || s[length] == '\'') length++;
         const char *close = length && s[length] == '[' ? closing(s + length, be) : NULL;
-        if (!close) {
-            ok = false;
-            break;
-        }
         char name[32];
         snprintf(name, sizeof name, "%.*s", (int)(length < 31 ? length : 31), s);
         for (char *c = name; *c; c++)
             if (*c == '\'') *c = '_';
-        strbuf_printf(&out, "%sDimension %s[", out.length ? "; " : "", name);
+        if (length && !close && (s + length == be || s[length] == ' ' || s[length] == ',')) { /* let x be a new node */
+            strbuf_printf(&out, "%s@%s <- new_object_()", out.length ? "; " : "", name);
+            s += length;
+            continue;
+        }
+        if (!close) {
+            ok = false;
+            break;
+        }
+        strbuf_printf(&out, "%sDimension @%s[", out.length ? "; " : "", name);
+        const char *first_size = NULL;
         unsigned zeros = 0;
         int dim = 0, depth = 0;
         const char *from = s + length + 1;
@@ -243,10 +320,15 @@ static const char *let(Rewriter *r, const char *s) {
                 problem(r, "an array begins at 0 or at 1 here, not at '%s'", low);
             if (from_zero) zeros |= 1u << dim;
             strbuf_printf(&out, from_zero ? "%s(%s)+1" : "%s%s", dim ? ", " : "", high);
+            if (!dim) first_size = arena_printf(r->arena, from_zero ? "(%s)+1" : "%s", high);
             from = c + 1;
             dim++;
         }
         strbuf_puts(&out, "]");
+        if (first_size && r->sized_count < 16) {
+            snprintf(r->sized[r->sized_count], sizeof r->sized[0], "%s", name);
+            r->sizes[r->sized_count++] = first_size;
+        }
         if (zeros && r->zero_count < 16) {
             snprintf(r->zero[r->zero_count], sizeof r->zero[0], "%s", name);
             r->zero_dims[r->zero_count++] = zeros;
@@ -264,8 +346,29 @@ static const char *statement(Rewriter *r, const char *s, int indent) {
     const char *rest;
     size_t n = strlen(s);
     if ((rest = after_word(s, "for"))) {
-        if (after_word(rest, "each") || word_in(rest, "in")) {
-            problem(r, "'for each' goes through a set, and sets are not read yet%.0s", "");
+        const char *each = after_word(rest, "each");
+        if (each || word_in(rest, "in") || strstr(rest, "\xe2\x88\x88")) { /* for each x in A: one after the other */
+            const char *from = each ? each : rest, *in = word_in(from, "in"), *sign = strstr(from, "\xe2\x88\x88");
+            const char *cut = in ? in : sign;
+            if (cut) {
+                size_t n2 = without(cut + (in ? 2 : 3), strlen(cut + (in ? 2 : 3)), "do");
+                const char *array = cut + (in ? 2 : 3);
+                while (*array == ' ') array++, n2 = n2 ? n2 - 1 : 0;
+                array = arena_strndup(r->arena, array, without(array, strlen(array), "do"));
+                const char *end = cut;
+                while (end > from && end[-1] == ' ') end--;
+                const char *name = end;
+                while (name > from && is_word(name[-1])) name--;
+                const char *known = name < end ? length_of(r, array) : NULL;
+                (void)n2;
+                if (known) {
+                    const char *index = arena_printf(r->arena, "each_%d", r->depth);
+                    push(r, 'f', indent);
+                    return arena_printf(r->arena, "Para %s <- 1 Hasta %s Hacer %s <- %s", index, known, expression(r, name, (size_t)(end - name)),
+                                        all(r, arena_printf(r->arena, "%s[%s]", array, index)));
+                }
+            }
+            problem(r, "'for each' goes through an array made here or taken by the procedure: sets are not read yet%.0s", "");
             return "";
         }
         n = without(rest, strlen(rest), "do");
@@ -326,16 +429,24 @@ static const char *statement(Rewriter *r, const char *s, int indent) {
     }
     if ((rest = after_word(s, "return"))) {
         if (!*rest) return "Retornar";
-        if (word_in(rest, ",") || strchr(rest, ',')) {
-            int depth = 0;
-            for (const char *c = rest; *c; c++) {
-                if (*c == '(' || *c == '[') depth++;
-                else if (*c == ')' || *c == ']') depth--;
-                else if (*c == ',' && depth == 0) {
-                    problem(r, "'return' gives back one value here, not several%.0s", "");
-                    return "";
-                }
+        if (r->proc && r->proc->values > 1) { /* each value into its own place, given by who called */
+            size_t n2 = strlen(rest);
+            if (*rest == '(' && closing(rest, rest + n2) == rest + n2 - 1) rest++, n2 -= 2;
+            StrBuf out = {0};
+            strbuf_puts(&out, "");
+            const char *from = rest;
+            int depth = 0, index = 0;
+            for (const char *c = rest; c <= rest + n2; c++) {
+                if (c < rest + n2 && (*c == '(' || *c == '[')) depth++;
+                else if (c < rest + n2 && (*c == ')' || *c == ']')) depth--;
+                if (c < rest + n2 && !(*c == ',' && depth == 0)) continue;
+                strbuf_printf(&out, "out%d_ <- %s; ", ++index, expression(r, from, (size_t)(c - from)));
+                from = c + 1;
             }
+            if (index != r->proc->values) problem(r, "'%s' gives back a different number of values here than elsewhere", r->proc->name);
+            const char *kept = arena_printf(r->arena, "%sRetornar", out.data);
+            strbuf_free(&out);
+            return kept;
         }
         return arena_printf(r->arena, "res_ <- %s; Retornar", all(r, rest));
     }
@@ -368,6 +479,14 @@ static const char *statement(Rewriter *r, const char *s, int indent) {
         }
     }
     if (!count) return all(r, s);
+    if (count == 1 && *s == '(' && closing(s, cuts[0]) && closing(s, cuts[0]) + 1 + strspn(closing(s, cuts[0]) + 1, " ") == cuts[0]) {
+        const char *close = closing(s, cuts[0]); /* (a, b) = F(x): F fills them in */
+        r->targets = expression(r, s + 1, (size_t)(close - s - 1));
+        const char *call = all(r, cuts[0] + (*cuts[0] == '=' ? 1 : 3));
+        if (r->targets) problem(r, "several values at once come from a procedure that gives back several%.0s", "");
+        r->targets = NULL;
+        return call;
+    }
     const char *value = all(r, cuts[count - 1] + (*cuts[count - 1] == '=' ? 1 : 3));
     StrBuf out = {0};
     strbuf_puts(&out, "");
@@ -421,6 +540,73 @@ static bool heading(const char *code, size_t n) {
     return i < n && code[i] == '(' && closing(code + i, code + n) == code + n - 1;
 }
 
+/* A first reading: the procedures there are, what each takes, how many values it gives back. */
+static void survey(Rewriter *r, const char *text) {
+    Proc *now = NULL;
+    int head_indent = 0;
+    for (const char *line = text; *line; line += strcspn(line, "\n") + (line[strcspn(line, "\n")] == '\n')) {
+        size_t n = strcspn(line, "\n");
+        const char *code, *comment;
+        size_t length;
+        int indent = measure(line, n, &code, &length, &comment);
+        if (!length) continue;
+        bool deeper = false;
+        for (const char *next = line + n + (line[n] == '\n'); *next; next += strcspn(next, "\n") + (next[strcspn(next, "\n")] == '\n')) {
+            const char *c, *k;
+            size_t l;
+            int at = measure(next, strcspn(next, "\n"), &c, &l, &k);
+            if (!l) continue;
+            deeper = at > indent;
+            break;
+        }
+        char *copy = arena_strndup(r->arena, code, length);
+        if (deeper && heading(code, length) && !word_in(copy, "=") && (!now || indent <= head_indent) && r->proc_count < 64) {
+            now = &r->procs[r->proc_count++];
+            head_indent = indent;
+            size_t i = 0;
+            for (; i < length && code[i] != '(' && code[i] != ' ' && i < 63; i++) now->name[i] = code[i] == '-' || code[i] == '\'' ? '_' : code[i];
+            const char *open = memchr(code, '(', length);
+            for (const char *c = open + 1; c < code + length - 1 && now->param_count < 12;) {
+                while (c < code + length - 1 && (*c == ' ' || *c == ',')) c++;
+                size_t k = 0;
+                while (c + k < code + length - 1 && (is_word(c[k]) || c[k] == '\'')) k++;
+                if (!k) break;
+                snprintf(now->params[now->param_count++], 32, "%.*s", (int)(k < 31 ? k : 31), c);
+                c += k;
+            }
+            continue;
+        }
+        if (!now || indent <= head_indent) {
+            now = NULL;
+            continue;
+        }
+        for (size_t i = 0; i < length; i++) { /* what the body asks of what it takes */
+            const char *rest;
+            if ((i == 0 || !is_word(code[i - 1])) && (rest = after_word(copy + i, "return")) && *rest) {
+                size_t n2 = strlen(rest);
+                if (*rest == '(' && closing(rest, rest + n2) == rest + n2 - 1) rest++, n2 -= 2;
+                int values = 1, depth = 0;
+                for (const char *c = rest; c < rest + n2; c++) {
+                    if (*c == '(' || *c == '[') depth++;
+                    else if (*c == ')' || *c == ']') depth--;
+                    else if (*c == ',' && depth == 0) values++;
+                }
+                if (values > now->values) now->values = values;
+            }
+            for (int k = 0; k < now->param_count; k++) {
+                size_t w = strlen(now->params[k]);
+                if (strncmp(copy + i, now->params[k], w) != 0 || (i && is_word(copy[i - 1]))) continue;
+                bool asked = strncmp(copy + i + w, ".length", 7) == 0 && !is_word(copy[i + w + 7]);
+                const char *before = copy + i;
+                while (before > copy && before[-1] == ' ') before--;
+                bool gone_through = after_word(copy, "for") && !is_word(copy[i + w]) &&
+                                    ((before - copy >= 2 && strncmp(before - 2, "in", 2) == 0) || (before - copy >= 3 && strncmp(before - 3, "\xe2\x88\x88", 3) == 0));
+                if (asked || gone_through) now->lengths |= 1u << k;
+            }
+        }
+    }
+}
+
 bool looks_like_cormen(const char *text) {
     const char *line = text;
     bool head = false;
@@ -460,6 +646,7 @@ Source cormen_source(const Source *written, Config *config, Arena *arena, Diag *
     Rewriter rewriter = {.arena = arena, .diag = diag};
     Rewriter *r = &rewriter;
     strbuf_puts(&r->out, "");
+    survey(r, written->text);
     const char *line = written->text;
     while (*line) {
         size_t n = strcspn(line, "\n");
@@ -504,17 +691,31 @@ Source cormen_source(const Source *written, Config *config, Arena *arena, Diag *
                     for (size_t i = 0; i + 6 <= l; i++)
                         if ((i == 0 || !is_word(c[i - 1])) && (rest = after_word(c + i, "return")) && rest < c + l) value = true;
                 }
+                char known[64] = "";
+                for (size_t i = 0; i < length && text[i] != '(' && text[i] != ' ' && i < 63; i++) known[i] = text[i] == '-' || text[i] == '\'' ? '_' : text[i];
+                r->proc = proc_named(r, known);
+                value = value && (!r->proc || r->proc->values < 2);
                 r->value = value;
-                r->zero_count = 0;
+                r->zero_count = r->sized_count = 0;
                 push(r, 'p', indent);
                 r->open[r->depth - 1].value = value;
-                said = arena_printf(arena, value ? "Funcion res_ <- %s" : "SubProceso %s", all(r, text));
+                StrBuf head_text = {0};
+                strbuf_printf(&head_text, value ? "Funcion res_ <- @%s(" : "SubProceso @%s(", known);
+                int listed = 0;
+                for (int i = 0; r->proc && i < r->proc->param_count; i++) strbuf_printf(&head_text, "%s@%s", listed++ ? ", " : "", r->proc->params[i]);
+                for (int i = 0; r->proc && i < r->proc->param_count; i++)
+                    if (r->proc->lengths & (1u << i)) strbuf_printf(&head_text, "%s@%s_length", listed++ ? ", " : "", r->proc->params[i]);
+                for (int i = 1; r->proc && r->proc->values > 1 && i <= r->proc->values; i++) strbuf_printf(&head_text, "%sout%d_ Por Referencia", listed++ ? ", " : "", i);
+                strbuf_puts(&head_text, ")");
+                said = arena_strndup(arena, head_text.data, head_text.length);
+                strbuf_free(&head_text);
             } else {
                 if (!r->depth) { /* outside every procedure: the program itself */
                     if (r->main_done) problem(r, "the statements outside the procedures go together, in one place%.0s", "");
                     r->main_done = true;
-                    r->zero_count = 0;
+                    r->zero_count = r->sized_count = 0;
                     r->value = false;
+                    r->proc = NULL;
                     push(r, 'm', -1);
                     strbuf_puts(&before, "Algoritmo principal ");
                 }

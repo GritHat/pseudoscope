@@ -563,7 +563,12 @@ TokenList lex_dialect(const Source *source, const Config *config, Arena *arena, 
         skip_blanks(&lx);
         if (lx.pos >= source->length) break;
         char c = at(&lx, 0);
-        if (is_letter(c)) lex_word(&lx);
+        if (config->cormen && c == '@' && is_letter(at(&lx, 1))) { /* a name of the writer's, whatever word of ours it looks like */
+            size_t length = 1;
+            while (is_letter(at(&lx, length)) || (at(&lx, length) >= '0' && at(&lx, length) <= '9')) length++;
+            lx.pos++;
+            take(&lx, TOK_IDENT, length - 1);
+        } else if (is_letter(c)) lex_word(&lx);
         else if (is_digit(c)) lex_number(&lx);
         else if (c == '"' || c == '\'') lex_quoted(&lx, c);
         else lex_symbol(&lx);
