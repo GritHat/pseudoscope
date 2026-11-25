@@ -418,8 +418,8 @@ static Type *resolve_decl_type(Sema *s, VarDecl *decl, TypeSpec *spec, bool dims
         dims = decl->dims;
         bool rank_given = spec->rank > 1 || spec->dims.count > 0;
         if (rank_given && spec->rank != dims.count)
-            diag_error(s->diag, decl->loc, "'%s' has %d dimensions here but its type has %d",
-                       decl->name, dims.count, spec->rank);
+            diag_error(s->diag, decl->loc, "'%s' has %d dimension%s here but its type has %d",
+                       decl->name, dims.count, dims.count == 1 ? "" : "s", spec->rank);
     } else if (!spec->is_array) {
         return base;
     }
@@ -587,6 +587,7 @@ static Type *check_external_call(Sema *s, Expr *expr, const char *name, bool nee
         param->kind = SYM_PARAM;
         param->name = arena_printf(s->arena, "argument %d", i + 1);
         param->type = type;
+        param->flattened = type->kind == TY_ARRAY && type->dims.count > 1;
         sym->params[i] = param;
     }
     sym->next = s->program->externals;
@@ -993,6 +994,15 @@ static bool mentions_later_param(const Expr *expr, const Symbol *param) {
     return false;
 }
 
+static bool mentions(const Expr *expr, const Symbol *sym) {
+    if (!expr) return false;
+    if (expr->kind == EX_NAME && expr->symbol == sym) return true;
+    if (mentions(expr->base, sym) || mentions(expr->right, sym)) return true;
+    for (int i = 0; i < expr->args.count; i++)
+        if (mentions(expr->args.items[i], sym)) return true;
+    return false;
+}
+
 /* Parameters live in their own scope, kept for when the body is checked. */
 static void resolve_signature(Sema *s, Function *function, Scope *scope) {
     Symbol *sym = function->symbol;
@@ -1024,6 +1034,14 @@ static void resolve_signature(Sema *s, Function *function, Scope *scope) {
     for (i = 0; i < sym->param_count; i++) {
         Symbol *p = sym->params[i];
         if (p->type->kind != TY_ARRAY) continue;
+        for (int d = 0; d < p->type->dims.count; d++) {
+            /* again, now that the types of all the parameters are known */
+            Dim *dim = &p->type->dims.items[d];
+            check_dim_expr(s, dim->lo);
+            check_dim_expr(s, dim->hi);
+            if (mentions(dim->lo, p) || mentions(dim->hi, p))
+                diag_error(s->diag, p->loc, "the bounds of '%s' depend on itself", p->name);
+        }
         for (int d = 1; d < p->type->dims.count; d++) {
             Dim *dim = &p->type->dims.items[d];
             if (mentions_later_param(dim->lo, p) || mentions_later_param(dim->hi, p))

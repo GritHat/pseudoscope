@@ -1,0 +1,12 @@
+self_bounds.plike:1:18: error: an array bound must be an integer, not array of integer
+    1 | procedure p(in n[n]: array of integer)
+      |                  ^
+self_bounds.plike:1:16: error: the bounds of 'n' depend on itself
+    1 | procedure p(in n[n]: array of integer)
+      |                ^
+self_bounds.plike:4:16: error: the bounds of 'a' depend on itself
+    4 | procedure q(in a[a[1]]: array of integer, in b[c]: array of real, in c[2]: array of integer)
+      |                ^
+self_bounds.plike:4:48: error: an array bound must be an integer, not array of integer
+    4 | procedure q(in a[a[1]]: array of integer, in b[c]: array of real, in c[2]: array of integer)
+      |                                                ^

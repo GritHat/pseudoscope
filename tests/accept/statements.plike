@@ -1,3 +1,7 @@
+procedure outside(in n: integer, in m[n][n]: array of real)
+begin
+    unknown(m, n, m[1])
+end outside
 procedure s(in n: integer, in/out v: array[n] of integer)
 var i, j: integer; k: integer
 var p: integer*

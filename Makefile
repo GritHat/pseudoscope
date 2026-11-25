@@ -17,7 +17,7 @@ LIB_OBJ   = $(LIB:%.c=$(BUILD)/%.o)
 CLI_OBJ   = $(CLI:%.c=$(BUILD)/%.o)
 UNIT_OBJ  = $(UNIT:%.c=$(BUILD)/%.o)
 
-.PHONY: all test unit e2e sanitize fuzz install uninstall clean
+.PHONY: all test unit e2e syntax sanitize fuzz install uninstall clean
 
 all: $(PLIKE)
 
@@ -32,13 +32,16 @@ $(BUILD)/%.o: %.c
 	@mkdir -p $(@D)
 	$(CC) $(STD) $(WARN) -Iinclude $(CFLAGS) -MMD -MP -c $< -o $@
 
-test: unit e2e
+test: unit e2e syntax
 
 unit: $(BUILD)/unit
 	$(BUILD)/unit
 
 e2e: $(PLIKE)
 	PLIKE=$(PLIKE) tests/run.sh
+
+syntax: $(PLIKE)
+	python3 tests/syntax.py $(PLIKE)
 
 # Everything again, with the translator itself under sanitizers.
 sanitize:
