@@ -62,6 +62,13 @@ for file in *.plike; do
     fi
 done
 
+cd "$here/../examples" || exit 1
+for file in *.plike; do
+    opts= ; grep -q 'plike run --indexing=zero' "$file" && opts=--indexing=zero
+    if "$plike" run -b $opts --cc="$here/ccheck" "$file" > /dev/null 2> "$tmp/err"
+    then pass; else fail "examples/$file" "$tmp/err"; fi
+done
+
 . "$here/cli.sh"
 
 echo "end to end: $passed passed, $failed failed"

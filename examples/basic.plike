@@ -1,6 +1,7 @@
 function somma_pari_e_dispari_in_riga(in: n: integer; in A[n][n] : array of integer)  : logical
     var i, j, pari, dispari : integer
     begin
+        i := 1
         somma_pari_e_dispari_in_riga := FALSE
         while i <= n and not somma_pari_e_dispari_in_riga do
             pari := 0
@@ -40,27 +41,6 @@ procedure BubbleSort (in: n; in/out: A)
     end
 end BubbleSort
 
-procedure InsertionSort(in n: integer, in/out arr[n]: array of integer)
-    var i, j, key : integer
-    begin
-    for i := 1 to n - 1 do
-        key := arr[i]
-        j := i - 1
-
-        while j >= 0 && arr[j] > key do
-            arr[j + 1] := arr[j]
-            j := j - 1
-        endwhile
-
-        arr[j + 1] := key
-        i := 0xFF34
-        i := 0o3436
-        i := 0b0101010001
-        i := 034243
-    endfor
-    end
-endprocedure
-
 procedure SelectionSort2 (in: n; in/out: A)
     var i, j, n, p : integer
     var A : array [1..n] of real
@@ -82,61 +62,6 @@ procedure SelectionSort2 (in: n; in/out: A)
     end
 end SelectionSort2
 
-procedure MergeSort(in/out arr[]: array of integer, in l: integer, in r: integer)
-    var m : integer
-        begin
-        if l < r then
-            m := (l + r) / 2
-            MergeSort(arr, l, m)
-            MergeSort(arr, m + 1, r)
-            Merge(arr, l, m, r)
-        endif
-    end
-endprocedure
-
-procedure Merge(in/out arr[]: array of integer, in l: integer, in m: integer, in r: integer)
-    var n1, n2, i, j, k : integer
-    var L[m - l + 1], R[r - m] : array of integer
-    begin
-        n1 := m - l + 1
-        n2 := r - m
-        
-        for i := 0 to n1 - 1 do
-            L[i] := arr[l + i]
-        endfor
-        for j := 0 to n2 - 1 do
-            R[j] := arr[m + 1 + j]
-        endfor
-        
-        i := 0
-        j := 0
-        k := l
-        
-        while i < n1 && j < n2 do
-            if L[i] <= R[j] then
-                arr[k] := L[i]
-                i := i + 1
-            else
-                arr[k] := R[j]
-                j := j + 1
-            endif
-            k := k + 1
-        endwhile
-        
-        while i < n1 do
-            arr[k] := L[i]
-            i := i + 1
-            k := k + 1
-        endwhile
-        
-        while j < n2 do
-            arr[k] := R[j]
-            j := j + 1
-            k := k + 1
-        endwhile
-    end
-endprocedure
-
 function ScalarProductVdotV (in: x,y,n) : real
     var i, n: integer
     var x,y : array [1..n] of real
@@ -154,7 +79,7 @@ procedure saxpy (in: a,x,n; in/out: y)
     var x,y : array [1..n] of real
     begin
         for i:= 1 to n do
-            y(i) := y(i) +ax(i)
+            y(i) := y(i) + a*x(i)
         endfor
     end
 end saxpy
@@ -202,29 +127,9 @@ procedure ScalarProductMdotM (in:m,n,p,A,B; out:C)
     end
 end ScalarProductMdotM
 
-procedure SelectionSort(in n, in/out arr[n]: array of integer)
-    var i, j, minIndex, n, temp : integer
-    begin
-    for i := 0 to n - 2 do
-        minIndex := i
-        for j := i + 1 to n - 1 do
-            if arr[j] < arr[minIndex] then
-                minIndex := j
-            endif
-        endfor
-
-        if minIndex != i then
-            temp := arr[i]
-            arr[i] := arr[minIndex]
-            arr[minIndex] := temp
-        endif
-    endfor
-    end
-endprocedure
-
 logical function OddAndEvenSum(A,N)
     var N, sum_pari, sum_dispari, i, j : integer
-    var A[N] : array of integer
+    var A[N,N] : array of integer
     var continua : logical
     begin
         i:=1 ; j:=1
@@ -241,7 +146,6 @@ logical function OddAndEvenSum(A,N)
             i:=i+1
         endwhile
         OddAndEvenSum:= continua
-        foo()
     end
 endfunction
 
@@ -254,3 +158,18 @@ function pow(in x:real, in n: integer) : real
         endif
     end
 end pow
+
+procedure main()
+    var v : array [1..6] of real
+    var i : integer
+    begin
+        for i := 1 to 6 do
+            v(i) := (i * 5) mod 7
+        endfor
+        BubbleSort(6, v)
+        for i := 1 to 6 do
+            print(v(i))
+        endfor
+        print(pow(2, 8))
+    end
+end main

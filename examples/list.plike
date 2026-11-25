@@ -1,0 +1,36 @@
+// Records, pointers and the different parameter modes.
+type Node : record
+    key : integer
+    next : Node*
+end
+
+procedure push(in/out: head; in: node, key)
+    var head, node : Node*
+    var key : integer
+    begin
+        node->key := key
+        node->next := head
+        head := node
+    end
+end push
+
+function total(in n: Node*): integer
+begin
+    while n != 0 do
+        total := total + n.key
+        n := n.next
+    endwhile
+end total
+
+procedure main()
+    var nodes : array [1..4] of Node
+    var head : Node*
+    var i : integer
+    begin
+        head := 0
+        for i := 1 to 4 do
+            push(head, &nodes[i], i * 10)
+        endfor
+        print("total:", total(head))
+    end
+end main
