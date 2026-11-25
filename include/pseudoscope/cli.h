@@ -4,7 +4,7 @@
 #include "pseudoscope/config.h"
 #include "pseudoscope/target.h"
 
-#define PSEUDOSCOPE_VERSION "5.0.0"
+#define PSEUDOSCOPE_VERSION "1.0.0"
 
 typedef enum {
     CMD_TRANSLATE, CMD_CHECK, CMD_BUILD, CMD_RUN, CMD_EXEC, CMD_TOKENS, CMD_AST, CMD_UI, CMD_TEST
