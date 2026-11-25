@@ -1011,7 +1011,13 @@ static void infer_statements(Infer *in, Stmt *s) {
             infer_uses(in, b->limit);
             infer_uses(in, b->step);
             for (int i = 0; i < b->args.count; i++) infer_uses(in, b->args.items[i]);
-            if (b->kind == ST_ASSIGN) infer_store(in, b->target, infer_expr(in, b->value));
+            if (b->kind == ST_ASSIGN) {
+                infer_store(in, b->target, infer_expr(in, b->value));
+                /* and backwards: what goes into an object is one (x = L.head, where x has attributes) */
+                if (infer_expr(in, b->target) == IN_OBJECT && infer_expr(in, b->value) != IN_OBJECT &&
+                    (b->value->kind == EX_FIELD || b->value->kind == EX_NAME || b->value->kind == EX_INDEX))
+                    infer_store(in, b->value, IN_OBJECT);
+            }
             if (b->kind == ST_FOR) {
                 int kind = infer_expr(in, b->value);
                 infer_store(in, b->target, kind == IN_REAL ? IN_REAL : IN_INT);

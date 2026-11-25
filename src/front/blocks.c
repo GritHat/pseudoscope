@@ -294,6 +294,7 @@ static const char *plain_math(Doc *d, const char *s) {
         {"\\False", "Falso"}, {"\\To", " Hasta "}, {"\\DownTo", " downto "}, {"\\,", " "}, {"\\;", " "}, {"\\ ", " "},
         {"\\quad", " "}, {"\\left", ""}, {"\\right", ""}, {"\\{", "{"}, {"\\}", "}"}, {"\\_", "_"}, {"\\(", ""}, {"\\)", ""},
         {"$", ""}, {"~", " "}, {"==", "="}, {"\\sqrt", "rc"}, {"\\infty", "1000000000"},
+        {"\\Nil", "nil_"}, {"NIL", "nil_"}, /* an object that is nothing: see the objects in foreign.inc */
     };
     static const char *const WRAPS[] = {"\\textbf", "\\textit", "\\textsc", "\\texttt", "\\text", "\\mathit", "\\mathrm", "\\mathbf",
                                         "\\emph", "\\mathsf", "\\textrm", "\\operatorname"};
