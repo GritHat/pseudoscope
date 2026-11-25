@@ -7,18 +7,32 @@ classi, un sistema distribuito o un diagramma; lo si guarda girare passo per pas
 avanti e indietro, dall'esterno o in ogni dettaglio; lo si mette alla prova; lo si traduce
 in C, C++, Java, Rust, TypeScript, JavaScript o Python.
 
-[![Demo](docs/demo/poster.png)](docs/demo/pseudoscope.mp4)
+![Pseudoscope in quarantacinque secondi](docs/demo/preview.gif)
 
-*Sette minuti, senza audio; testi in italiano e in inglese. Fatto con `tools/demo/make.py`,
-prima della traduzione in altri linguaggi, dell'ereditarietà, delle librerie e dei
-diagrammi più recenti.*
+## Che cosa fa
+
+- **Esegue lo pseudocodice passo per passo**, avanti e indietro, a cinque livelli: dal
+  diagramma di sequenza di un intero sistema fino ai byte in memoria.
+- **Legge lo pseudocodice che c'è già**: il P-like in tutte le sue grafie, PSeInt,
+  VisuAlg, Portugol Studio e Cambridge, ognuno con le sue librerie per testi, numeri,
+  file e disegni.
+- **Classi ed ereditarietà**: classi astratte, interfacce, più classi base; il metodo lo
+  sceglie l'oggetto.
+- **Sistemi**: componenti che si scambiano messaggi su collegamenti che li ritardano e
+  li perdono, e prove che dicono che cosa deve succedere da un capo all'altro.
+- **Diagrammi da percorrere**: UML (sequenza, stati, attività, classi, tempi), Gantt,
+  entità e relazioni, mappe mentali, WBS, linee del tempo, in PlantUML, Mermaid e
+  Graphviz.
+- **Documenti**: i programmi e i diagrammi dentro appunti in Markdown e articoli in
+  LaTeX si aprono lì dove sono.
+- **Sette linguaggi**: C, C++, Java, Rust, TypeScript, JavaScript e Python, prove e
+  simulazione comprese; ciò che un linguaggio non sa dire viene rifiutato spiegando
+  perché.
 
 È nato come `plike-translator`, un progetto del primo anno per eseguire lo pseudocodice
 usato a lezione. Quello pseudocodice non ha mai avuto una sintassi fissa, quindi si
 accettano tutte le grafie: `A[i,j]`, `A[i][j]` o `A(i,j)`, `and`, `.AND.` o `&&`, `end f`
-o `endfunction`, e così via. Ora legge anche PSeInt, VisuAlg, Portugol e lo pseudocodice
-di Cambridge con le loro librerie, PlantUML, Mermaid e Graphviz, e ciò che contengono i
-documenti Markdown e LaTeX.
+o `endfunction`, e così via.
 
 ## Compilare
 
@@ -149,10 +163,10 @@ funziona ancora.
 
 ## Limiti
 
-File, disegni e le altre funzioni di libreria
-degli pseudocodici si eseguono qui e non si traducono. I puntatori a valori semplici
-esistono solo in C, C++ e Rust. Non si leggono `algorithm2e` né tastiera, mouse e rete di
-Portugol Studio. Ogni documento dice che cos'altro manca.
+File, disegni e le altre funzioni di libreria degli pseudocodici si eseguono qui e non si
+traducono. I puntatori a valori semplici esistono solo in C, C++ e Rust. Non si leggono
+`algorithm2e` né tastiera, mouse e rete di Portugol Studio. Ogni documento dice che
+cos'altro manca.
 
 ## Documentazione
 
@@ -174,6 +188,12 @@ make sanitize   # gli stessi, con il programma sotto ASan e UBSan
 make targets    # ogni programma in ogni linguaggio di cui ci sono gli strumenti
 make fuzz       # programmi e diagrammi alterati, tasti a caso
 ```
+
+## Il video
+
+`tools/demo/make.py` riprende la vera interfaccia, guidata dai tasti scritti in
+`tools/demo/story.py`, e i veri comandi: `--preview` fa quello breve qui sopra. Il video
+intero non sta nel repository.
 
 ## Licenza
 

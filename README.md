@@ -7,16 +7,31 @@ classes, a distributed system or a diagram; watch it run step by step, forwards 
 backwards, from the outside or in every detail; test it; translate it to C, C++, Java,
 Rust, TypeScript, JavaScript or Python.
 
-[![Demo](docs/demo/poster.png)](docs/demo/pseudoscope.mp4)
+![Pseudoscope in forty-five seconds](docs/demo/preview.gif)
 
-*Seven minutes, no sound; captions in Italian and English. Made with `tools/demo/make.py`,
-before translation to other languages, inheritance, libraries and the newer diagrams.*
+## What it does
+
+- **Runs pseudocode step by step**, forwards and backwards, at five levels: from the
+  sequence diagram of a whole system down to the bytes in memory.
+- **Reads the pseudocode you already have**: P-like in all its spellings, PSeInt,
+  VisuAlg, Portugol Studio and Cambridge, each with its libraries for texts, numbers,
+  files and drawings.
+- **Classes and inheritance**: abstract classes, interfaces, several base classes; the
+  object chooses its method.
+- **Systems**: components that exchange messages over links that delay and lose them,
+  and tests that say what must happen from one end to the other.
+- **Diagrams to walk through**: UML (sequence, state, activity, classes, timing), Gantt
+  charts, entities and relationships, mind maps, WBS, timelines, in PlantUML, Mermaid
+  and Graphviz.
+- **Documents**: the programs and diagrams inside Markdown notes and LaTeX papers open
+  where they are.
+- **Seven languages**: C, C++, Java, Rust, TypeScript, JavaScript and Python, tests and
+  simulation included; what a language cannot say is refused with the reason.
 
 It started as `plike-translator`, a first-year project to run the pseudocode used in our
 lectures. That pseudocode never had a fixed syntax, so all the spellings are accepted:
 `A[i,j]`, `A[i][j]` or `A(i,j)`, `and`, `.AND.` or `&&`, `end f` or `endfunction`, and so
-on. It now also reads PSeInt, VisuAlg, Portugol and Cambridge pseudocode with their
-libraries, PlantUML, Mermaid and Graphviz, and what Markdown and LaTeX documents hold.
+on.
 
 ## Build
 
@@ -145,10 +160,10 @@ spelling of P-like:
 
 ## Limits
 
-Files, drawings and the other library
-functions of the pseudocodes run here and are not translated. Pointers to plain values
-exist only in C, C++ and Rust. `algorithm2e` and the keyboard, mouse and network of
-Portugol Studio are not read. Each document says what else is missing.
+Files, drawings and the other library functions of the pseudocodes run here and are not
+translated. Pointers to plain values exist only in C, C++ and Rust. `algorithm2e` and
+the keyboard, mouse and network of Portugol Studio are not read. Each document says
+what else is missing.
 
 ## Documentation
 
@@ -168,6 +183,12 @@ make sanitize   # the same, with the program under ASan and UBSan
 make targets    # every program in every language whose tools are installed
 make fuzz       # mutated programs and diagrams, random keys
 ```
+
+## The video
+
+`tools/demo/make.py` films the real interface, driven by the keys in
+`tools/demo/story.py`, and the real commands: `--preview` makes the short one above.
+The full tour is not kept in the repository.
 
 ## License
 
