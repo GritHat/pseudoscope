@@ -343,7 +343,7 @@ static Symbol *lookup(Sema *s, const char *name, Loc loc) {
         Symbol *sym = find_local(scope, name);
         if (sym) return sym;
     }
-    for (Scope *scope = s->scope; scope; scope = scope->parent) {
+    for (Scope *scope = s->config->cormen ? NULL : s->scope; scope; scope = scope->parent) {
         for (Symbol *sym = scope->symbols; sym; sym = sym->next) {
             if (equals_ignore_case(sym->name, name)) {
                 diag_warning(s->diag, loc, "'%s' is not declared, using '%s'", name, sym->name);

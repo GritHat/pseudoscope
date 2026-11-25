@@ -16,7 +16,7 @@ TypeScript, JavaScript o Python.
 - **Ejecuta el pseudocódigo paso a paso**, hacia delante y hacia atrás, en cinco
   niveles: del diagrama de secuencia de todo un sistema a los bytes en memoria.
 - **Lee el pseudocódigo que ya tienes**: P-like en todas sus grafías, PSeInt, VisuAlg,
-  Portugol Studio y Cambridge, cada uno con sus bibliotecas de textos, números, archivos
+  Portugol Studio, Cambridge y el libro de Cormen, con sus bibliotecas de textos, números, archivos
   y dibujos.
 - **Clases y herencia**: clases abstractas, interfaces, varias clases base; el método lo
   elige el objeto.
@@ -103,6 +103,7 @@ pasado.
 | Planes, entidades, mapas mentales | `examples/diagrams` | un Gantt día a día |
 | Apuntes y artículos | `examples/documents` | Markdown y LaTeX, abiertos como carpetas |
 | Archivos y dibujos | `examples/libraries` | `d`: lo que dibuja un programa en Portugol |
+| Como en el libro de Cormen | `examples/cormen` | `r` sobre un procedimiento: no se declara nada |
 
 Los componentes intercambian mensajes por enlaces que los retrasan y los pierden; las
 pruebas dicen qué debe ocurrir de un extremo al otro:

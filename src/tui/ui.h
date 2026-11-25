@@ -2,6 +2,7 @@
 #define PSEUDOSCOPE_UI_H
 
 #include "pseudoscope/codegen.h"
+#include "pseudoscope/cormen.h"
 #include "pseudoscope/i18n.h"
 #include "pseudoscope/uml.h"
 #include "pseudoscope/blocks.h"
@@ -54,6 +55,7 @@ typedef struct {
     int message_count;
     int *lines;              /* offset of each line; lines[0] is the first */
     char *shown;             /* the lines as their writer wrote them, when the text is our rewriting; else NULL */
+    const char *written_as;  /* and what they are written in: "LaTeX", "Cormen" */
     int *shown_lines;
     int line_count;
     unsigned char *kinds;    /* highlighting of each byte */

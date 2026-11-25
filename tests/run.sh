@@ -54,7 +54,7 @@ for file in *.plike; do
 done
 
 cd "$here/dialects" || exit 1
-for file in *.psc *.alg *.por *.pse; do
+for file in *.psc *.alg *.por *.pse *.clrs; do
     input=/dev/null; [ -f "$file.in" ] && input=$file.in
     for how in exec "run --cc=$here/ccheck"; do
         # shellcheck disable=SC2086

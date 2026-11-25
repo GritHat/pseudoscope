@@ -16,7 +16,7 @@ in C, C++, Java, Rust, TypeScript, JavaScript o Python.
 - **Esegue lo pseudocodice passo per passo**, avanti e indietro, a cinque livelli: dal
   diagramma di sequenza di un intero sistema fino ai byte in memoria.
 - **Legge lo pseudocodice che c'è già**: il P-like in tutte le sue grafie, PSeInt,
-  VisuAlg, Portugol Studio e Cambridge, ognuno con le sue librerie per testi, numeri,
+  VisuAlg, Portugol Studio, Cambridge e il libro di Cormen, con le loro librerie per testi, numeri,
   file e disegni.
 - **Classi ed ereditarietà**: classi astratte, interfacce, più classi base; il metodo lo
   sceglie l'oggetto.
@@ -104,6 +104,7 @@ successo.
 | Piani, entità, mappe mentali | `examples/diagrams` | un Gantt giorno per giorno |
 | Appunti e articoli | `examples/documents` | Markdown e LaTeX, aperti come cartelle |
 | File e disegni | `examples/libraries` | `d`: ciò che disegna un programma Portugol |
+| Come nel libro di Cormen | `examples/cormen` | `r` su una procedura: non si dichiara niente |
 
 I componenti si scambiano messaggi su collegamenti che li ritardano e li perdono; le prove
 dicono che cosa deve succedere da un capo all'altro:

@@ -97,7 +97,7 @@ REFUSED = {
 
 def cases():
     found = []
-    for folder, pattern in (("programs", r"\.plike$"), ("targets", r"\.plike$"), ("dialects", r"\.(psc|alg|por|pse)$")):
+    for folder, pattern in (("programs", r"\.plike$"), ("targets", r"\.plike$"), ("dialects", r"\.(psc|alg|por|pse|clrs)$")):
         path = os.path.join(here, folder)
         for name in sorted(os.listdir(path)) if os.path.isdir(path) else []:
             if not re.search(pattern, name):

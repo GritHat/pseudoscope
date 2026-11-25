@@ -446,7 +446,7 @@ static void lex_word(Lexer *lx) {
         Source other = {"", t->text, length, NULL};
         Lexer view = {.source = &other};
         size_t k = 0;
-        bool same = lx->config->dialect != DIALECT_PORTUGOL;
+        bool same = lx->config->dialect != DIALECT_PORTUGOL && !lx->config->cormen;
         while (same && k < length) {
             size_t a, b;
             same = plain(&view, k, &a) == plain(lx, k, &b) && a == b;
@@ -590,7 +590,7 @@ Config config_for(Config config, const char *path) {
     if (!config.dialect_given) {
         config.dialect = ends_with(path, ".psc") ? DIALECT_PSEINT : ends_with(path, ".alg") ? DIALECT_VISUALG
                        : ends_with(path, ".por") ? DIALECT_PORTUGOL : ends_with(path, ".pse") ? DIALECT_CAMBRIDGE
-                       : DIALECT_PLIKE;
+                       : ends_with(path, ".clrs") ? DIALECT_CORMEN : DIALECT_PLIKE;
     }
     if (config.dialect != DIALECT_PLIKE) {
         config.paren_arrays = false;

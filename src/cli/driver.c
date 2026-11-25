@@ -1,5 +1,6 @@
 #include "pseudoscope/blocks.h"
 #include "pseudoscope/cli.h"
+#include "pseudoscope/cormen.h"
 
 #include "pseudoscope/codegen.h"
 #include "pseudoscope/dump.h"
@@ -329,6 +330,18 @@ static int translate(const Options *options, const Source *source, Arena *arena,
         }
         uml_dump(uml, out);
         return write_file(options->output, out) ? EXIT_OK : EXIT_IO;
+    }
+    Options as_read;
+    Source rewritten;
+    if (options->config.dialect == DIALECT_CORMEN) { /* run in a rewriting of ours, shown as it was written */
+        as_read = *options;
+        Source as_written = *source; /* what the rewriting finds wrong is said of the line as it is written */
+        as_written.shown = source->shown ? source->shown : source->text;
+        diag.source = &as_written;
+        rewritten = cormen_source(source, &as_read.config, arena, &diag);
+        options = &as_read;
+        source = &rewritten;
+        diag.source = source;
     }
     step(options, "reading tokens");
     TokenList tokens = lex(source, &options->config, arena, &diag);

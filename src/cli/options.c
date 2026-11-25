@@ -36,9 +36,9 @@ static void print_help(FILE *out) {
           out);
     fputs(T("\n"
             "Language of the program:\n"
-            "      --dialect=NAME        plike, pseint, visualg, portugol or cambridge\n"
+            "      --dialect=NAME        plike, pseint, visualg, portugol, cambridge or cormen\n"
             "                            (default: from the extension .pscope .plike .psc .alg .por\n"
-            "                            .pse, or from how the file begins)\n"
+            "                            .pse .clrs, or from how the file begins)\n"
             "  -a, --assignment=STYLE    colon-equals (default) or equals\n"
             "  -i, --indexing=BASE       first index of arrays without a range:\n"
             "                            one (default) or zero\n"
@@ -122,7 +122,7 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
     static const char *const PARAMS[] = {"decl", "body", "mixed", NULL};
     static const char *const OPERATORS[] = {"standard", "dotted", "mixed", NULL};
     static const char *const BOOLEAN[] = {"false", "true", NULL};
-    static const char *const DIALECTS[] = {"plike", "pseint", "visualg", "portugol", "cambridge", NULL};
+    static const char *const DIALECTS[] = {"plike", "pseint", "visualg", "portugol", "cambridge", "cormen", NULL};
     static const char *const COLOR[] = {"auto", "always", "never", NULL};
 
     *options = (Options){.command = CMD_TRANSLATE, .config = CONFIG_DEFAULT, .width = 100, .height = 30};

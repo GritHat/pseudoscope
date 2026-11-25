@@ -185,7 +185,7 @@ void files_open(App *app, const char *directory) {
 
 static const char *kind_of(const Document *doc) {
     if (doc->uml) return uml_kind_name(doc->uml);
-    if (doc->shown) return "LaTeX";
+    if (doc->written_as) return doc->written_as;
     switch (doc->config.dialect) {
         case DIALECT_PSEINT: return "PSeInt";
         case DIALECT_VISUALG: return "VisuAlg";

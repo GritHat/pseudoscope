@@ -198,8 +198,8 @@ msgid "\nCommands:\n  ui          explore programs and watch them run (FILE may 
 msgstr "\nComandos:\n  ui          explore os programas e veja-os funcionar (ARQUIVO pode ser uma pasta;\n              é o comando usado quando não há argumentos)\n  translate   escreve o programa em C ou em outra linguagem (o comando padrão)\n  check       só informa erros e avisos\n  build       traduz e compila para um executável (C, C++, Rust)\n  run         traduz, e executa com as ferramentas dessa linguagem\n  exec        executa aqui, sem outras ferramentas, verificando cada acesso\n  test        roda os testes do programa (com --to: traduzidos)\n  tokens      lista os símbolos\n  ast         imprime a árvore sintática\n"
 
 #: src/cli/options.c
-msgid "\nLanguage of the program:\n      --dialect=NAME        plike, pseint, visualg, portugol or cambridge\n                            (default: from the extension .pscope .plike .psc .alg .por\n                            .pse, or from how the file begins)\n  -a, --assignment=STYLE    colon-equals (default) or equals\n  -i, --indexing=BASE       first index of arrays without a range:\n                            one (default) or zero\n  -p, --params=STYLE        where parameter types go: decl, body or mixed (default)\n      --operators=STYLE     standard (and), dotted (.and.) or mixed (default)\n  -m, --mixed-arrays=BOOL   accept a(i) for a[i]: true (default) or false\n"
-msgstr "\nLinguagem do programa:\n      --dialect=NOME        plike, pseint, visualg, portugol ou cambridge\n                            (padrão: pela extensão .pscope .plike .psc .alg .por\n                            .pse, ou por como o arquivo começa)\n  -a, --assignment=ESTILO   colon-equals (padrão) ou equals\n  -i, --indexing=BASE       primeiro índice dos vetores sem intervalo:\n                            one (padrão) ou zero\n  -p, --params=ESTILO       onde ficam os tipos dos parâmetros: decl, body ou mixed (padrão)\n      --operators=ESTILO    standard (and), dotted (.and.) ou mixed (padrão)\n  -m, --mixed-arrays=BOOL   aceita a(i) no lugar de a[i]: true (padrão) ou false\n"
+msgid "\nLanguage of the program:\n      --dialect=NAME        plike, pseint, visualg, portugol, cambridge or cormen\n                            (default: from the extension .pscope .plike .psc .alg .por\n                            .pse .clrs, or from how the file begins)\n  -a, --assignment=STYLE    colon-equals (default) or equals\n  -i, --indexing=BASE       first index of arrays without a range:\n                            one (default) or zero\n  -p, --params=STYLE        where parameter types go: decl, body or mixed (default)\n      --operators=STYLE     standard (and), dotted (.and.) or mixed (default)\n  -m, --mixed-arrays=BOOL   accept a(i) for a[i]: true (default) or false\n"
+msgstr "\nLinguagem do programa:\n      --dialect=NOME        plike, pseint, visualg, portugol, cambridge ou cormen\n                            (padrão: pela extensão .pscope .plike .psc .alg .por\n                            .pse .clrs, ou por como o arquivo começa)\n  -a, --assignment=ESTILO   colon-equals (padrão) ou equals\n  -i, --indexing=BASE       primeiro índice dos vetores sem intervalo:\n                            one (padrão) ou zero\n  -p, --params=ESTILO       onde ficam os tipos dos parâmetros: decl, body ou mixed (padrão)\n      --operators=ESTILO    standard (and), dotted (.and.) ou mixed (padrão)\n  -m, --mixed-arrays=BOOL   aceita a(i) no lugar de a[i]: true (padrão) ou false\n"
 
 #: src/cli/options.c
 msgid "\nOutput:\n  -t, --to=LANGUAGE         c (default), cpp, java, rust, ts, js or python;\n                            translate also tells from the extension of the output\n  -o, --output=FILE         translate: where to write (default: standard output)\n                            build: executable (default: FILE without extension)\n  -b, --bounds-check        stop with an error on array indices out of bounds\n      --cc=COMMAND          the compiler, or what runs the program, for build and run\n                            (default: $CC or cc, c++, rustc, java, node, python3)\n      --steps=N             exec: stop after N steps\n      --canvas=FILE         exec: save what the program drew, as a PPM picture\n      --dot                 ast: Graphviz format\n"
@@ -252,6 +252,42 @@ msgstr "pseudoscope: falta o arquivo de entrada\nTente 'pseudoscope --help'.\n"
 #: src/cli/options.c
 msgid "pseudoscope: unexpected argument '%s'\n"
 msgstr "pseudoscope: argumento inesperado: '%s'\n"
+
+#: src/front/cormen.c
+msgid "this sign of mathematics is not read: write it out in words%.0s"
+msgstr "este sinal matemático não é lido: escreva-o por extenso%.0s"
+
+#: src/front/cormen.c
+msgid "the length of an array is not kept: pass it to the procedure, as in 'SORT(A, n)'%.0s"
+msgstr "o comprimento de um vetor não é guardado: passe-o ao procedimento, como em 'SORT(A, n)'%.0s"
+
+#: src/front/cormen.c
+msgid "objects with attributes, as in '%s', are not read yet: only numbers, texts and arrays"
+msgstr "os objetos com atributos, como em '%s', ainda não são lidos: só números, textos e vetores"
+
+#: src/front/cormen.c
+msgid "an array begins at 0 or at 1 here, not at '%s'"
+msgstr "aqui um vetor começa em 0 ou em 1, não em '%s'"
+
+#: src/front/cormen.c
+msgid "this 'let' is not understood: write 'let A[1:n] be a new array'%.0s"
+msgstr "este 'let' não foi entendido: escreva 'let A[1:n] be a new array'%.0s"
+
+#: src/front/cormen.c
+msgid "'for each' goes through a set, and sets are not read yet%.0s"
+msgstr "'for each' percorre um conjunto, e os conjuntos ainda não são lidos%.0s"
+
+#: src/front/cormen.c
+msgid "'%s' has nothing above it to go with"
+msgstr "'%s' não tem nada acima com que combinar"
+
+#: src/front/cormen.c
+msgid "'return' gives back one value here, not several%.0s"
+msgstr "aqui 'return' devolve um só valor, não vários%.0s"
+
+#: src/front/cormen.c
+msgid "the statements outside the procedures go together, in one place%.0s"
+msgstr "as instruções fora dos procedimentos ficam juntas, em um só lugar%.0s"
 
 #: src/front/dialect.c src/front/lexer.c
 msgid "comment is never closed"

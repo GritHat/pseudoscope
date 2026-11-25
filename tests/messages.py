@@ -37,8 +37,8 @@ def extract():
         for m in re.finditer(rf"\bTN\(\s*{RUN},\s*{RUN}", source):
             add(path, "", text(m.group(1)), text(m.group(2)))
         # the messages of the translator and of the machine are said in the language chosen where they are shown
-        for m in re.finditer(rf"\bdiag_(?:error|warning)\([^;\"]*?{RUN}", source):
-            add(path, "", text(m.group(1)))
+        for m in re.finditer(rf"\bdiag_(?:error|warning)\([^;\"]*?{RUN}|\bproblem\(r,\s*{RUN}", source):
+            add(path, "", text(m.group(1) or m.group(2)))
         for m in re.finditer(rf"\b(?:fail|warn)\(vm,\s*{RUN}|\bstep\(options,\s*{RUN}", source):
             add(path, "", text(m.group(1) or m.group(2)))
         for m in re.finditer(rf"\b(?:syntax_error|expect)\(p, [^;\"]*?{RUN}", source):

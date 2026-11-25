@@ -16,7 +16,7 @@ Rust, TypeScript, JavaScript or Python.
 - **Runs pseudocode step by step**, forwards and backwards, at five levels: from the
   sequence diagram of a whole system down to the bytes in memory.
 - **Reads the pseudocode you already have**: P-like in all its spellings, PSeInt,
-  VisuAlg, Portugol Studio and Cambridge, each with its libraries for texts, numbers,
+  VisuAlg, Portugol Studio, Cambridge and Cormen's book, with their libraries for texts, numbers,
   files and drawings.
 - **Classes and inheritance**: abstract classes, interfaces, several base classes; the
   object chooses its method.
@@ -101,6 +101,7 @@ have generated. Every access is checked, and errors say what happened.
 | Plans, entities, mind maps | `examples/diagrams` | a Gantt chart day by day |
 | Lecture notes and papers | `examples/documents` | Markdown and LaTeX, opened like folders |
 | Files and drawings | `examples/libraries` | `d`: what a Portugol program draws |
+| As in Cormen's book | `examples/cormen` | `r` on a procedure: nothing is declared |
 
 Components exchange messages over links that delay and lose them; tests say what must
 happen from one end to the other:

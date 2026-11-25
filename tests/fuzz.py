@@ -27,12 +27,13 @@ def read(*patterns):
 KINDS = {".plike": read("/*/*.plike", "/../examples/*.pscope", "/../examples/*/*.pscope")}
 for ext in (".psc", ".alg", ".por", ".pse"):
     KINDS[ext] = read("/dialects/*" + ext, "/../examples/libraries/*" + ext)
+KINDS[".clrs"] = read("/dialects/*.clrs", "/../examples/cormen/*.clrs")
 for ext in (".puml", ".mmd"):
     KINDS[ext] = read("/../examples/uml/*" + ext, "/../examples/diagrams/*" + ext)
 for ext in (".dot", ".md", ".tex"):
     KINDS[ext] = read("/../examples/*/*" + ext)
 WORDS = {e: sorted(set(t for text in c for t in re.findall(rb"\w+|[^\w\s]+", text))) for e, c in KINDS.items()}
-WEIGHTS = [10, 1, 1, 1, 1, 2, 2, 1, 1, 1]
+WEIGHTS = [10, 1, 1, 1, 1, 3, 2, 2, 1, 1, 1]
 LANGUAGES = ["cpp", "java", "rust", "ts", "js", "python"]
 scratch = tempfile.mkdtemp()  # where programs that write files are run
 

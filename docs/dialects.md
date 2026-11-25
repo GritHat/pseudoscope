@@ -1,7 +1,8 @@
 # Other pseudocodes
 
 The extension of the file says which, or `--dialect`; without one, the first words do
-(`Algoritmo`, `programa {`, `DECLARE`...):
+(`Algoritmo`, `programa {`, `DECLARE`, a procedure in capitals with its body further
+right...):
 
 | | Extension | `--dialect` | Language |
 |---|---|---|---|
@@ -10,6 +11,7 @@ The extension of the file says which, or `--dialect`; without one, the first wor
 | [VisuAlg](https://visualg3.com.br) | `.alg` | `visualg` | Portuguese |
 | Portugol Studio | `.por` | `portugol` | Portuguese |
 | Cambridge International (IGCSE, A Level) | `.pse` | `cambridge` | English |
+| Cormen, Leiserson, Rivest, Stein: *Introduction to Algorithms* | `.clrs` | `cormen` | English |
 
 Case and accents do not matter in keywords (`Según`, `segun`). All that the tool does
 works with all of them: running, going back, the levels, the translation to C.
@@ -64,3 +66,38 @@ are accepted and do nothing: time here is made of steps.
 Not there: the keyboard, the mouse, sounds and the network of Portugol Studio, and its
 calendar. What comes from these libraries runs here and is not translated to other
 languages, except for the functions on numbers and the plainest ones on texts.
+
+## Cormen
+
+The pseudocode of *Introduction to Algorithms*, as the book prints it:
+
+```
+INSERTION-SORT(A, n)
+    for i = 2 to n
+        key = A[i]
+        j = i - 1
+        while j > 0 and A[j] > key
+            A[j + 1] = A[j]
+            j = j - 1
+        A[j + 1] = key
+```
+
+Nothing is declared: what is a number and what is an array is worked out from how it is
+used. A block is what stands further right, and the numbers the book puts before the
+lines may stay. `r` and `R` are two names. The statements outside the procedures are the
+program.
+
+| | |
+|---|---|
+| Procedures | `NAME(A, n)`, with hyphens in the name; `return`, with a value or without |
+| Statements | `for … to`, `downto`, `by`; `while`; `repeat … until`; `if`, `elseif`, `else`; the `do` and `then` of the older editions |
+| Assignment | `=` or `←`, also `i = j = e`; `exchange A[i] with A[j]` |
+| Arrays | `A[i]`, `A[i, j]`; `let A[1:n] be a new array`, `let L[0:n] and R[0:m] be new arrays`, from 0 or from 1 |
+| Expressions | `==`, `≠`, `≤`, `≥`, `and`, `or`, `not` (which stop as soon as they know), `mod`, `⌊ ⌋`, `∞`, `TRUE`, `FALSE` |
+| Others | `print`, `error "…"`, comments after `//` or `▷` |
+
+It is shown, and quoted in errors, as it was written; it runs in a rewriting, so a
+message may name a word as another pseudocode would (`'endwhile'`). Not read yet, and
+refused saying so: objects with attributes (`x.key`, `L.head`, `NIL`), `A.length` (pass
+the length, as the fourth edition does), `for each` and sets, several values in one
+`return`, `⌈ ⌉`, and the `codebox` environment of the `clrscode` packages.

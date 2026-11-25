@@ -1,4 +1,5 @@
 #include "pseudoscope/blocks.h"
+#include "pseudoscope/cormen.h"
 
 #include "pseudoscope/lexer.h"
 
@@ -57,6 +58,7 @@ Dialect guess_dialect(const char *text) {
     static const char *const CAMBRIDGE[] = {"DECLARE ", "OUTPUT ", "ENDPROCEDURE", "ENDFUNCTION", "ENDWHILE", "ENDIF", "NEXT "};
     for (size_t i = 0; i < sizeof CAMBRIDGE / sizeof CAMBRIDGE[0]; i++)
         if (strstr(text, CAMBRIDGE[i])) return DIALECT_CAMBRIDGE;
+    if (looks_like_cormen(text)) return DIALECT_CORMEN;
     return DIALECT_PLIKE;
 }
 
@@ -75,6 +77,7 @@ static const Known KNOWN[] = {
     {"pseint", false, DIALECT_PSEINT}, {"psc", false, DIALECT_PSEINT}, {"visualg", false, DIALECT_VISUALG},
     {"alg", false, DIALECT_VISUALG}, {"portugol", false, DIALECT_PORTUGOL}, {"por", false, DIALECT_PORTUGOL},
     {"cambridge", false, DIALECT_CAMBRIDGE}, {"igcse", false, DIALECT_CAMBRIDGE}, {"pse", false, DIALECT_CAMBRIDGE},
+    {"cormen", false, DIALECT_CORMEN}, {"clrs", false, DIALECT_CORMEN},
 };
 
 static const Known *known(const char *language) {
@@ -556,7 +559,7 @@ Blocks *blocks_read(const Source *source, Arena *arena) {
 }
 
 bool is_program_path(const char *path) {
-    static const char *const ENDINGS[] = {".pscope", ".plike", ".p", ".pseudo", ".psc", ".alg", ".por", ".pse"};
+    static const char *const ENDINGS[] = {".pscope", ".plike", ".p", ".pseudo", ".psc", ".alg", ".por", ".pse", ".clrs"};
     for (size_t i = 0; i < sizeof ENDINGS / sizeof ENDINGS[0]; i++)
         if (ends_with(path, ENDINGS[i])) return true;
     return false;

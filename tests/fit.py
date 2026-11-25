@@ -52,6 +52,8 @@ MORE = [
       for keys in ("", R * 3 + D * 2, R * 6 + TAB, "?")],
     ("examples/documents", ""), ("examples/documents", "<enter>" + D), ("examples/documents", "<enter>" + D + "<enter>r" + R * 12),
     ("examples/documents", D + "<enter>"), ("examples/documents", D + "<enter><enter>r2" + R * 5), ("examples/documents", D + "<enter>" + D + "<enter>" + R * 3),
+    ("examples/cormen", D), ("examples/cormen/sorting.clrs", ""), ("examples/cormen/sorting.clrs", "<home>r<enter>" + R * 12),
+    ("examples/cormen/sorting.clrs", "<home><enter><enter>TT"), ("examples/cormen/sorting.clrs", "r2" + R * 20),
     ("examples/libraries/desenho.por", "rgd"), ("examples/libraries/files.pse", "r" + R * 16), ("examples/libraries/media.alg", "r" + R * 8),
     ("examples/libraries/funciones.psc", "r" + R * 8), ("tests/dialects/basico.psc", "<home>" + D * 2 + "<enter>r<enter>" + R * 14),
     *[(path, "") for path in sorted(glob.glob(os.path.join(ROOT, "tests/errors/*.plike")))],

@@ -1080,7 +1080,7 @@ static void arguments(Gen *g, const Expr *e, int first) {
 /* Rust: x.sqrt(); a number alone does not say of which kind it is. */
 static void rust_receiver(Gen *g, const Expr *a, const Type *want) {
     const Expr *plain = a->kind == EX_UNARY && (a->op == TOK_MINUS || a->op == TOK_PLUS) ? a->base : a;
-    if (plain->kind == EX_INT || plain->kind == EX_FLOAT) {
+    if (plain->kind == EX_INT || plain->kind == EX_FLOAT || a->kind == EX_BINARY) { /* numbers alone do not say what they are */
         put(g, "(");
         value(g, a, want, P_UNARY);
         put(g, want->kind == TY_REAL ? " as f64)" : " as i32)");
@@ -2121,7 +2121,13 @@ static void statement(Gen *g, const Stmt *s) {
 }
 
 static void statements(Gen *g, const Stmt *s) {
-    for (; s; s = s->next) statement(g, s);
+    for (; s; s = s->next) {
+        statement(g, s);
+        /* nothing after it can happen: Java refuses to be told what cannot */
+        Stmt alone = *s;
+        alone.next = NULL;
+        if (s->next && ends_with_return(&alone)) break;
+    }
 }
 
 /* ---- subprograms ---- */

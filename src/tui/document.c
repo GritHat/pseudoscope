@@ -322,6 +322,7 @@ Document *document_load(const char *path, const Config *config) {
         if (block->rewritten) { /* what is run is ours; what is shown is what was written */
             doc->shown = strdup(doc->text.data);
             if (!doc->shown) abort();
+            doc->written_as = "LaTeX";
         }
         doc->text.length = 0;
         doc->text.data[0] = '\0';
@@ -332,6 +333,16 @@ Document *document_load(const char *path, const Config *config) {
         wanted.dialect_given = true;
     }
     doc->config = config_for_text(wanted, file, doc->text.data);
+    if (doc->config.dialect == DIALECT_CORMEN && !diagram) { /* run in a rewriting of ours, shown as it was written */
+        Source written = {doc->path, doc->text.data, doc->text.length, NULL};
+        doc->shown = strdup(doc->text.data);
+        if (!doc->shown) abort();
+        doc->written_as = "Cormen";
+        Source run = cormen_source(&written, &doc->config, &doc->arena, &diag);
+        doc->text.length = 0;
+        doc->text.data[0] = '\0';
+        strbuf_puts(&doc->text, run.text);
+    }
     doc->source = (Source){doc->path, doc->text.data, doc->text.length, doc->shown};
     split_lines(doc);
     if (doc->shown) { /* the same lines, as many: where each begins */

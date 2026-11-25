@@ -923,6 +923,15 @@ static void infer_uses(Infer *in, const Expr *e) {
                 param->inferred = true;
                 infer_changed = true;
             }
+            /* what is handed on as an array is one, even where nobody looks inside it */
+            if (param->has_dims && e->args.items[i]->kind == EX_NAME) {
+                VarDecl *mine = find_decl(in->function->params, e->args.items[i]->text);
+                if (mine && !mine->has_dims && !(mine->spec && mine->spec->is_array)) {
+                    mine->has_dims = true;
+                    for (int k = 0; k < param->dims.count; k++) dim_add(in->p, &mine->dims, (Dim){NULL, NULL});
+                    infer_changed = true;
+                }
+            }
             /* a matrix: its sizes come from what is passed */
             if (param->has_dims && param->dims.count > 1 && !param->dims.items[1].hi && e->args.items[i]->kind == EX_NAME) {
                 VarDecl *arg = infer_find(in, e->args.items[i]->text);
@@ -963,6 +972,13 @@ static void finish_decls(Parser *p, VarDecl *d) {
         if (!d->spec) d->spec = kind_spec(p, IN_UNKNOWN, d->loc); /* a number, then */
 }
 
+/* In Cormen's book what a procedure takes besides its arrays is a size, a
+ * position, a key to look for: a whole number, when nothing says otherwise. */
+static void finish_params(Parser *p, VarDecl *d) {
+    for (; d; d = d->next)
+        if (!d->spec) d->spec = kind_spec(p, p->config->cormen && !d->has_dims ? IN_INT : IN_UNKNOWN, d->loc);
+}
+
 static void finish_statements(Parser *p, Stmt *s) {
     for (; s; s = s->next) {
         for (Stmt *b = s; b; b = b->otherwise) {
@@ -989,7 +1005,7 @@ static void infer_types(Parser *p) {
         if (!infer_changed) break;
     }
     for (Function *f = p->program->functions; f; f = f->next) {
-        finish_decls(p, f->params);
+        finish_params(p, f->params);
         finish_decls(p, f->locals);
         finish_statements(p, f->body);
         if (!f->is_procedure && !f->result) f->result = kind_spec(p, IN_UNKNOWN, f->loc);

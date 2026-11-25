@@ -305,6 +305,7 @@ static Value make_text(Vm *vm, const char *text) {
 }
 
 static const char *true_word(const Vm *vm, bool v) {
+    if (vm->config->cormen) return v ? "TRUE" : "FALSE";
     switch (vm->config->dialect) {
         case DIALECT_PSEINT: return v ? "VERDADERO" : "FALSO";
         case DIALECT_VISUALG: return v ? "VERDADEIRO" : "FALSO";

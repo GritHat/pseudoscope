@@ -198,7 +198,7 @@ msgid "\nCommands:\n  ui          explore programs and watch them run (FILE may 
 msgstr ""
 
 #: src/cli/options.c
-msgid "\nLanguage of the program:\n      --dialect=NAME        plike, pseint, visualg, portugol or cambridge\n                            (default: from the extension .pscope .plike .psc .alg .por\n                            .pse, or from how the file begins)\n  -a, --assignment=STYLE    colon-equals (default) or equals\n  -i, --indexing=BASE       first index of arrays without a range:\n                            one (default) or zero\n  -p, --params=STYLE        where parameter types go: decl, body or mixed (default)\n      --operators=STYLE     standard (and), dotted (.and.) or mixed (default)\n  -m, --mixed-arrays=BOOL   accept a(i) for a[i]: true (default) or false\n"
+msgid "\nLanguage of the program:\n      --dialect=NAME        plike, pseint, visualg, portugol, cambridge or cormen\n                            (default: from the extension .pscope .plike .psc .alg .por\n                            .pse .clrs, or from how the file begins)\n  -a, --assignment=STYLE    colon-equals (default) or equals\n  -i, --indexing=BASE       first index of arrays without a range:\n                            one (default) or zero\n  -p, --params=STYLE        where parameter types go: decl, body or mixed (default)\n      --operators=STYLE     standard (and), dotted (.and.) or mixed (default)\n  -m, --mixed-arrays=BOOL   accept a(i) for a[i]: true (default) or false\n"
 msgstr ""
 
 #: src/cli/options.c
@@ -251,6 +251,42 @@ msgstr ""
 
 #: src/cli/options.c
 msgid "pseudoscope: unexpected argument '%s'\n"
+msgstr ""
+
+#: src/front/cormen.c
+msgid "this sign of mathematics is not read: write it out in words%.0s"
+msgstr ""
+
+#: src/front/cormen.c
+msgid "the length of an array is not kept: pass it to the procedure, as in 'SORT(A, n)'%.0s"
+msgstr ""
+
+#: src/front/cormen.c
+msgid "objects with attributes, as in '%s', are not read yet: only numbers, texts and arrays"
+msgstr ""
+
+#: src/front/cormen.c
+msgid "an array begins at 0 or at 1 here, not at '%s'"
+msgstr ""
+
+#: src/front/cormen.c
+msgid "this 'let' is not understood: write 'let A[1:n] be a new array'%.0s"
+msgstr ""
+
+#: src/front/cormen.c
+msgid "'for each' goes through a set, and sets are not read yet%.0s"
+msgstr ""
+
+#: src/front/cormen.c
+msgid "'%s' has nothing above it to go with"
+msgstr ""
+
+#: src/front/cormen.c
+msgid "'return' gives back one value here, not several%.0s"
+msgstr ""
+
+#: src/front/cormen.c
+msgid "the statements outside the procedures go together, in one place%.0s"
 msgstr ""
 
 #: src/front/dialect.c src/front/lexer.c
