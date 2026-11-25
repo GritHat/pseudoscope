@@ -1,0 +1,30 @@
+ ◆ PSEUDOSCOPE  single.plike ▸ total                                                      ▐ Mappa ▌▸▐ Codice ▌▸▐ Rust ▌
+                                                   Traduzione in Rust
+╭─ Pseudocodice ───────────────────────────────────────────╮╭─ Rust ───────────────────────────────────────────────────╮
+│ ▶  58 function total(in n: integer, in all: array [1..n… ││                                                          │
+│    59 var i: integer                                     ││ riga 19: Rust non ha classi che estendono classi:        │
+│    60 begin                                              ││ 'Rectangle' potrebbe estendere solo un'interfaccia (un   │
+│    61     total := 0                                     ││ trait), e 'Shape' non lo è                               │
+│    62     for i := 1 to n do                             ││                                                          │
+│    63         total := total + all[i].area()             ││                                                          │
+│    64     endfor                                         ││                                                          │
+│    65 end total                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││  T  un altro linguaggio                                  │
+│                                                          ││                                                          │
+╰──────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────────────────╯
+
+  ↑↓  scorri   Invio  più dettaglio   Esc  meno dettaglio   r  esegui   E  modifica   q  esci   ?  aiuto

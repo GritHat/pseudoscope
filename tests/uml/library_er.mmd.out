@@ -1,0 +1,19 @@
+entities
+  entity MEMBER
+    int id PK
+    string name
+    date joined
+  entity LOAN
+    int id PK
+    date due
+  entity BOOK
+    string isbn PK
+    string title
+  entity COPY
+    int number PK
+    string isbn FK
+  entity AUTHOR
+  one MEMBER -- zero or more LOAN: takes
+  one BOOK -- zero or more COPY: exists as
+  one COPY -- zero or more LOAN: is lent in
+  one or more AUTHOR -- one or more BOOK: writes

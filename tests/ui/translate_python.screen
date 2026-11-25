@@ -1,0 +1,30 @@
+ ◆ PSEUDOSCOPE  single.plike ▸ total                                                    ▐ Mappa ▌▸▐ Codice ▌▸▐ Python ▌
+                                                  Traduzione in Python
+╭─ Pseudocodice ───────────────────────────────────────────╮╭─ Python ─────────────────────────────────────────────────╮
+│ ▶  58 function total(in n: integer, in all: array [1..n… ││  def total(n: int, all: list[Shape | None]) -> float:    │
+│    59 var i: integer                                     ││      total_result = 0.0                                  │
+│    60 begin                                              ││      i = 0                                               │
+│    61     total := 0                                     ││      total_result = 0                                    │
+│    62     for i := 1 to n do                             ││      for i in range(1, n + 1):                           │
+│    63         total := total + all[i].area()             ││          total_result = total_result + all[i - 1].area() │
+│    64     endfor                                         ││      return total_result                                 │
+│    65 end total                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+│                                                          ││                                                          │
+╰──────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────────────────╯
+
+  ↑↓  scorri   Invio  più dettaglio   Esc  meno dettaglio   r  esegui   E  modifica   q  esci   ?  aiuto

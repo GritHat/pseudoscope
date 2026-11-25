@@ -115,10 +115,46 @@ for file in */*.plike; do
     case $file in exercises/*) want=1 ;; esac # what is wrong in them is found
     if [ "$got" = "$want" ]; then pass; else fail "examples/$file" "$tmp/out"; fi
 done
-for file in uml/*; do
+for file in uml/* diagrams/* documents/*; do
     "$plike" ast "$file" > "$tmp/out" 2>&1
     compare "examples/$file" "$here/uml/$(basename "$file").out" "$tmp/out"
 done
+# documents: everything they hold is right, and their programs run
+for file in documents/*; do
+    if "$plike" check -q "$file" > /dev/null 2> "$tmp/err"; then pass; else fail "examples/$file" "$tmp/err"; fi
+done
+"$plike" exec documents/lesson.md#2 > "$tmp/out" 2>&1
+compare "examples/documents/lesson.md#2" "$here/uml/lesson.md.2.out" "$tmp/out"
+"$plike" exec documents/paper.tex > "$tmp/out" 2>&1
+compare "examples/documents/paper.tex (exec)" "$here/uml/paper.tex.1.out" "$tmp/out"
+
+# libraries: files are written where the program is run, so in a place of their own
+mkdir "$tmp/libraries" && cp libraries/* "$tmp/libraries" && cd "$tmp/libraries" || exit 1
+for file in *.por *.pse *.psc *.alg; do
+    "$plike" exec "$file" --canvas="$tmp/canvas.ppm" > "$tmp/out" 2>&1
+    compare "examples/libraries/$file" "$here/libraries/$file.out" "$tmp/out"
+done
+"$plike" exec desenho.por --canvas="$tmp/canvas.ppm" > /dev/null 2>&1
+cksum < "$tmp/canvas.ppm" > "$tmp/out"
+compare "examples/libraries/desenho.por (drawing)" "$here/libraries/desenho.por.cksum" "$tmp/out"
+compare "examples/libraries/files.pse (file)" "$here/libraries/marks.txt" "$tmp/libraries/marks.txt"
+
+# classes that extend others, and what else C cannot say: run here
+cd "$here/targets" || exit 1
+for file in *.plike; do
+    "$plike" exec "$file" > "$tmp/out" 2>&1
+    compare "targets/$file (exec)" "${file%.plike}.out" "$tmp/out"
+done
+
+# a file is what its text says, whatever its name
+cp "$here/../examples/fib.plike" "$tmp/noname" && cp "$here/dialects/basico.psc" "$tmp/pseint.txt" && cp "$here/../examples/uml/payment.mmd" "$tmp/drawing"
+"$plike" exec "$tmp/noname" > "$tmp/out" 2>&1
+compare "a program without an extension" "$here/uml/noname.out" "$tmp/out"
+"$plike" exec "$tmp/pseint.txt" < "$here/dialects/basico.psc.in" > "$tmp/out" 2>&1
+compare "PSeInt without its extension" "$here/dialects/basico.psc.out" "$tmp/out"
+"$plike" ast "$tmp/drawing" > "$tmp/out" 2>&1
+compare "a diagram without an extension" "$here/uml/payment.mmd.out" "$tmp/out"
+cd "$here/../examples" || exit 1
 
 cd "$here/ui" || exit 1
 for file in *.ui; do

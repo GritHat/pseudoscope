@@ -1,0 +1,9 @@
+plan Releasing version 2
+  from 2026-01-05
+  day 1, 5 days: Requirements [Design] (done)
+  day 6, 4 days: Architecture [Design] (done)
+  day 10, 10 days: Core [Build] (active)
+  day 10, 8 days: Interface [Build]
+  day 20, 4 days: Integration [Build] (critical)
+  day 24, 5 days: Testing [Release]
+  day 29, 0 days: Go live [Release] (milestone)

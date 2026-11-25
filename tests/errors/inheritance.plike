@@ -1,0 +1,50 @@
+abstract class Shape
+    abstract function area(): real
+end Shape
+class Blob extends Shape
+end Blob
+class A extends B
+end A
+class B extends A
+end B
+class C extends Nothing, Shape, Shape
+    function area(in x: integer): real
+    begin
+        area := super.missing()
+    end area
+end C
+interface I
+    var x: integer
+    procedure go()
+end I
+class L
+    procedure go()
+    begin
+    end go
+end L
+class R
+    procedure go()
+    begin
+    end go
+end R
+class Both extends L, R
+    procedure other()
+    begin
+        super.go()
+        Shape.area()
+    end other
+end Both
+component K extends L
+end K
+procedure main()
+var s: Shape
+var b: Blob
+var i: array [1..2] of I
+var both: Both
+var p: Shape*
+var l: L*
+begin
+    p := &b
+    l := &both
+    p := &both
+end main

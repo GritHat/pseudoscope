@@ -1,0 +1,39 @@
+inheritance.plike:6:7: error: class 'A' ends up extending itself
+    6 | class A extends B
+      |       ^
+inheritance.plike:10:17: error: there is no class 'Nothing'
+   10 | class C extends Nothing, Shape, Shape
+      |                 ^
+inheritance.plike:10:33: error: 'Shape' is extended twice
+   10 | class C extends Nothing, Shape, Shape
+      |                                 ^
+inheritance.plike:17:9: error: an interface has no variables: only what its classes must be able to do
+   17 |     var x: integer
+      |         ^
+inheritance.plike:37:21: error: components do not extend, and are not extended: only classes
+   37 | component K extends L
+      |                     ^
+inheritance.plike:11:14: error: 'C.area' replaces 'Shape.area': it must take and give the same
+   11 |     function area(in x: integer): real
+      |              ^
+inheritance.plike:30:20: error: 'Both' gets 'go' from both 'L' and 'R': it must have its own
+   30 | class Both extends L, R
+      |                    ^
+inheritance.plike:13:23: error: no class that 'C' extends has 'missing'
+   13 |         area := super.missing()
+      |                       ^
+inheritance.plike:34:15: error: 'Shape' has no 'area' that 'Both' could use
+   34 |         Shape.area()
+      |               ^
+inheritance.plike:40:5: error: there can be no 'Shape': nobody has written 'Shape.area' (use a class that extends it, or a pointer)
+   40 | var s: Shape
+      |     ^
+inheritance.plike:41:5: error: there can be no 'Blob': nobody has written 'Shape.area' (use a class that extends it, or a pointer)
+   41 | var b: Blob
+      |     ^
+inheritance.plike:42:5: error: there can be no 'I': nobody has written 'I.go' (use a class that extends it, or a pointer)
+   42 | var i: array [1..2] of I
+      |     ^
+inheritance.plike:49:5: error: Both* cannot be assigned to Shape*
+   49 |     p := &both
+      |     ^

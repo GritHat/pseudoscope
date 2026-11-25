@@ -1,0 +1,14 @@
+graph
+  node start
+  node idle
+  node word
+  node number
+  node done
+  start -> idle
+  idle -> word: letter
+  word -> word: letter or digit
+  word -> idle: other
+  idle -> number: digit
+  number -> number: digit
+  number -> idle: other
+  idle -> done: end

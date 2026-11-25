@@ -1,0 +1,30 @@
+ ◆ PSEUDOSCOPE  values.plike ▸ main                                                       ▐ Mappa ▌▸▐ Codice ▌▸▐ Java ▌
+                                                   Traduzione in Java
+╭─ Pseudocodice ───────────────────────────────────────────╮╭─ Java ───────────────────────────────────────────────────╮
+│ ▶  52 procedure main()                                  ┃││  static void run() {                                     │
+│    53 var p, q: Point                                   ┃││      Point p = new Point();                              │
+│    54 var l, m: Line                                    ┃││      Point q = new Point();                              │
+│    55 var c: Counter                                    ┃││      Line l = new Line();                                │
+│    56 var r, i, old: integer                            ┃││      Line m = new Line();                                │
+│    57 var s, t: string                                  ┃││      Counter c = new Counter();                          │
+│    58 var x: real                                       ┃││      int r = 0;                                          │
+│    59 var ch: character                                 ┃││      int i = 0;                                          │
+│    60 begin                                             ┃││      int old = 0;                                        │
+│    61     p.x := 1                                       ││      String s = "";                                      │
+│    62     p.y := 2                                       ││      String t = "";                                      │
+│    63     q := moved(p, 10)                              ││      double x = 0.0;                                     │
+│    64     print(p.x, q.x, q.y)                           ││      char ch = ' ';                                      │
+│    65     l.a := p                                       ││      p.x = 1;                                            │
+│    66     l.b := q                                       ││      p.y = 2;                                            │
+│    67     l.tags[2] := 5                                 ││      q = moved(p.copy(), 10);                            │
+│    68     m := l                                         ││      System.out.printf("%d %d %d%n", p.x, q.x, q.y);     │
+│    69     m.a.x := 99                                    ││      l.a = p.copy();                                     │
+│    70     m.tags[2] := 6                                 ││      l.b = q.copy();                                     │
+│    71     print(l.a.x, m.a.x, l.tags[2], m.tags[2])      ││      l.tags[1] = 5;                                      │
+│    72     reset(q)                                       ││      m = l.copy();                                       │
+│    73     print(q.x, q.y)                                ││      m.a.x = 99;                                         │
+│    74                                                    ││      m.tags[1] = 6;                                      │
+│    75     i := divide(17, 5, r)                          ││      System.out.printf("%d %d %d %d%n", l.a.x, m.a.x, l. │
+╰──────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────────────────╯
+
+  ↑↓  scorri   Invio  più dettaglio   Esc  meno dettaglio   r  esegui   E  modifica   q  esci   ?  aiuto

@@ -562,7 +562,7 @@ static int open_file(Vm *vm, const char *path, int mode) {
             return -1;
         }
         index = vm->file_count++;
-        snprintf(vm->files[index].path, sizeof vm->files[index].path, "%s", path);
+        snprintf(vm->files[index].path, sizeof vm->files[index].path, "%.255s", path);
     }
     if (mode != 1 && !vm->files[index].loaded && !vm->files[index].written) { /* what is on the disk, read once */
         FILE *file = fopen(path, "rb");

@@ -1,0 +1,26 @@
+ ◆ PSEUDOSCOPE  thesis_plan.puml ▸ piano (Gantt)
+
+╭────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                            │
+│                        03-02               03-12               03-22               04-01                   │
+│                        ╷                   ╷         ▼         ╷                   ╷                       │
+│ Study                                                                                                      │
+│ ✓ Read the literature   10                                                                                 │
+│ ✓ Define the method                         5                                                              │
+│ Work                                                                                                       │
+│ ▶ Experiments                               15                                                             │
+│   Analysis                                                                6                                │
+│ ▶ Write                                               12                                                   │
+│   Hand in                                                                            ◆                     │
+│                                                                                                            │
+│                                                                                                            │
+│                                                                                                            │
+│                                                                                                            │
+│                                                                                                            │
+│ ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │
+│  2026-03-17   finite 2 / 6                                                                                 │
+│ in corso: Experiments, Write                                                                               │
+│ Read the literature  2026-03-02 → 2026-03-11                                                               │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+  →  avanti nel tempo   ←  indietro   Spazio  va da solo   ↑↓  attività   0  da capo   Esc  file   ?  aiuto
