@@ -2,7 +2,7 @@
 
 ╭─ Map ─────────────────────────╮╭─────────────────────────────────────────────────────────────────╮
 │ Subprograms                   ││                                                                 │
-│  ƒ somma_pari_e_dispari_in_r… ││  BubbleSort  procedure: performs actions                        │
+│  ƒ even_odd_sums_in_row       ││  BubbleSort  procedure: performs actions                        │
 │▸ ■ BubbleSort                 ││                                                                 │
 │  ■ SelectionSort2             ││                       ╭────────────────╮                        │
 │  ƒ ScalarProductVdotV         ││         n integer ───▶│                │                        │

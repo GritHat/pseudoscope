@@ -2,7 +2,7 @@
 
 # Pseudoscope
 
-*[Italiano](README.it.md)*
+*[Italiano](README.it.md) · [Español](README.es.md)*
 
 Pseudocode and designs, brought to life in the terminal. Write an algorithm, a set of
 classes, a distributed system or a diagram; watch it run step by step, forwards and
@@ -29,6 +29,7 @@ Rust, TypeScript, JavaScript or Python.
   where they are.
 - **Seven languages**: C, C++, Java, Rust, TypeScript, JavaScript and Python, tests and
   simulation included; what a language cannot say is refused with the reason.
+- **In your language**: interface, errors and help in English, Italian and Spanish.
 
 It started as `plike-translator`, a first-year project to run the pseudocode used in our
 lectures. That pseudocode never had a fixed syntax, so all the spellings are accepted:
@@ -57,10 +58,13 @@ tools/pseudoscope-window examples         # in a new window, whatever the termin
 Programs end in `.pscope` (`.plike` still works), or in nothing: a file is what its
 first lines say it is.
 
-Enter goes deeper, Esc comes back up, `r` runs, `t` tests, `?` lists the keys. It is in
-Italian; `--lang=en` for English. It works in kitty, GNOME Terminal, Ptyxis, Konsole,
-xterm and the like, in tmux and screen, on the Linux console, and without colours or
-Unicode: see [docs/interface.md](docs/interface.md).
+Enter goes deeper, Esc comes back up, `r` runs, `t` tests, `?` lists the keys. It works
+in kitty, GNOME Terminal, Ptyxis, Konsole, xterm and the like, in tmux and screen, on the
+Linux console, and without colours or Unicode: see [docs/interface.md](docs/interface.md).
+
+It speaks English, Italian and Spanish: the language of the system, or `--lang=it`, or
+`PSEUDOSCOPE_LANG=es`. Adding another is a matter of one file: see
+[docs/localization.md](docs/localization.md).
 
 ## One program, five levels
 
@@ -175,12 +179,13 @@ what else is missing.
 - [Translating: seven languages](docs/translation.md)
 - [Other pseudocodes](docs/dialects.md)
 - [Diagrams and documents](docs/diagrams.md)
+- [Languages: English, Italian, Spanish, and adding one](docs/localization.md)
 - [How it works](docs/design.md)
 
 ## Tests
 
 ```sh
-make test       # unit tests, end-to-end tests, screens, syntax matrix
+make test       # unit tests, end-to-end tests, screens, catalogs, fit, syntax matrix
 make sanitize   # the same, with the program under ASan and UBSan
 make targets    # every program in every language whose tools are installed
 make fuzz       # mutated programs and diagrams, random keys
