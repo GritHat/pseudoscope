@@ -288,7 +288,7 @@ static int collect(App *app, int frame, const Symbol *const *only, int only_coun
 static void draw_title(const App *app, const Var *var, int x, int y, int w, bool selected) {
     char type[120] = "";
     describe_type(app->doc, var->symbol->type, type, sizeof type);
-    const char *role = var->symbol->kind == SYM_RESULT ? L("  risultato", "  result") : "";
+    const char *role = var->symbol->kind == SYM_RESULT ? T("  result") : "";
     print_at(x, y, w, S(C_BRIGHT, C_DEFAULT, A_BOLD), "%s%s" M_RESET M_FAINT "  %s" M_WRITE "%s",
              selected ? M_FOCUS "▸ " M_RESET M_BOLD : "", var->symbol->name, type, role);
 }
@@ -622,7 +622,7 @@ static void draw_chain(App *app, const Block *block, int x, int y, int w, int bo
     if (y < bottom) draw_title(app, var, x, y, w, selected);
     if (++y >= bottom) return;
     if (!v || !v->known) {
-        print_at(x + 1, y, w, S(C_FAINT, C_DEFAULT, 0), "· %s", L("non punta ancora a niente", "points nowhere yet"));
+        print_at(x + 1, y, w, S(C_FAINT, C_DEFAULT, 0), "· %s", T("points nowhere yet"));
         return;
     }
     if (links >= 2 && v->as.p.object) {
@@ -638,12 +638,12 @@ static void draw_chain(App *app, const Block *block, int x, int y, int w, int bo
             return;
         }
         if (!vm_cell(vm, p)) {
-            print_at(cx, y, w, S(C_ERROR, C_DEFAULT, A_BOLD), "%s", L("✗ non esiste più", "✗ gone"));
+            print_at(cx, y, w, S(C_ERROR, C_DEFAULT, A_BOLD), "%s", T("✗ gone"));
             return;
         }
         for (int k = 0; k < n && k < 64; k++) {
             if (seen[k].object == p.object && seen[k].offset == p.offset) {
-                print_at(cx, y, w, S(C_FOCUS, C_DEFAULT, 0), "↻ %s", L("torna indietro", "goes back"));
+                print_at(cx, y, w, S(C_FOCUS, C_DEFAULT, 0), "↻ %s", T("goes back"));
                 return;
             }
         }
@@ -705,7 +705,7 @@ void run_data_draw(App *app, int x, int y, int w, int h) {
     }
     n = collect(app, frame, only ? m.symbols : NULL, m.count, blocks, 40, w);
     if (frame > 0) {
-        Block title = {.kind = BLOCK_TITLE, .title = L("globali", "globals")};
+        Block title = {.kind = BLOCK_TITLE, .title = T("globals")};
         Block globals[20];
         int g = collect(app, 0, only ? m.symbols : NULL, m.count, globals, 20, w);
         if (g > 0) {
@@ -716,8 +716,8 @@ void run_data_draw(App *app, int x, int y, int w, int h) {
     }
     if (n == 0) {
         print_wrapped(x, y, w, 3, S_FAINT, "%s",
-                      only ? L("Questa istruzione non usa variabili.", "This statement uses no variables.")
-                             : L("Qui non ci sono variabili.", "There are no variables here."));
+                      only ? T("This statement uses no variables.")
+                             : T("There are no variables here."));
         return;
     }
     int selected = app->run.selected_var % n, first = 0, total = 0;
@@ -735,7 +735,7 @@ void run_data_draw(App *app, int x, int y, int w, int h) {
     for (int i = first; i < n && cy < y + h; i++) {
         draw_block(app, &blocks[i], x, cy, w, y + h, i == selected && app->run.selected_var > 0);
         cy += blocks[i].height;
-        if (cy >= y + h && i < n - 1) print_at(x + w - 14, y + h - 1, 14, S_DIM, "%s", L("▼ altro (Tab)", "▼ more (Tab)"));
+        if (cy >= y + h && i < n - 1) print_at(x + w - 14, y + h - 1, 14, S_DIM, "%s", T("▼ more (Tab)"));
     }
 }
 
@@ -768,7 +768,10 @@ static void bytes_of(const Vm *vm, const Value *v, const Type *type, char *out, 
 /* The stack as it is: newest frame on top, one line per slot. */
 void run_memory_draw(App *app, int x, int y, int w, int h) {
     const Vm *vm = app->run.vm;
-    print_at(x, y, w, S_FAINT, "%-11s%-14s%-13s%s", L("indirizzo", "address"), L("nome", "name"), L("valore", "value"), "byte");
+    print_at(x, y, 10, S_FAINT, "%s", T("address"));
+    print_at(x + 11, y, 13, S_FAINT, "%s", T("name"));
+    print_at(x + 25, y, 12, S_FAINT, "%s", T("value"));
+    print_at(x + 38, y, w - 38, S_FAINT, "%s", T("byte"));
     int row = y + 1, frame = -1;
     for (int i = vm_object_count(vm) - 1; i > 0 && row < y + h; i--) {
         const Object *o = vm_object_at(vm, i);
@@ -780,7 +783,7 @@ void run_memory_draw(App *app, int x, int y, int w, int h) {
             if (row >= y + h) return;
             bool top = frame == vm_frame_count(vm) - 1;
             print_at(x, row++, w, S_TEXT, "%s%s %s ", top ? M_CHIP_CALL : M_CHIP_OFF, top ? " ▶" : " ",
-                     f ? f->full_name : vm_trial_count(vm) ? L("prova", "try") : L("globali", "globals"));
+                     f ? f->full_name : vm_trial_count(vm) ? T("try") : T("globals"));
         }
         Pointer base = vm_pointer_to(vm, i);
         int from = 0, limit = 8; /* long arrays: around what was touched */
@@ -790,7 +793,7 @@ void run_memory_draw(App *app, int x, int y, int w, int h) {
             if (from > o->count - limit) from = o->count - limit;
             break;
         }
-        if (from > 0 && row < y + h) print_at(x, row++, w, S_FAINT, L("           … altri %d", "           … %d more"), from);
+        if (from > 0 && row < y + h) print_at(x, row++, w, S_FAINT, T("           … %d more"), from);
         for (int k = from; k < o->count && k < from + limit && row < y + h; k++) {
             Pointer at = moved(base, k);
             const Value *v = vm_cell(vm, at);
@@ -810,6 +813,6 @@ void run_memory_draw(App *app, int x, int y, int w, int h) {
             row++;
         }
         int rest = o->count - from - limit;
-        if (rest > 0 && row < y + h) print_at(x, row++, w, S_FAINT, L("           … altri %d", "           … %d more"), rest);
+        if (rest > 0 && row < y + h) print_at(x, row++, w, S_FAINT, T("           … %d more"), rest);
     }
 }

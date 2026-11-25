@@ -1,5 +1,5 @@
-#include "plike/parser.h"
-#include "plike/vm.h"
+#include "pseudoscope/parser.h"
+#include "pseudoscope/vm.h"
 #include "unit.h"
 
 #include <stdlib.h>

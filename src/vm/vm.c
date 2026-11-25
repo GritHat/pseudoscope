@@ -1,4 +1,4 @@
-#include "plike/vm.h"
+#include "pseudoscope/vm.h"
 
 #include <limits.h>
 #include <math.h>
@@ -1244,7 +1244,7 @@ static void print_text(Vm *vm, Pointer p) {
     for (;;) {
         Value *cell = access(vm, p);
         if (!cell) {
-            vm->s.message = "the text has no end: a character 0 is missing";
+            vm->s.message = N_("the text has no end: a character 0 is missing");
             return;
         }
         if (cell->as.i == 0) return;

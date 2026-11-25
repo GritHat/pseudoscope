@@ -1,5 +1,7 @@
 #include "screen.h"
 
+#include "pseudoscope/i18n.h"
+
 #include <errno.h>
 #include <poll.h>
 #include <signal.h>
@@ -10,6 +12,13 @@
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
+
+/* PSEUDOSCOPE_FIT=FILE: every text that did not fit where it was put is written
+ * there, a line each: what happened, the frame, where, the room, the room it
+ * needed, the text. tests/fit.py reads it, language by language. */
+static FILE *fit_log;
+static int fit_frame;
+static bool fit_silent;
 
 typedef struct {
     char ch[5];
@@ -67,7 +76,7 @@ static void allocate(int w, int h) {
     prev = calloc((size_t)w * (size_t)h, sizeof(Cell));
     if (!cur || !prev) {
         screen_close();
-        fputs("pseudoscope: out of memory\n", stderr);
+        fputs(T("pseudoscope: out of memory\n"), stderr);
         exit(3);
     }
     width = w;
@@ -131,6 +140,7 @@ bool screen_open(void) {
 }
 
 void screen_open_headless(int w, int h) {
+    if (getenv("PSEUDOSCOPE_FIT")) fit_log = fopen(getenv("PSEUDOSCOPE_FIT"), "a");
     headless = active = true;
     const char *glyphs = getenv("PSEUDOSCOPE_GLYPHS"), *depth = getenv("PSEUDOSCOPE_COLORS");
     if (glyphs && *glyphs) {
@@ -240,6 +250,7 @@ static void set_cell(int x, int y, const char *s, int n, Style st) {
 }
 
 void frame_begin(void) {
+    fit_frame++;
     if (resized) {
         resized = 0;
         measure();
@@ -454,9 +465,27 @@ int text_width(const char *s) {
     return w;
 }
 
+void fit_quiet(bool quiet) { fit_silent = quiet; }
+
+void fit_note(const char *what, int x, int y, int room, int needed, const char *text) {
+    if (!fit_log || fit_silent) return;
+    fprintf(fit_log, "%s\t%d\t%d\t%d\t%d\t%d\t", what, fit_frame, x, y, room, needed);
+    for (const char *s = text; *s; s++) {
+        if (*s == '\001') {
+            if (s[1]) s++;
+            continue;
+        }
+        fputc(*s == '\n' || *s == '\t' ? ' ' : *s, fit_log);
+    }
+    fputc('\n', fit_log);
+    fflush(fit_log);
+}
+
 static int draw_markup(int x, int y, int max, Style base, const char *s) {
     int total = text_width(s);
     bool cut = max >= 0 && total > max;
+    if (cut) fit_note("cut", x, y, max, total, s);
+    else if (y >= 0 && y < height && total > 0 && x + total > width) fit_note("off", x, y, width - x, total, s);
     int limit = cut ? max - 1 : total, col = 0;
     Style now = base;
     while (*s && col < limit) {
@@ -519,6 +548,7 @@ int print_wrapped(int x, int y, int w, int max_lines, Style base, const char *fo
     FORMAT(text);
     Style now = base;
     int line = 0, col = 0;
+    bool lost = false;
     if (w <= 0) return 0;
     for (const char *s = text; *s;) {
         if (*s == '\001') {
@@ -552,9 +582,11 @@ int print_wrapped(int x, int y, int w, int max_lines, Style base, const char *fo
         }
         int n = char_bytes(s);
         if (line < max_lines) set_cell(x + col, y + line, s, n, now);
+        else lost = true;
         s += n;
         col++;
     }
+    if (lost) fit_note("lost", x, y, w * max_lines, text_width(text), text);
     return line + 1 < max_lines ? line + 1 : max_lines;
 }
 

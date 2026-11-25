@@ -1,4 +1,4 @@
- ◆ PSEUDOSCOPE  thesis_plan.puml ▸ piano (Gantt)
+ ◆ PSEUDOSCOPE  thesis_plan.puml ▸ plan (Gantt)
 
 ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │                                                                                                            │
@@ -18,9 +18,9 @@
 │                                                                                                            │
 │                                                                                                            │
 │ ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │
-│  2026-03-17   finite 2 / 6                                                                                 │
-│ in corso: Experiments, Write                                                                               │
+│  2026-03-17   done 2 / 6                                                                                   │
+│ in progress: Experiments, Write                                                                            │
 │ Read the literature  2026-03-02 → 2026-03-11                                                               │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-  →  avanti nel tempo   ←  indietro   Spazio  va da solo   ↑↓  attività   0  da capo   Esc  file   ?  aiuto
+  →  on in time   ←  back   Space  play   ↑↓  task   0  restart   Esc  files   ?  help

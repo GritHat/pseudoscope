@@ -16,7 +16,7 @@ flowchart LR
 | `src/vm` | bytecode compiler and virtual machine |
 | `src/tui` | the interface |
 | `src/cli` | options, reading and writing files, running the C compiler |
-| `src/util` | arena, string buffer, messages |
+| `src/util` | arena, string buffer, messages, languages ([localization.md](localization.md)) |
 
 Everything that belongs to a translation lives in one arena, freed at the end.
 

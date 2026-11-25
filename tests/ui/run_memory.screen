@@ -1,21 +1,21 @@
- ◆ PSEUDOSCOPE  basic.pscope                          ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
-  ‖ fermo   BubbleSort
-╭─ Tradotto in C ────────────────────────────────────╮╭─ Memoria ──────────────────────────────────────────────────────╮
-│  void BubbleSort(int n, float A[n]) {              ││ indirizzo  nome          valore       byte                     │
+ ◆ PSEUDOSCOPE  basic.pscope                               ▐ System ▌▸▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
+  ‖ paused   BubbleSort
+╭─ Translated to C ──────────────────────────────────╮╭─ Memory ───────────────────────────────────────────────────────╮
+│  void BubbleSort(int n, float A[n]) {              ││ address    name          value        byte                     │
 │      int i;                                        ││  ▶ BubbleSort                                                  │
-│      int j;                                        ││ 7fffefd3   ordinato      true         01                       │
+│      int j;                                        ││ 7fffefd3   sorted        true         01                       │
 │      float temp;                                   ││ 7fffefd4   temp          37.0         00 00 14 42              │
-│      bool ordinato;                                ││ 7fffefd8   j             2            02 00 00 00              │
-│      ordinato = false;                             ││ 7fffefdc   i             1            01 00 00 00              │
+│      bool sorted;                                  ││ 7fffefd8   j             2            02 00 00 00              │
+│      sorted = false;                               ││ 7fffefdc   i             1            01 00 00 00              │
 │      i = 1;                                        ││ 7fffefe0   n             6            06 00 00 00              │
-│      while (i < n && !ordinato) {                  ││                                                                │
-│          ordinato = true;                          ││   prova                                                        │
+│      while (i < n && !sorted) {                    ││                                                                │
+│          sorted = true;                            ││   try                                                          │
 │          for (j = 1; j <= n - i; j++) {            ││ 7fffefe4   A[1]          34.0         00 00 08 42              │
 │              if (A[j - 1] > A[j]) {                ││ 7fffefe8   A[2]          37.0         00 00 14 42              │
 │                  temp = A[j - 1];                  ││ 7fffefec   A[3]          28.0         00 00 e0 41              │
 │▶                 A[j - 1] = A[j];                  ││ 7fffeff0   A[4]          16.0         00 00 80 41              │
 │                  A[j] = temp;                      ││ 7fffeff4   A[5]          44.0         00 00 30 42              │
-│                  ordinato = false;                 ││ 7fffeff8   A[6]          36.0         00 00 10 42              │
+│                  sorted = false;                   ││ 7fffeff8   A[6]          36.0         00 00 10 42              │
 │              }                                     ││ 7fffeffc   n             6            06 00 00 00              │
 │          }                                         ││                                                                │
 │          i = i + 1;                                ││                                                                │
@@ -26,9 +26,9 @@
 │                                                    ││                                                                │
 │                                                    ││                                                                │
 ╰────────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────╯
-╭─ Cosa è successo ────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ? j = 2, fino a n - i = 5   vero   si entra nel ciclo                                                                │
-│ ? A[j] > A[j + 1]  →  37.0 > 28.0   vero   si esegue questo ramo                                                     │
-│ ✎ temp diventa  37.0                                                                                                 │
+╭─ What happened ──────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ ? j = 2, up to n - i = 5   true   into the loop                                                                      │
+│ ? A[j] > A[j + 1]  →  37.0 > 28.0   true   this branch runs                                                          │
+│ ✎ temp becomes  37.0                                                                                                 │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   n  salta   g  alla fine   ?  aiuto
+  →  step   ←  back   Space  play   Enter  details   Esc  overview   n  over   g  to the end   ?  help

@@ -1,5 +1,5 @@
-#include "plike/blocks.h"
-#include "plike/uml.h"
+#include "pseudoscope/blocks.h"
+#include "pseudoscope/uml.h"
 #include "unit.h"
 
 typedef struct {

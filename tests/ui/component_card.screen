@@ -1,8 +1,8 @@
- ◆ PSEUDOSCOPE  election.pscope                                                    ▐ Mappa ▌▸▐ Codice ▌▸▐ C ▌
+ ◆ PSEUDOSCOPE  election.pscope                                                        ▐ Map ▌▸▐ Code ▌▸▐ C ▌
 
-╭─ Mappa ──────────────────────────╮╭────────────────────────────────────────────────────────────────────────╮
-│ Componenti                       ││                                                                        │
-│▸ ▣ Node                          ││  Node  componente: vive da solo e scambia messaggi                     │
+╭─ Map ────────────────────────────╮╭────────────────────────────────────────────────────────────────────────╮
+│ Components                       ││                                                                        │
+│▸ ▣ Node                          ││  Node  component: lives on its own and exchanges messages              │
 │    → start                       ││                                                                        │
 │    ■ wait_for_leader             ││                        ╭──────────────────────╮                        │
 │    ■ step_down                   ││                        │         Node         │                        │
@@ -13,17 +13,17 @@
 │    → Heartbeat                   ││               Beat ───▶│ voted_for integer    │                        │
 │    → Crash                       ││          Heartbeat ───▶│ deadline integer     │                        │
 │                                  ││              Crash ───▶│──────────────────────│                        │
-│ Sottoprogrammi                   ││                        │ wait_for_leader()    │                        │
+│ Subprograms                      ││                        │ wait_for_leader()    │                        │
 │  ■ name_nodes                    ││                        │ step_down()          │                        │
 │  ƒ leader                        ││                        ╰──────────────────────╯                        │
 │  ƒ leaders                       ││                                                                        │
-│  ƒ clashes                       ││  I suoi stati                                                          │
-│  ■ main  si parte da qui         ││  ╭───────────╮── Timeout ──▶ Candidate                                 │
+│  ƒ clashes                       ││  Its states                                                            │
+│  ■ main  starts here             ││  ╭───────────╮── Timeout ──▶ Candidate                                 │
 │                                  ││  │ Follower  │── RequestVote ──▶ Follower                              │
-│ Dati condivisi                   ││  ╰───────────╯── Heartbeat ──▶ Follower                                │
-│  ● variabili globali             ││               ── Crash ──▶ Crashed                                     │
+│ Shared data                      ││  ╰───────────╯── Heartbeat ──▶ Follower                                │
+│  ● global variables              ││               ── Crash ──▶ Crashed                                     │
 │                                  ││                                                                        │
-│ Prove                            ││  ╭───────────╮── Timeout ──▶ Candidate                                 │
+│ Tests                            ││  ╭───────────╮── Timeout ──▶ Candidate                                 │
 │  ◇ one leader, and another one … ││  │ Candidate │── RequestVote ──▶ Follower                              │
 │  ◇ never two leaders in the sam… ││  ╰───────────╯── Vote ──▶ Leader                                       │
 │                                  ││               ── Heartbeat ──▶ Follower                                │
@@ -31,4 +31,4 @@
 │                                  ││                                                                        │
 ╰──────────────────────────────────╯╰────────────────────────────────────────────────────────────────────────╯
 
-  ↑↓  scorri   Invio  più dettaglio   Esc  meno dettaglio   r  esegui   t  prove   E  modifica   ?  aiuto
+  ↑↓  move   Enter  more detail   Esc  less detail   r  run   t  tests   E  edit   ?  help

@@ -1,4 +1,4 @@
- ◆ PSEUDOSCOPE  fib.pscope ▸ fib                     ▐ Mappa ▌▸▐ Codice ▌▸▐ C ▌
+ ◆ PSEUDOSCOPE  fib.pscope ▸ fib                         ▐ Map ▌▸▐ Code ▌▸▐ C ▌
 
 ╭─ fib ────────────────────────────────────────────────────────────────────────╮
 │     3 function fib(in n: integer): integer                                   │
@@ -21,4 +21,4 @@
 │                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
-  ↑↓  scorri   Invio  più dettaglio   Esc  meno dettaglio   q  esci   ?  aiuto
+  ↑↓  move   Enter  more detail   Esc  less detail   r  run   ?  help

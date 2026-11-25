@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Makes the demo video: the real interface, driven by keys, with captions.
 
-Usage: make.py OUTPUT.mp4 [THUMBNAIL.png] [--music=FILE|none]
+Usage: make.py OUTPUT.mp4 [THUMBNAIL.png] [--music=FILE|none] [--lang=CODE]
        make.py --preview OUTPUT.gif         (the short one, which plays by itself in a README)
        make.py --thumbnail OUTPUT.png       (only the picture that stands for the video)
        make.py --soundtrack OUTPUT.wav      (only the music, to listen to it)
@@ -10,8 +10,13 @@ Usage: make.py OUTPUT.mp4 [THUMBNAIL.png] [--music=FILE|none]
 Needs Pillow, numpy and ffmpeg. The scenes in a terminal run the real commands:
 the last chapter needs rustc, java and python3. The music is written by
 music.py, so it is nobody else's; --music takes a file instead, or none.
+
+Everything is in English. --lang=it films the interface in Italian with the
+captions of story_it.py; a language without captions of its own keeps the
+English ones.
 """
 import glob
+import importlib
 import os
 import re
 import shutil
@@ -28,6 +33,19 @@ sys.path.insert(0, str(Path(__file__).parent))
 import logo  # noqa: E402
 import music  # noqa: E402
 from story import STORY, TRAILER  # noqa: E402
+
+# The language of the interface and of the captions.
+LANG = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--lang=")), "en")
+try:
+    WORDS = importlib.import_module("story_" + LANG).WORDS
+except ImportError:
+    WORDS = {}
+
+
+def say(text):
+    """A text of the story, in the language of the video."""
+    return WORDS.get(text, text)
+
 
 # Programs that write files write them here, not among the examples.
 WORK = tempfile.mkdtemp(prefix="pseudoscope-demo-")
@@ -71,7 +89,7 @@ def screen(session, keys, cache={}):
     path, options = session
     key = (path, options, keys)
     if key not in cache:
-        out = subprocess.run([str(BIN), "ui", str(ROOT / path), f"--size={COLS}x{ROWS}", "--color=always", "--keys=" + keys, *options],
+        out = subprocess.run([str(BIN), "ui", str(ROOT / path), f"--size={COLS}x{ROWS}", "--color=always", "--keys=" + keys, "--lang=" + LANG, *options],
                              cwd=WORK, env=dict(os.environ, HOME=str(ROOT.parent)), capture_output=True, text=True, check=True).stdout
         rows = []
         fg = bg = None
@@ -105,7 +123,7 @@ def command(text, cache={}):
     """What a command prints, run for real from the folder of the project."""
     if text not in cache:
         path = os.pathsep.join([str(ROOT / "bin"), str(Path.home() / ".cargo" / "bin"), os.environ.get("PATH", "")])
-        done = subprocess.run(["bash", "-c", text], cwd=ROOT, env=dict(os.environ, PATH=path), capture_output=True, text=True)
+        done = subprocess.run(["bash", "-c", text], cwd=ROOT, env=dict(os.environ, PATH=path, PSEUDOSCOPE_LANG=LANG), capture_output=True, text=True)
         out = (done.stdout + done.stderr).rstrip("\n")
         if "cannot run" in out or "not found" in out:
             raise SystemExit(f"demo: {text!r} needs a tool that is not installed:\n{out}")
@@ -165,8 +183,10 @@ def region(rows, spot):
 
 # ---- overlays ----
 
-KEYNAMES = {"<right>": "→", "<left>": "←", "<up>": "↑", "<down>": "↓", "<enter>": "Invio", "<esc>": "Esc",
-            "<tab>": "Tab", "<space>": "Spazio", "<home>": "Inizio", "<end>": "Fine", "<back>": "⌫"}
+KEYNAMES = {"<right>": "→", "<left>": "←", "<up>": "↑", "<down>": "↓", "<enter>": "Enter", "<esc>": "Esc",
+            "<tab>": "Tab", "<space>": "Space", "<home>": "Home", "<end>": "End", "<back>": "⌫"}
+KEYNAMES.update({"it": {"<enter>": "Invio", "<space>": "Spazio", "<home>": "Inizio", "<end>": "Fine"},
+                 "es": {"<enter>": "Intro", "<space>": "Espacio", "<home>": "Inicio", "<end>": "Fin"}}.get(LANG, {}))
 
 
 def wrap(d, text, fnt, width):
@@ -189,30 +209,24 @@ def keycap(d, x, y, text, hot):
     return w
 
 
-def caption(it, en):
+def caption(text):
     """The band with the words; drawn once per caption."""
     im = Image.new("RGB", (W - 520, H - BAND - 14), BG)
     d = ImageDraw.Draw(im)
-    size = 38
-    lines = wrap(d, it, BOLD[38], im.width - 40)
+    lines = wrap(d, text, BOLD[38], im.width - 40)
     if len(lines) > 2:
-        raise SystemExit(f"demo: too long: {it!r}")
+        raise SystemExit(f"demo: too long: {text!r}")
     d.rounded_rectangle([0, 4, 8, im.height - 10], 4, fill=YELLOW)
-    y = 0
+    y = 24 if len(lines) == 1 else 2
     for line in lines:
-        d.text((30, y), line, font=BOLD[size], fill=TEXT)
-        y += 46
-    small = wrap(d, en, SANS[26], im.width - 40)
-    for line in small[:1]:
-        d.text((30, y + 4), line, font=SANS[26], fill=DIM)
-    if len(small) > 1:
-        raise SystemExit(f"demo: too long: {en!r}")
+        d.text((30, y), line, font=BOLD[38], fill=TEXT)
+        y += 50
     return im
 
 
-def reading_time(it):
+def reading_time(text):
     """Seconds needed to read a caption and look at what it is about."""
-    return max(3.2, 1.5 + len(it) * 0.062)
+    return max(3.2, 1.5 + len(text) * 0.062)
 
 
 def ease(t):
@@ -279,22 +293,24 @@ class Film:
             size = 160 if y >= 300 else 120
             logo.draw(im, W // 2 - size // 2, y - size - 30, size)
         if scene.get("tag"):
-            w = d.textlength(scene["tag"], font=BOLD[34]) + 60
+            w = d.textlength(say(scene["tag"]), font=BOLD[34]) + 60
             d.rounded_rectangle([(W - w) / 2, y, (W + w) / 2, y + 62], 31, fill=scene.get("color", BLUE))
-            d.text((W / 2, y + 31), scene["tag"], font=BOLD[34], fill=(16, 16, 20), anchor="mm")
+            d.text((W / 2, y + 31), say(scene["tag"]), font=BOLD[34], fill=(16, 16, 20), anchor="mm")
             y += 110
-        d.text((W / 2, y + 45), scene["title"], font=BOLD[84], fill=TEXT, anchor="mm")
+        for text, fnt in ((say(scene["title"]), BOLD[84]), (say(scene["sub"]), SANS[44])):
+            if d.textlength(text, font=fnt) > W - 160:
+                raise SystemExit(f"demo: too long for a card: {text!r}")
+        d.text((W / 2, y + 45), say(scene["title"]), font=BOLD[84], fill=TEXT, anchor="mm")
         y += 130
-        d.text((W / 2, y), scene["sub"], font=SANS[44], fill=YELLOW, anchor="mm")
+        d.text((W / 2, y), say(scene["sub"]), font=SANS[44], fill=YELLOW, anchor="mm")
         y += 58
-        d.text((W / 2, y), scene["en"], font=SANS[30], fill=DIM, anchor="mm")
-        y += 90
+        y += 64
         for left, right in scene.get("lines", []):
             d.text((W / 2 - 30, y), left, font=MONOB, fill=BLUE, anchor="rm")
-            d.text((W / 2 + 10, y), right, font=SANS[30], fill=TEXT, anchor="lm")
+            d.text((W / 2 + 10, y), say(right), font=SANS[30], fill=TEXT, anchor="lm")
             y += 58
         self.progress(d)
-        text = scene["title"] + scene["sub"] + "".join(a + b for a, b in scene.get("lines", []))
+        text = say(scene["title"]) + say(scene["sub"]) + "".join(a + say(b) for a, b in scene.get("lines", []))
         seconds = scene.get("seconds") or 1.6 + len(text) * 0.04
         previous = self.last if self.frames else Image.new("RGB", (W, H), BG)
         self.fade(previous, im)
@@ -359,12 +375,12 @@ class Film:
 
     def shell_(self, scene):
         """Steps in a terminal: caption, a command typed, what it prints."""
-        self.chapter = scene["name"]
+        self.chapter = say(scene["name"])
         self.marks_now(scene["name"])
         history, first = [], True
         for step in scene["steps"]:
-            words = caption(step["it"], step["en"])
-            needed = step.get("seconds") or reading_time(step["it"])
+            words = caption(say(step["say"]))
+            needed = step.get("seconds") or reading_time(say(step["say"]))
             start = self.time
             if step.get("clear"):
                 history = []
@@ -392,24 +408,24 @@ class Film:
             rows = [[]] + history[-(ROWS - 2):]
             if self.pipe:
                 term = paint(rows)
-                self.last = self.frame(term, words, ["Invio"], True)
+                self.last = self.frame(term, words, [KEYNAMES["<enter>"]], True)
             self.put(self.last, 0.5)
-            self.settle(term, rows, words, ["Invio"], step, start, needed, True)
+            self.settle(term, rows, words, [KEYNAMES["<enter>"]], step, start, needed, True)
 
     def chapter_(self, scene):
         """Steps: caption, keys, what to look at."""
         session = (scene["open"], tuple(scene.get("options", ())))
-        self.chapter = scene["name"]
+        self.chapter = say(scene["name"])
         self.marks_now(scene["name"])
         typed, pressed = scene.get("start", ""), []
         term = paint(screen(session, typed)) if self.pipe else None
         first = True
         for step in scene["steps"]:
             rows = screen(session, typed)
-            words = caption(step["it"], step["en"])
+            words = caption(say(step["say"]))
             keys = re.findall(r"<\w+>|.", step.get("keys", ""))
             pace = step.get("pace", 0.55)
-            needed = step.get("seconds") or reading_time(step["it"])
+            needed = step.get("seconds") or reading_time(say(step["say"]))
             start = self.time
             lead = min(1.6, needed * 0.35) if keys else 0
             if not keys and step.get("spot"):
@@ -445,9 +461,9 @@ class Film:
         for scene in self.story:
             if "title" in scene:
                 if not self.pipe:
-                    self.chapters.append((self.time, scene.get("chapter", scene["title"]), scene.get("title_en", scene["title"])))
+                    self.chapters.append((self.time, say(scene.get("chapter", scene["title"]))))
                     self.time += 0.4
-                    text = scene["title"] + scene["sub"] + "".join(a + b for a, b in scene.get("lines", []))
+                    text = say(scene["title"]) + say(scene["sub"]) + "".join(a + say(b) for a, b in scene.get("lines", []))
                     self.time += scene.get("seconds") or 1.6 + len(text) * 0.04
                     self.frames = round(self.time * FPS)
                 else:
@@ -532,15 +548,15 @@ def clock(t):
 def chapters(plan):
     """Where each part begins, as the sites that show videos want it: none shorter than ten seconds."""
     kept = []
-    for t, it, en in plan.chapters:
+    for t, name in plan.chapters:
         if kept and t - kept[-1][0] < 10:
             t = kept.pop()[0]
-        kept.append((t, it, en))
+        kept.append((t, name))
     return kept
 
 
 def main():
-    words = [w for w in sys.argv[1:] if not w.startswith("--music=")]
+    words = [w for w in sys.argv[1:] if not w.startswith(("--music=", "--lang="))]
     chosen = [w.split("=", 1)[1] for w in sys.argv[1:] if w.startswith("--music=")]
     mode = words.pop(0) if words and words[0].startswith("--") else ""
     if mode not in ("", "--preview", "--thumbnail", "--soundtrack", "--check") or (mode != "--check" and not words):
@@ -553,10 +569,8 @@ def main():
     plan = Film(story, None, preview=preview)
     plan.run()
     print(f"{int(plan.time // 60)}:{plan.time % 60:04.1f}")
-    for which in (1, 2):
-        print()
-        for chapter in chapters(plan):
-            print(f"{clock(chapter[0])} {chapter[which]}")
+    for chapter in chapters(plan):
+        print(f"{clock(chapter[0])} {chapter[1]}")
     starts = [chapter[0] for chapter in chapters(plan)]
     if mode == "--check":
         return

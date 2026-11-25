@@ -1,16 +1,16 @@
- ◆ PSEUDOSCOPE  tree.pscope                                              ▐ Mappa ▌▸▐ Codice ▌▸▐ C ▌
+ ◆ PSEUDOSCOPE  tree.pscope                                                  ▐ Map ▌▸▐ Code ▌▸▐ C ▌
 
-╭─ Mappa ───────────────────────╮╭─────────────────────────────────────────────────────────────────╮
-│ Sottoprogrammi                ││                                                                 │
-│  ■ insert                     ││  Node  record: più valori insieme, ognuno con un nome           │
-│  ■ main  si parte da qui      ││                                                                 │
+╭─ Map ─────────────────────────╮╭─────────────────────────────────────────────────────────────────╮
+│ Subprograms                   ││                                                                 │
+│  ■ insert                     ││  Node  record: several values together, each with a name        │
+│  ■ main  starts here          ││                                                                 │
 │                               ││  ╭─ Node ───────────────────────────────────────────────╮       │
-│ Strutture (record)            ││  │ key             integer                              │       │
+│ Structures (records)          ││  │ key             integer                              │       │
 │▸ ▦ Node                       ││  │ left            ──▶ Node                             │       │
 │                               ││  │ right           ──▶ Node                             │       │
 │                               ││  ╰──────────────────────────────────────────────────────╯       │
 │                               ││                                                                 │
-│                               ││  usato da     insert   main                                     │
+│                               ││  used by      insert   main                                     │
 │                               ││                                                                 │
 │                               ││                                                                 │
 │                               ││                                                                 │
@@ -27,4 +27,4 @@
 │                               ││                                                                 │
 ╰───────────────────────────────╯╰─────────────────────────────────────────────────────────────────╯
 
-  ↑↓  scorri   Invio  più dettaglio   Esc  meno dettaglio   r  esegui   E  modifica   ?  aiuto
+  ↑↓  move   Enter  more detail   Esc  less detail   r  run   E  edit   q  quit   ?  help

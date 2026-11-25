@@ -111,7 +111,7 @@ static void draw_uml_graph(App *app, int x, int y, int w, int h) {
     if (side) { /* the way done so far */
         int sx = x + w - side + 2, row = y;
         vline(sx - 2, y, h, S_FAINT, "│");
-        print_at(sx, row, side - 2, S_BOLD, "%s", L("Il cammino fatto", "The way so far"));
+        print_at(sx, row, side - 2, S_BOLD, "%s", T("The way so far"));
         row += 2;
         int first = app->walk.depth > h - 6 ? app->walk.depth - (h - 6) : 0;
         for (int i = first; i <= app->walk.depth && row < y + h; i++) {
@@ -142,34 +142,32 @@ static void class_box(const UmlClass *c, int x, int y, int w, bool selected, int
 
 static const char *many_words(const char *many) {
     if (!many) return "";
-    if (strcmp(many, "zero or more") == 0) return L("zero o più", "zero or more");
-    if (strcmp(many, "one or more") == 0) return L("uno o più", "one or more");
-    if (strcmp(many, "zero or one") == 0) return L("zero o uno", "zero or one");
-    return L("uno", "one");
+    if (strcmp(many, "zero or more") == 0) return T("zero or more");
+    if (strcmp(many, "one or more") == 0) return T("one or more");
+    if (strcmp(many, "zero or one") == 0) return T("zero or one");
+    return T("one");
 }
 
 const char *uml_kind_name(const Uml *u) {
-    static const char *const IT[] = {"", "diagramma di sequenza", "diagramma di stato", "diagramma delle classi", "diagramma",
-                                     "piano (Gantt)", "entità e relazioni", "albero", "torta"};
-    static const char *const EN[] = {"", "sequence diagram", "state diagram", "class diagram", "diagram", "plan (Gantt)",
-                                     "entities and relationships", "tree", "pie"};
+    static const char *const KINDS[] = {"", N_("sequence diagram"), N_("state diagram"), N_("class diagram"), N_("diagram"),
+                                        N_("plan (Gantt)"), N_("entities and relationships"), N_("tree"), N_("pie")};
     if (u->kind == UML_TREE && u->tree_kind) {
-        if (strcmp(u->tree_kind, "mind map") == 0) return L("mappa mentale", "mind map");
-        if (strcmp(u->tree_kind, "work breakdown") == 0) return L("scomposizione del lavoro (WBS)", "work breakdown (WBS)");
-        if (strcmp(u->tree_kind, "timeline") == 0) return L("linea del tempo", "timeline");
-        if (strcmp(u->tree_kind, "journey") == 0) return L("percorso", "journey");
-        if (strcmp(u->tree_kind, "outline") == 0) return L("indice", "outline");
+        if (strcmp(u->tree_kind, "mind map") == 0) return T("mind map");
+        if (strcmp(u->tree_kind, "work breakdown") == 0) return T("work breakdown (WBS)");
+        if (strcmp(u->tree_kind, "timeline") == 0) return T("timeline");
+        if (strcmp(u->tree_kind, "journey") == 0) return T("journey");
+        if (strcmp(u->tree_kind, "outline") == 0) return T("outline");
     }
-    return L(IT[u->kind], EN[u->kind]);
+    return tr(KINDS[u->kind]);
 }
 
 static const char *relation_words(const char *kind) {
-    if (strcmp(kind, "extends") == 0) return L("è un tipo di", "is a kind of");
-    if (strcmp(kind, "implements") == 0) return L("realizza", "implements");
-    if (strcmp(kind, "owns") == 0) return L("è fatta di", "is made of");
-    if (strcmp(kind, "has") == 0) return L("contiene", "contains");
-    if (strcmp(kind, "uses") == 0) return L("usa", "uses");
-    return L("conosce", "knows");
+    if (strcmp(kind, "extends") == 0) return T("is a kind of");
+    if (strcmp(kind, "implements") == 0) return T("implements");
+    if (strcmp(kind, "owns") == 0) return T("is made of");
+    if (strcmp(kind, "has") == 0) return T("contains");
+    if (strcmp(kind, "uses") == 0) return T("uses");
+    return T("knows");
 }
 
 static void draw_uml_classes(App *app, int x, int y, int w, int h) {
@@ -196,14 +194,14 @@ static void draw_uml_classes(App *app, int x, int y, int w, int h) {
         bool out = r->from == app->walk.selected;
         if (r->from_many) { /* entities: how many of each */
             const UmlClass *other = &u->classes[out ? r->to : r->from];
-            print_at(sx, row++, side - 3, S_TEXT, M_FOCUS "%s " M_RESET M_DIM "%s", many_words(out ? r->from_many : r->to_many), L("di questa", "of this"));
+            print_at(sx, row++, side - 3, S_TEXT, M_FOCUS "%s " M_RESET M_DIM "%s", many_words(out ? r->from_many : r->to_many), T("of this"));
             print_at(sx, row++, side - 3, S_TEXT, M_DIM "  %s", r->text[0] ? r->text : "—");
             print_at(sx, row++, side - 3, S_TEXT, M_FOCUS "%s " M_TYPE M_BOLD "%s", many_words(out ? r->to_many : r->from_many), other->name);
             row++;
             continue;
         }
         if (out) print_at(sx, row++, side - 3, S_TEXT, M_DIM "%s " M_TYPE M_BOLD "%s", relation_words(r->kind), u->classes[r->to].name);
-        else print_at(sx, row++, side - 3, S_TEXT, M_TYPE M_BOLD "%s" M_RESET M_DIM " %s %s", u->classes[r->from].name, relation_words(r->kind), L("questa", "this"));
+        else print_at(sx, row++, side - 3, S_TEXT, M_TYPE M_BOLD "%s" M_RESET M_DIM " %s %s", u->classes[r->from].name, relation_words(r->kind), T("this"));
     }
 }
 
@@ -225,47 +223,47 @@ void uml_draw(App *app) {
     draw_header(path, NULL, 0, 0, 0);
     draw_box(0, 2, w, h - 4, C_TYPE, u->title ? u->title : NULL);
     int x = 2, y = 4, iw = w - 4, ih = h - 7;
-    const char *play = L("va da solo", "play"), *space = L("Spazio", "Space"), *files = L("file", "files"), *help = L("aiuto", "help");
+    const char *play = T("play"), *space = T("Space"), *files = T("files"), *help = T("help");
     switch (u->kind) {
         case UML_SEQUENCE: {
             draw_uml_sequence(app, x, y, iw, ih);
-            const Hint hints[] = {{"→", L("messaggio", "message")}, {"←", L("indietro", "back")}, {space, play}, {"g", L("tutto", "all")},
-                                  {"Tab", L("altra alternativa", "other branch")}, {"0", L("da capo", "restart")},
+            const Hint hints[] = {{"→", T("message")}, {"←", T("back")}, {space, play}, {"g", T("all")},
+                                  {"Tab", T("other branch")}, {"0", T("restart")},
                                   {"Esc", files}, {"?", help}};
             draw_footer(hints, 8);
             break;
         }
         case UML_CLASS: case UML_ER: {
             draw_uml_classes(app, x, y, iw, ih);
-            const Hint hints[] = {{"↑↓", u->kind == UML_ER ? L("entità", "entity") : L("classe", "class")}, {"E", L("modifica", "edit")},
+            const Hint hints[] = {{"↑↓", u->kind == UML_ER ? T("entity") : T("class")}, {"E", T("edit")},
                                   {"Esc", files}, {"?", help}};
             draw_footer(hints, 4);
             break;
         }
         case UML_GANTT: {
             draw_uml_plan(app, x, y, iw, ih);
-            const Hint hints[] = {{"→", L("avanti nel tempo", "on in time")}, {"←", L("indietro", "back")}, {space, play},
-                                  {"↑↓", L("attività", "task")}, {"0", L("da capo", "restart")}, {"Esc", files}, {"?", help}};
+            const Hint hints[] = {{"→", T("on in time")}, {"←", T("back")}, {space, play},
+                                  {"↑↓", T("task")}, {"0", T("restart")}, {"Esc", files}, {"?", help}};
             draw_footer(hints, 7);
             break;
         }
         case UML_TREE: {
             draw_uml_tree(app, x, y, iw, ih);
-            const Hint hints[] = {{"↑↓", L("scorri", "move")}, {"→", L("dentro", "into")}, {"←", L("fuori", "out")}, {space, play},
-                                  {"0", L("da capo", "restart")}, {"Esc", files}, {"?", help}};
+            const Hint hints[] = {{"↑↓", T("move")}, {"→", T("into")}, {"←", T("out")}, {space, play},
+                                  {"0", T("restart")}, {"Esc", files}, {"?", help}};
             draw_footer(hints, 7);
             break;
         }
         case UML_PIE: {
             draw_uml_pie(app, x, y, iw, ih);
-            const Hint hints[] = {{"↑↓", L("parte", "slice")}, {"Esc", files}, {"?", help}};
+            const Hint hints[] = {{"↑↓", T("slice")}, {"Esc", files}, {"?", help}};
             draw_footer(hints, 3);
             break;
         }
         default: {
             draw_uml_graph(app, x, y, iw, ih);
-            const Hint hints[] = {{"↑↓", L("quale freccia", "which arrow")}, {"→", L("segui", "follow")}, {"←", L("indietro", "back")},
-                                  {space, play}, {"0", L("da capo", "restart")}, {"Esc", files}, {"?", help}};
+            const Hint hints[] = {{"↑↓", T("which arrow")}, {"→", T("follow")}, {"←", T("back")},
+                                  {space, play}, {"0", T("restart")}, {"Esc", files}, {"?", help}};
             draw_footer(hints, 7);
         }
     }

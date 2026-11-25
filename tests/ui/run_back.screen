@@ -1,20 +1,20 @@
- ◆ PSEUDOSCOPE  basic.pscope      ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
-  ‖ fermo   BubbleSort
-╭─ BubbleSort ───────────────────────────────╮╭─ Dati ─────────────────────────────────────────────╮
+ ◆ PSEUDOSCOPE  basic.pscope           ▐ System ▌▸▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
+  ‖ paused   BubbleSort
+╭─ BubbleSort ───────────────────────────────╮╭─ Data ─────────────────────────────────────────────╮
 │   23     var A : array [1..n] of real      ││                                                    │
 │   24     var temp : real                   ││ n  6    i  1    j  2    temp  37.0                 │
-│   25     var ordinato: logical            ┃││                                                    │
-│   26     begin                            ┃││ ordinato  true                                     │
-│   27         ordinato:= FALSE             ┃││                                                    │
+│   25     var sorted: logical              ┃││                                                    │
+│   26     begin                            ┃││ sorted  true                                       │
+│   27         sorted:= FALSE               ┃││                                                    │
 │   28         i:= 1                        ┃││ A  array [1..n] of real                            │
-│   29         while (i<n) AND (NOT ordinat…┃││           ▼ j                                      │
-│   30             ordinato:= TRUE          ┃││   34.0   28.0   37.0   16.0   44.0   36.0          │
+│   29         while (i<n) AND (NOT sorted)…┃││           ▼ j                                      │
+│   30             sorted:= TRUE            ┃││   34.0   28.0   37.0   16.0   44.0   36.0          │
 │   31             for j:= 1 to n-i do      ┃││    1      2      3      4      5      6            │
 │   32                 if A(j)>A(j+1) then  ┃││                                                    │
 │   33                     temp := A(j)     ┃││                                                    │
 │   34                     A(j) := A(j+1)   ┃││                                                    │
 │   35                     A(j+1) := temp   ┃││                                                    │
-│▶  36                     ordinato:= FALSE ┃││                                                    │
+│▶  36                     sorted:= FALSE   ┃││                                                    │
 │   37                 endif                ┃││                                                    │
 │   38             endfor                   ┃││                                                    │
 │   39             i:=i+1                   ┃││                                                    │
@@ -22,9 +22,9 @@
 │   41     end                              ┃││                                                    │
 │   42 end BubbleSort                       ┃││                                                    │
 ╰────────────────────────────────────────────╯╰────────────────────────────────────────────────────╯
-╭─ Cosa è successo ────────────────────────────────────────────────────────────────────────────────╮
-│ ✎ temp diventa  37.0                                                                             │
-│ ✎ A[2] diventa  28.0   prima era 37.0                                                            │
-│ ✎ A[3] diventa  37.0   prima era 28.0                                                            │
+╭─ What happened ──────────────────────────────────────────────────────────────────────────────────╮
+│ ✎ temp becomes  37.0                                                                             │
+│ ✎ A[2] becomes  28.0   it was 37.0                                                               │
+│ ✎ A[3] becomes  37.0   it was 28.0                                                               │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   n  salta   ?  aiuto
+  →  step   ←  back   Space  play   Enter  details   Esc  overview   n  over   ?  help

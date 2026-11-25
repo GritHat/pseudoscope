@@ -1,6 +1,6 @@
- ◆ PSEUDOSCOPE  tree.pscope ▸ insert                                               ▐ Mappa ▌▸▐ Codice ▌▸▐ C ▌
+ ◆ PSEUDOSCOPE  tree.pscope ▸ insert                                                   ▐ Map ▌▸▐ Code ▌▸▐ C ▌
 
-╭─ Pseudocodice ──────────────────────────────────────╮╭─ C ─────────────────────────────────────────────────╮
+╭─ Pseudocode ────────────────────────────────────────╮╭─ C ─────────────────────────────────────────────────╮
 │     9 procedure insert(in/out: root; in: node)      ││  void insert(struct Node **root, struct Node *node) │
 │    10 var root, node: Node*                         ││      if (*root == 0) {                              │
 │    11 begin                                         ││▶         *root = node;                              │
@@ -27,4 +27,4 @@
 │                                                     ││                                                     │
 ╰─────────────────────────────────────────────────────╯╰─────────────────────────────────────────────────────╯
 
-  ↑↓  scorri   Invio  più dettaglio   Esc  meno dettaglio   r  esegui   E  modifica   q  esci   ?  aiuto
+  ↑↓  move   Enter  more detail   Esc  less detail   r  run   E  edit   q  quit   ?  help

@@ -1,6 +1,6 @@
- ◆ PSEUDOSCOPE  paper.tex#1                 ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
-  ‖ fermo   main ▸ Gcd
-╭─ Gcd ──────────────────────────────────────────╮╭─ Dati ───────────────────────────────────────────────────╮
+ ◆ PSEUDOSCOPE  paper.tex#1                      ▐ System ▌▸▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
+  ‖ paused   main ▸ Gcd
+╭─ Gcd ──────────────────────────────────────────╮╭─ Data ───────────────────────────────────────────────────╮
 │   15 Funcion res_ <- Gcd(a, b)                 ││                                                          │
 │   16 Mientras b <> 0 Hacer                     ││ a  48    b  12    ⇒ Gcd  0    t  18    res_  ·           │
 │   17 t <- b                                    ││                                                          │
@@ -18,9 +18,9 @@
 │                                                ││                                                          │
 │                                                ││                                                          │
 ╰────────────────────────────────────────────────╯╰──────────────────────────────────────────────────────────╯
-╭─ Cosa è successo ──────────────────────────────────────────────────────────────────────────────────────────╮
-│ ? b != 0  →  18 != 0   vero   si entra nel ciclo                                                           │
-│ ✎ t diventa  18                                                                                            │
-│ ✎ b diventa  12   prima era 18                                                                             │
+╭─ What happened ────────────────────────────────────────────────────────────────────────────────────────────╮
+│ ? b != 0  →  18 != 0   true   into the loop                                                                │
+│ ✎ t becomes  18                                                                                            │
+│ ✎ b becomes  12   it was 18                                                                                │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   n  salta   ?  aiuto
+  →  step   ←  back   Space  play   Enter  details   Esc  overview   n  over   g  to the end   ?  help

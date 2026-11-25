@@ -1,6 +1,6 @@
-#include "plike/blocks.h"
+#include "pseudoscope/blocks.h"
 
-#include "plike/lexer.h"
+#include "pseudoscope/lexer.h"
 
 #include <stdio.h>
 #include <stdlib.h>

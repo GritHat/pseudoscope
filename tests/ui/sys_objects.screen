@@ -1,6 +1,6 @@
- ◆ PSEUDOSCOPE  stack_class.pscope          ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
-  ‖ fermo   main ▸ balanced
-  Sequenza   Comunicazione   Oggetti
+ ◆ PSEUDOSCOPE  stack_class.pscope               ▐ System ▌▸▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
+  ‖ paused   main ▸ balanced
+  Sequence   Communication   Objects
 ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ ╭─ s: Stack ────────────────────╮                                                                          │
 │ │ items 1 2 ? ? ? ? ? ? ? ? ? … │                                                                          │
@@ -24,9 +24,9 @@
 │                                                                                                            │
 │                                                                                                            │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Cosa è successo ──────────────────────────────────────────────────────────────────────────────────────────╮
-│ ✎ pop diventa  2   prima era 0                                                                             │
-│ ✎ size diventa  1   prima era 2                                                                            │
-│ ◀ Stack.pop restituisce  2                                                                                 │
+╭─ What happened ────────────────────────────────────────────────────────────────────────────────────────────╮
+│ ✎ pop becomes  2   it was 0                                                                                │
+│ ✎ size becomes  1   it was 2                                                                               │
+│ ◀ Stack.pop returns  2                                                                                     │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   Tab  altra vista   ?  aiuto
+  →  step   ←  back   Space  play   Enter  details   Esc  overview   Tab  other view   ?  help

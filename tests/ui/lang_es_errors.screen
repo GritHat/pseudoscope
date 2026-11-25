@@ -1,0 +1,30 @@
+ ◆ PSEUDOSCOPE  names.plike
+
+╭─ Para corregir antes de seguir ──────────────────────────────────────────────────────────────────╮
+│▸ ✗ línea 11  'p' ya está declarado en la línea 1                                                 │
+│  ✗ línea 1  'a' ya está declarado en la línea 1                                                  │
+│  ✗ línea 14  la función 'f' no tiene tipo de resultado                                           │
+│  ✗ línea 17  el parámetro 'x' no tiene tipo                                                      │
+│  ✗ línea 3  'b' ya está declarado en la línea 2                                                  │
+│  ✗ línea 4  el tipo 'unknown' no existe                                                          │
+│  ✗ línea 6  'x' no está declarado                                                                │
+│  ✗ línea 7  integer no es un registro                                                            │
+│  ✗ línea 8  'q' no está declarado                                                                │
+│  ✗ línea 8  'p' recibe 2 argumento(s), no 0                                                      │
+│  ✗ línea 9  'p' recibe 2 argumento(s), no 0                                                      │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────────────────────────────────────╮
+│     5 begin                                                                                      │
+│     6     x := 1                                                                                 │
+│     7     a.f := 2                                                                              ┃│
+│     8     q := p                                                                                ┃│
+│     9     p := 3                                                                                ┃│
+│    10 end p                                                                                     ┃│
+│ ▶  11 procedure p()                                                                             ┃│
+│    12 begin                                                                                     ┃│
+│    13 end p                                                                                      │
+│    14 function f(in x: integer)                                                                  │
+│    15 begin                                                                                      │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+  ↑↓  elegir   E  editar   Esc  archivos   ?  ayuda   q  salir

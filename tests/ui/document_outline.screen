@@ -1,13 +1,13 @@
- ◆ PSEUDOSCOPE  paper.tex#outline ▸ indice
+ ◆ PSEUDOSCOPE  paper.tex#outline ▸ outline
 
 ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │                                                                                                            │
-│ paper.tex                                                             │ Come ci si arriva                  │
+│ paper.tex                                                             │ How to get here                    │
 │  ├─  Euclid                                                           │                                    │
 │  └─ The plan                                                          │ paper.tex                          │
 │     └─ When                                                           │   Euclid                           │
 │                                                                       │                                    │
-│                                                                       │ 0 rami, 0 in tutto sotto           │
+│                                                                       │ 0 branches, 0 below in all         │
 │                                                                       │                                    │
 │                                                                       │                                    │
 │                                                                       │                                    │
@@ -23,4 +23,4 @@
 │                                                                       │                                    │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-  ↑↓  scorri   →  dentro   ←  fuori   Spazio  va da solo   0  da capo   Esc  file   ?  aiuto
+  ↑↓  move   →  into   ←  out   Space  play   0  restart   Esc  files   ?  help

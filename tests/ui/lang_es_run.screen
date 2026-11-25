@@ -1,0 +1,30 @@
+ ◆ PSEUDOSCOPE  fib.pscope         ▐ Sistema ▌▸▐ Programa ▌▸▐ Función ▌▸▐ Instrucción ▌▸▐ Memoria ▌
+  ‖ en pausa   main ▸ fib ▸ fib
+╭─ fib ──────────────────────────────────────╮╭─ Datos ────────────────────────────────────────────╮
+│    3 function fib(in n: integer): integer  ││                                                    │
+│    4 begin                                 ││ n  3    ⇒ fib  0                                   │
+│▶   5     if n < 2 then                     ││                                                    │
+│    6         return n                      ││                                                    │
+│    7     endif                             ││                                                    │
+│    8     return fib(n - 1) + fib(n - 2)    ││                                                    │
+│    9 end fib                               ││                                                    │
+│                                            ││                                                    │
+│                                            ││                                                    │
+│                                            ││                                                    │
+│                                            ││                                                    │
+│                                            ││                                                    │
+│                                            ││                                                    │
+│                                            ││                                                    │
+│                                            ││                                                    │
+│                                            ││                                                    │
+│                                            ││                                                    │
+│                                            ││                                                    │
+│                                            ││                                                    │
+│                                            ││                                                    │
+╰────────────────────────────────────────────╯╰────────────────────────────────────────────────────╯
+╭─ Qué ha pasado ──────────────────────────────────────────────────────────────────────────────────╮
+│ ▶ se entra en fib(n=4)                                                                           │
+│ ? n < 2  →  4 < 2   falso   esta rama se salta                                                   │
+│ ▶ se entra en fib(n=3)                                                                           │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+  →  paso   ←  atrás   Espacio  avanza   Intro  detalles   Esc  resumen   n  saltar   ?  ayuda

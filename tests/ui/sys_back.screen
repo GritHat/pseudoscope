@@ -1,6 +1,6 @@
- ◆ PSEUDOSCOPE  stop_and_wait.pscope        ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
-  ‖ fermo   everything arrives, once and in order, even if p ▸ Receiver.Data
-  Sequenza   Componenti   Stati   Tempi   Comunicazione   Verifiche                     tempo t = 11
+ ◆ PSEUDOSCOPE  stop_and_wait.pscope             ▐ System ▌▸▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
+  ‖ paused   everything arrives, once and in order, even if p ▸ Receiver.Data
+  Sequence   Components   States   Timing   Communication   Checks                      time t = 11
 ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │                             ╭───────╮                                      ╭──────────╮                    │
 │                             │ alice │                                      │ receiver │                    │
@@ -24,9 +24,9 @@
 │ →13                             │┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ Ack ────┃                         │
 │ →16                             │◷ Timeout                                       ┃                         │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Cosa è successo ──────────────────────────────────────────────────────────────────────────────────────────╮
-│ ▷ alice manda  Timeout  a alice                                                                            │
-│ ▶  Data(0, 10)  arriva a receiver                                                                          │
-│ ▷ receiver manda  Ack  a alice                                                                             │
+╭─ What happened ────────────────────────────────────────────────────────────────────────────────────────────╮
+│ ▷ alice sends  Timeout  to alice                                                                           │
+│ ▶  Data(0, 10)  reaches receiver                                                                           │
+│ ▷ receiver sends  Ack  to alice                                                                            │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   Tab  altra vista   ?  aiuto
+  →  step   ←  back   Space  play   Enter  details   Esc  overview   Tab  other view   ?  help

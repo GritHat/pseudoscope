@@ -2,7 +2,7 @@
 
 # Pseudoscope
 
-*[English](README.md)*
+*[English](README.md) · [Español](README.es.md) · [Português](README.pt.md)*
 
 Pseudocodice e progetti che prendono vita nel terminale. Si scrive un algoritmo, delle
 classi, un sistema distribuito o un diagramma; lo si guarda girare passo per passo,
@@ -30,9 +30,11 @@ in C, C++, Java, Rust, TypeScript, JavaScript o Python.
 - **Sette linguaggi**: C, C++, Java, Rust, TypeScript, JavaScript e Python, prove e
   simulazione comprese; ciò che un linguaggio non sa dire viene rifiutato spiegando
   perché.
+- **Nella tua lingua**: interfaccia, errori e aiuto in inglese, italiano, spagnolo e
+  portoghese.
 
-È nato come `plike-translator`, un progetto del primo anno per eseguire lo pseudocodice
-usato a lezione. Quello pseudocodice non ha mai avuto una sintassi fissa, quindi si
+È nato come un progetto del primo anno per eseguire il P-like, lo pseudocodice usato a
+lezione. Quello pseudocodice non ha mai avuto una sintassi fissa, quindi si
 accettano tutte le grafie: `A[i,j]`, `A[i][j]` o `A(i,j)`, `and`, `.AND.` o `&&`, `end f`
 o `endfunction`, e così via.
 
@@ -41,8 +43,8 @@ o `endfunction`, e così via.
 Servono un compilatore C11, make e un sistema POSIX. Per i test anche Python 3.
 
 ```sh
-git clone https://github.com/GritHat/plike-translator
-cd plike-translator
+git clone https://github.com/GritHat/pseudoscope
+cd pseudoscope
 make                 # bin/pseudoscope
 make install         # facoltativo, PREFIX=/usr/local
 ```
@@ -59,9 +61,13 @@ I programmi finiscono in `.pscope` (`.plike` funziona ancora), o in niente: un f
 che dicono le sue prime righe.
 
 Invio scende nel dettaglio, Esc risale, `r` esegue, `t` lancia le prove, `?` elenca i
-tasti. L'interfaccia è in italiano; `--lang=en` per l'inglese. Funziona in kitty, GNOME
-Terminal, Ptyxis, Konsole, xterm e simili, in tmux e screen, sulla console di Linux, e
-anche senza colori o senza Unicode: vedi [docs/interface.md](docs/interface.md).
+tasti. Funziona in kitty, GNOME Terminal, Ptyxis, Konsole, xterm e simili, in tmux e
+screen, sulla console di Linux, e anche senza colori o senza Unicode: vedi
+[docs/interface.md](docs/interface.md).
+
+Parla inglese, italiano, spagnolo e portoghese: la lingua del sistema, oppure `--lang=it`, oppure
+`PSEUDOSCOPE_LANG=es`. Per aggiungerne un'altra basta un file: vedi
+[docs/localization.md](docs/localization.md).
 
 ## Un programma, cinque livelli
 
@@ -149,8 +155,7 @@ pseudoscope ast diagram.puml              # che cosa ha capito (--dot per Graphv
 ```
 
 `exec`, `run` e `build` partono da una procedura chiamata `main`, senza parametri. `-`
-legge lo standard input. `--lang=it` dà i messaggi in italiano. `pseudoscope --help`
-elenca le opzioni; queste scelgono la grafia di P-like:
+legge lo standard input. `pseudoscope --help` elenca le opzioni; queste scelgono la grafia di P-like:
 
 | Opzione | Valori | Predefinito |
 |---|---|---|
@@ -160,8 +165,7 @@ elenca le opzioni; queste scelgono la grafia di P-like:
 | `--operators` | `standard`, `dotted`, `mixed` | `mixed` |
 | `-m`, `--mixed-arrays` | `true`, `false` | `true` |
 
-`-b` aggiunge il controllo degli indici al programma generato. Il vecchio nome, `plike`,
-funziona ancora.
+`-b` aggiunge il controllo degli indici al programma generato.
 
 ## Limiti
 
@@ -180,12 +184,13 @@ In inglese:
 - [Tradurre: sette linguaggi](docs/translation.md)
 - [Altri pseudocodici](docs/dialects.md)
 - [Diagrammi e documenti](docs/diagrams.md)
+- [Le lingue: inglese, italiano, spagnolo, portoghese, e come aggiungerne una](docs/localization.md)
 - [Come funziona](docs/design.md)
 
 ## Test
 
 ```sh
-make test       # test di unità, end to end, schermate, combinazioni di sintassi
+make test       # unità, end to end, schermate, cataloghi, ingombri, sintassi
 make sanitize   # gli stessi, con il programma sotto ASan e UBSan
 make targets    # ogni programma in ogni linguaggio di cui ci sono gli strumenti
 make fuzz       # programmi e diagrammi alterati, tasti a caso

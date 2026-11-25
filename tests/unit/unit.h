@@ -1,5 +1,5 @@
-#ifndef PLIKE_UNIT_H
-#define PLIKE_UNIT_H
+#ifndef PSEUDOSCOPE_UNIT_H
+#define PSEUDOSCOPE_UNIT_H
 
 #include <stdio.h>
 #include <string.h>

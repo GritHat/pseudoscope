@@ -1,16 +1,16 @@
- ◆ PSEUDOSCOPE  library_er.mmd ▸ entità e relazioni
+ ◆ PSEUDOSCOPE  library_er.mmd ▸ entities and relationships
 
 ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │                                                                                                            │
 │ ╭──────────────────────────────╮  ╭──────────────────────────────╮  │ BOOK                                 │
 │ │       MEMBER «entity»        │  │        LOAN «entity»         │  │                                      │
-│ │ int id PK                    │  │ int id PK                    │  │ uno di questa                        │
+│ │ int id PK                    │  │ int id PK                    │  │ one of this                          │
 │ │ string name                  │  │ date due                     │  │   exists as                          │
-│ │ date joined                  │  ╰──────────────────────────────╯  │ zero o più COPY                      │
+│ │ date joined                  │  ╰──────────────────────────────╯  │ zero or more COPY                    │
 │ ╰──────────────────────────────╯                                    │                                      │
-│                                   ╭──────────────────────────────╮  │ uno o più di questa                  │
+│                                   ╭──────────────────────────────╮  │ one or more of this                  │
 │ ╭──────────────────────────────╮  │        BOOK «entity»         │  │   writes                             │
-│ │        COPY «entity»         │  │ string isbn PK               │  │ uno o più AUTHOR                     │
+│ │        COPY «entity»         │  │ string isbn PK               │  │ one or more AUTHOR                   │
 │ │ int number PK                │  │ string title                 │  │                                      │
 │ │ string isbn FK               │  ╰──────────────────────────────╯  │                                      │
 │ ╰──────────────────────────────╯                                    │                                      │
@@ -23,4 +23,4 @@
 │                                                                     │                                      │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-  ↑↓  entità   E  modifica   Esc  file   ?  aiuto
+  ↑↓  entity   E  edit   Esc  files   ?  help

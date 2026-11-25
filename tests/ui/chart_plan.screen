@@ -1,4 +1,4 @@
- ◆ PSEUDOSCOPE  release_plan.mmd ▸ piano (Gantt) ▸ Releasing version 2
+ ◆ PSEUDOSCOPE  release_plan.mmd ▸ plan (Gantt) ▸ Releasing version 2
 
 ╭─ Releasing version 2 ──────────────────────────────────────────────────────────────────────────────────────╮
 │                                                                                                            │
@@ -18,9 +18,9 @@
 │                                                                                                            │
 │                                                                                                            │
 │ ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │
-│  2026-01-22   finite 3 / 7                                                                                 │
-│ in corso: Core                                                                                             │
-│ Architecture  2026-01-10 → 2026-01-13   aspetta Requirements                                               │
+│  2026-01-22   done 3 / 7                                                                                   │
+│ in progress: Core                                                                                          │
+│ Architecture  2026-01-10 → 2026-01-13   waits for Requirements                                             │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-  →  avanti nel tempo   ←  indietro   Spazio  va da solo   ↑↓  attività   0  da capo   Esc  file   ?  aiuto
+  →  on in time   ←  back   Space  play   ↑↓  task   0  restart   Esc  files   ?  help

@@ -1,17 +1,16 @@
-#ifndef PLIKE_UI_H
-#define PLIKE_UI_H
+#ifndef PSEUDOSCOPE_UI_H
+#define PSEUDOSCOPE_UI_H
 
-#include "plike/codegen.h"
-#include "plike/uml.h"
-#include "plike/blocks.h"
-#include "plike/target.h"
-#include "plike/vm.h"
+#include "pseudoscope/codegen.h"
+#include "pseudoscope/i18n.h"
+#include "pseudoscope/uml.h"
+#include "pseudoscope/blocks.h"
+#include "pseudoscope/target.h"
+#include "pseudoscope/vm.h"
 #include "screen.h"
 
 #include <time.h>
 
-extern bool ui_italian;
-#define L(it, en) (ui_italian ? (it) : (en))
 
 #define MIN_WIDTH 80
 #define MIN_HEIGHT 24

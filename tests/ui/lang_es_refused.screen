@@ -1,0 +1,30 @@
+ ◆ PSEUDOSCOPE  shapes.pscope ▸ Square                                 ▐ Mapa ▌▸▐ Código ▌▸▐ Rust ▌
+                                         Traducción a Rust
+╭─ Pseudocódigo ─────────────────────────────────╮╭─ Rust ─────────────────────────────────────────╮
+│ ▶  28 class Square extends Rectangle implemen… ││                                                │
+│    29     procedure side(in s: real)           ││ línea 20: Rust no tiene clases que extiendan   │
+│    30     begin                                ││ clases: 'Rectangle' solo podría extender una   │
+│    31         w := s                           ││ interfaz (un trait), y 'Shape' no lo es        │
+│    32         h := s                           ││                                                │
+│    33     end side                             ││                                                │
+│    34     procedure describe()                 ││                                                │
+│    35     begin                                ││                                                │
+│    36         print(4)                         ││                                                │
+│    37         super.describe()                 ││                                                │
+│    38     end describe                         ││                                                │
+│    39     function label(): integer            ││                                                │
+│    40     begin                                ││                                                │
+│    41         label := 400 + id                ││                                                │
+│    42     end label                            ││                                                │
+│    43 end Square                               ││                                                │
+│                                                ││                                                │
+│                                                ││                                                │
+│                                                ││                                                │
+│                                                ││                                                │
+│                                                ││                                                │
+│                                                ││                                                │
+│                                                ││  T  otro lenguaje                              │
+│                                                ││                                                │
+╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────╯
+
+  ↑↓  mover   Intro  más detalle   Esc  subir   r  ejecutar   E  editar   q  salir   ?  ayuda

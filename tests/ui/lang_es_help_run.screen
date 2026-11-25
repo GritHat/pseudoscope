@@ -1,0 +1,30 @@
+ ◆ PSEUDOSCOPE  Ayuda
+
+╭─ Teclas ───────────────────────────────────────╮╭─ Colores ──────────────────────────────────────╮
+│ → ←      un paso adelante, uno atrás           ││                                                │
+│ Espacio  avanza solo / se detiene              ││   5       se está leyendo                      │
+│ ↑ ↓      más rápido, más lento                 ││   5       recién escrito, resultado            │
+│ n        salta la llamada                      ││   5       dónde estamos                        │
+│ u        sale del subprograma                  ││  sort     procedimientos y funciones           │
+│ g        hasta el final (o hasta ●)            ││  Node     tipos y registros                    │
+│ 0        empieza de nuevo                      ││  ─▶       punteros                             │
+│ b        parada ● en la línea                  ││   ✗       error, falso                         │
+│ Intro    más detalle                           ││   ·       aún sin valor                        │
+│ Esc      subir                                 ││                                                │
+│ 1 … 5    directo a un nivel                    ││                                                │
+│ Tab      otra vista o variable                 ││  Nivel: qué se ve, y el paso                   │
+│ m        otro componente (Estados)             ││  1        Sistema: un mensaje                  │
+│ f        código, o su diagrama                 ││  2        Programa: una llamada                │
+│ v        arreglos: celdas o barras             ││  3        Función: una instrucción             │
+│ o        lo que se imprimió                    ││  4        Instrucción: una parte               │
+│ d        lo que se dibujó                      ││  5        Memoria: leer o escribir             │
+│ c        toda la historia                      ││                                                │
+│ x        volver a explorar                     ││                                                │
+│ q        salir                                 ││                                                │
+│                                                ││                                                │
+│                                                ││                                                │
+│                                                ││                                                │
+│                                                ││                                                │
+╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────╯
+
+  cualquier tecla  cerrar

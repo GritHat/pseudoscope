@@ -1,8 +1,8 @@
- ◆ PSEUDOSCOPE  ~/Desktop/plike-translator/examples/documents/lesson.md
+ ◆ PSEUDOSCOPE  ~/examples/documents/lesson.md
 
-╭─ File ───────────────────────────╮╭─ Anteprima ────────────────────────────────────────────────────────────╮
-│  ▪ ../                           ││ ƒ 2 sottoprogrammi   ▦ 0 record   82 righe                             │
-│  ◆ ≡ indice                      ││ ✓ nessun errore                                                 P-like │
+╭─ Files ──────────────────────────╮╭─ Preview ──────────────────────────────────────────────────────────────╮
+│  ▪ ../                           ││ ƒ 2 subprograms   ▦ 0 records   82 lines                               │
+│  ◆ ≡ outline                     ││ ✓ no errors                                                     P-like │
 │  ◆ 1  mermaid  The idea          ││ ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │
 │▸ ◆ 2  pseudocode  The algorithm  ││   22 function search(in n: integer, in a[n]: array of integer, in x:…┃ │
 │  ◆ 3  pseint  The same, as stud… ││   23 var lo, hi, mid: integer                                        ┃ │
@@ -23,4 +23,4 @@
 │                                  ││   38 end search                                                        │
 ╰──────────────────────────────────╯╰────────────────────────────────────────────────────────────────────────╯
 
-  ↑↓  scegli   Invio  apri   ←  cartella superiore   ?  aiuto   q  esci
+  ↑↓  choose   Enter  open   ←  parent folder   ?  help   q  quit

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Mutates the test programs; the translator must never crash or hang.
 
-Usage: fuzz.py PLIKE [ROUNDS] [SEED]. Build PLIKE with sanitizers (make fuzz).
+Usage: fuzz.py PSEUDOSCOPE [ROUNDS] [SEED]. Build PSEUDOSCOPE with sanitizers (make fuzz).
 """
 import glob
 import os
@@ -12,7 +12,7 @@ import sys
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
 
-PLIKE = os.path.abspath(sys.argv[1])
+PSEUDOSCOPE = os.path.abspath(sys.argv[1])
 ROUNDS = int(sys.argv[2]) if len(sys.argv) > 2 else 3000
 SEED = int(sys.argv[3]) if len(sys.argv) > 3 else 1
 
@@ -75,8 +75,8 @@ def run_ui(rng, text, ext):
         program.write(text)
         program.flush()
         try:
-            result = subprocess.run([PLIKE, "ui", program.name, "--keys=" + rng.choice("rt") + keys, "--size=" + size,
-                                     rng.choice(["--lang=it", "--lang=en"])], capture_output=True, timeout=120)
+            result = subprocess.run([PSEUDOSCOPE, "ui", program.name, "--keys=" + rng.choice("rt") + keys, "--size=" + size,
+                                     rng.choice(["--lang=it", "--lang=en", "--lang=es", "--lang=pt"])], capture_output=True, timeout=120)
         except subprocess.TimeoutExpired:
             return text, "timeout with keys " + keys
     if result.returncode == 0:
@@ -96,7 +96,7 @@ def run(i):
             program.flush()
             command = rng.choice([["check"], ["ast"], ["exec", "--steps=300000"], ["translate", "-o", output.name]])
             try:
-                result = subprocess.run([PLIKE, *command, program.name], stdin=subprocess.DEVNULL, capture_output=True, timeout=60,
+                result = subprocess.run([PSEUDOSCOPE, *command, program.name], stdin=subprocess.DEVNULL, capture_output=True, timeout=60,
                                         cwd=scratch)
             except subprocess.TimeoutExpired:
                 return text, "timeout in " + command[0]
@@ -110,13 +110,13 @@ def run(i):
         return None
     if rng.randrange(5) == 0:  # to another language: whatever is written, nothing must break
         try:
-            result = subprocess.run([PLIKE, "translate", "--to=" + rng.choice(LANGUAGES), "-", "-o", os.devnull], input=text,
+            result = subprocess.run([PSEUDOSCOPE, "translate", "--to=" + rng.choice(LANGUAGES), "-", "-o", os.devnull], input=text,
                                     capture_output=True, timeout=30)
         except subprocess.TimeoutExpired:
             return text, "timeout translating"
         bad = b"Sanitizer" in result.stderr or b"runtime error:" in result.stderr or result.returncode not in (0, 1)
         return (text, "translate\n" + result.stderr.decode(errors="replace")[:1500]) if bad else None
-    args = [PLIKE, rng.choice(["translate", "translate", "exec", "exec", "ast", "tokens"]), "-"]
+    args = [PSEUDOSCOPE, rng.choice(["translate", "translate", "exec", "exec", "ast", "tokens"]), "-"]
     args += rng.choice([[], ["-b"], ["--indexing=zero"], ["--assignment=equals"],
                         ["--operators=dotted"], ["--mixed-arrays=false"]])
     if args[1] == "exec":

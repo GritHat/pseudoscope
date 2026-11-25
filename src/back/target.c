@@ -1,5 +1,5 @@
-#include "plike/target.h"
-#include "plike/builtins.h"
+#include "pseudoscope/target.h"
+#include "pseudoscope/builtins.h"
 
 #include <string.h>
 

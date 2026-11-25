@@ -1,30 +1,30 @@
- ◆ PSEUDOSCOPE  basic.pscope      ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
-  ✓ finito
-╭─ Codice ───────────────────────────────────╮╭─ Alla fine ────────────────────────────────────────╮
+ ◆ PSEUDOSCOPE  basic.pscope           ▐ System ▌▸▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
+  ✓ done
+╭─ Code ─────────────────────────────────────╮╭─ In the end ───────────────────────────────────────╮
 │   21 procedure BubbleSort (in: n; in/out:…┃││                                                    │
 │   22     var i, j, n : integer            ┃││ n  6                                               │
 │   23     var A : array [1..n] of real     ┃││                                                    │
 │   24     var temp : real                  ┃││ A  array [1..n] of real                            │
-│   25     var ordinato: logical            ┃││   16.0   28.0   34.0   36.0   37.0   44.0          │
+│   25     var sorted: logical              ┃││   16.0   28.0   34.0   36.0   37.0   44.0          │
 │   26     begin                            ┃││    1      2      3      4      5      6            │
-│   27         ordinato:= FALSE             ┃││                                                    │
+│   27         sorted:= FALSE               ┃││                                                    │
 │   28         i:= 1                        ┃││                                                    │
-│   29         while (i<n) AND (NOT ordinat…┃││                                                    │
-│   30             ordinato:= TRUE          ┃││                                                    │
+│   29         while (i<n) AND (NOT sorted)…┃││                                                    │
+│   30             sorted:= TRUE            ┃││                                                    │
 │   31             for j:= 1 to n-i do      ┃││                                                    │
 │   32                 if A(j)>A(j+1) then  ┃││                                                    │
 │   33                     temp := A(j)     ┃││                                                    │
 │   34                     A(j) := A(j+1)   ┃││                                                    │
 │   35                     A(j+1) := temp   ┃││                                                    │
-│   36                     ordinato:= FALSE ┃││                                                    │
+│   36                     sorted:= FALSE   ┃││                                                    │
 │   37                 endif                ┃││                                                    │
 │   38             endfor                   ┃││                                                    │
 │   39             i:=i+1                    ││                                                    │
 │   40         endwhile                      ││                                                    │
 ╰────────────────────────────────────────────╯╰────────────────────────────────────────────────────╯
-╭─ Cosa è successo ────────────────────────────────────────────────────────────────────────────────╮
-│ ? i < n and not ordinato   falso   il ciclo finisce                                              │
-│ ◀ BubbleSort ha finito                                                                           │
-│ ✓ programma terminato                                                                            │
+╭─ What happened ──────────────────────────────────────────────────────────────────────────────────╮
+│ ? i < n and not sorted   false   the loop ends                                                   │
+│ ◀ BubbleSort is done                                                                             │
+│ ✓ the program is over                                                                            │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   n  salta   ?  aiuto
+  →  step   ←  back   Space  play   Enter  details   Esc  overview   n  over   ?  help

@@ -1,0 +1,24 @@
+ ◆ PSEUDOSCOPE  shapes.pscope                        ▐ Mappa ▌▸▐ Codice ▌▸▐ C ▌
+
+╭─ Mappa ──────────────────╮╭──────────────────────────────────────────────────╮
+│ Classi                   ││                                                  │
+│  ▣ Shape                 ││  Square  classe: dati e operazioni insieme       │
+│    ■ area                ││  estende Rectangle, Named                        │
+│    ■ twice               ││  ╭──────────────────────╮                        │
+│    ■ describe            ││  │        Square        │                        │
+│  ▣ Named                 ││  │──────────────────────│                        │
+│    ■ label               ││  │ id integer           │                        │
+│  ▣ Rectangle             ││  │ w real               │                        │
+│    ■ area                ││  │ h real               │                        │
+│▸ ▣ Square                ││  │──────────────────────│                        │
+│    ■ side                ││  │ side()               │                        │
+│    ■ describe            ││  │ describe()           │                        │
+│    ■ label               ││  │ label()              │                        │
+│  ▣ Circle                ││  ╰──────────────────────╯                        │
+│    ■ area                ││                                                  │
+│                          ││                                                  │
+│ Sottoprogrammi           ││                                                  │
+│  ■ show                  ││                                                  │
+╰──────────────────────────╯╰──────────────────────────────────────────────────╯
+
+  ↑↓  scorri   Invio  più dettaglio   Esc  risali   r  esegui   ?  aiuto

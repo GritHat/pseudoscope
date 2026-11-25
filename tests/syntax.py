@@ -11,7 +11,9 @@ import sys
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
 
-PLIKE = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else "bin/pseudoscope")
+os.environ["PSEUDOSCOPE_LANG"] = "en"  # what is compared is in English, wherever the tests run
+
+PSEUDOSCOPE = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else "bin/pseudoscope")
 CC = os.environ.get("CC", "cc")
 
 MODES = ["", "in ", "in: ", "out ", "out: ", "in/out ", "in/out: ", "inout ",
@@ -65,7 +67,7 @@ def programs():
 
 def check(text):
     with tempfile.NamedTemporaryFile("w+", suffix=".c") as output:
-        result = subprocess.run([PLIKE, "-q", "-", "-o", output.name], input=text,
+        result = subprocess.run([PSEUDOSCOPE, "-q", "-", "-o", output.name], input=text,
                                 capture_output=True, text=True)
         if result.returncode == 0:
             result = subprocess.run([CC, "-std=c11", "-Wall", "-Wextra", "-Werror",

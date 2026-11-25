@@ -1,6 +1,6 @@
- ◆ PSEUDOSCOPE  stop_and_wait.pscope        ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
-  ‖ fermo   everything arrives, once and in order, even if p ▸ Sender.Transmit
-  Sequenza   Componenti   Stati   Tempi   Comunicazione   Verifiche                     tempo t = 18
+ ◆ PSEUDOSCOPE  stop_and_wait.pscope             ▐ System ▌▸▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
+  ‖ paused   everything arrives, once and in order, even if p ▸ Sender.Transmit
+  Sequence   Components   States   Timing   Communication   Checks                      time t = 18
 ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │                             ╭───────╮                                      ╭──────────╮                    │
 │                             │ alice │                                      │ receiver │                    │
@@ -24,9 +24,9 @@
 │                                 ┃                                                │                         │
 │                                 ┃                                                │                         │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Cosa è successo ──────────────────────────────────────────────────────────────────────────────────────────╮
-│ ◆ alice passa a  Ready   prima era WaitAck                                                                 │
-│ ▷ alice manda  Transmit  a alice                                                                           │
-│ ▶  Transmit  arriva a alice                                                                                │
+╭─ What happened ────────────────────────────────────────────────────────────────────────────────────────────╮
+│ ◆ alice becomes  Ready   it was WaitAck                                                                    │
+│ ▷ alice sends  Transmit  to alice                                                                          │
+│ ▶  Transmit  reaches alice                                                                                 │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   Tab  altra vista   ?  aiuto
+  →  step   ←  back   Space  play   Enter  details   Esc  overview   Tab  other view   ?  help

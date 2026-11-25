@@ -1,6 +1,6 @@
- * PSEUDOSCOPE  login.pscope        Sistema  >  Programma  >  Funzione  >  Istruzione  >  Memoria  
-  = fermo   the right password logs in > Database.Find
-  Sequenza   Componenti   Stati   Tempi   Comunicazione   Verifiche           tempo t = 5
+ * PSEUDOSCOPE  login.pscope             System  >  Program  >  Function  >  Statement  >  Memory  
+  = paused   the right password logs in > Database.Find
+  Sequence   Components   States   Timing   Communication   Checks            time t = 5
 +--------------------------------------------------------------------------------------------------+
 |                +------+             +--------+            +--------+           +----------+      |
 |                | test |             | client |            | server |           | database |      |
@@ -22,9 +22,9 @@
 |                    |                     |                     |                     #           |
 | >6                 |                     |                     |............... Found            |
 +--------------------------------------------------------------------------------------------------+
-+- Cosa e successo --------------------------------------------------------------------------------+
-| > server manda  Find  a database                                                                 |
-| >  Find(2, 2222)  arriva a database                                                              |
-| > database manda  Found  a server                                                                |
++- What happened ----------------------------------------------------------------------------------+
+| > server sends  Find  to database                                                                |
+| >  Find(2, 2222)  reaches database                                                               |
+| > database sends  Found  to server                                                               |
 +--------------------------------------------------------------------------------------------------+
-  >  passo   <  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   ?  aiuto
+  >  step   <  back   Space  play   Enter  details   Esc  overview   Tab  other view   ?  help

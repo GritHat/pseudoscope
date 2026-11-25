@@ -1,8 +1,8 @@
- ◆ PSEUDOSCOPE  order_state.puml ▸ diagramma di stato ▸ The life of an order
+ ◆ PSEUDOSCOPE  order_state.puml ▸ state diagram ▸ The life of an order
 
 ╭─ The life of an order ─────────────────────────────────────────────────────────────────────────────────────╮
 │                                                                                                            │
-│ ╭───────────╮                                                           │ Il cammino fatto                 │
+│ ╭───────────╮                                                           │ The way so far                   │
 │ │     ●     │────▶ Cart                                                 │                                  │
 │ ╰───────────╯                                                           │  ●                               │
 │ ╭───────────╮── add a product ──▶ Cart                                  │  Cart                            │
@@ -29,4 +29,4 @@
 │                                                                         │                                  │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-  ↑↓  quale freccia   →  segui   ←  indietro   Spazio  va da solo   0  da capo   Esc  file   ?  aiuto
+  ↑↓  which arrow   →  follow   ←  back   Space  play   0  restart   Esc  files   ?  help

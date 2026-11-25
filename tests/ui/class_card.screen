@@ -1,8 +1,8 @@
- ◆ PSEUDOSCOPE  shop.pscope                                                        ▐ Mappa ▌▸▐ Codice ▌▸▐ C ▌
+ ◆ PSEUDOSCOPE  shop.pscope                                                            ▐ Map ▌▸▐ Code ▌▸▐ C ▌
 
-╭─ Mappa ──────────────────────────╮╭────────────────────────────────────────────────────────────────────────╮
-│ Classi                           ││                                                                        │
-│▸ ▣ Cart                          ││  Cart  classe: dati e operazioni insieme                               │
+╭─ Map ────────────────────────────╮╭────────────────────────────────────────────────────────────────────────╮
+│ Classes                          ││                                                                        │
+│▸ ▣ Cart                          ││  Cart  class: data and operations together                             │
 │    ■ add                         ││                                                                        │
 │    ■ cost                        ││  ╭────────────────────────────────╮                                    │
 │  ▣ Warehouse                     ││  │              Cart              │                                    │
@@ -11,12 +11,12 @@
 │  ▣ Payments                      ││  │────────────────────────────────│                                    │
 │    ■ charge                      ││  │ add()                          │                                    │
 │                                  ││  │ cost()                         │                                    │
-│ Sottoprogrammi                   ││  ╰────────────────────────────────╯                                    │
+│ Subprograms                      ││  ╰────────────────────────────────╯                                    │
 │  ■ checkout                      ││                                                                        │
-│  ■ main  si parte da qui         ││                                                                        │
+│  ■ main  starts here             ││                                                                        │
 │                                  ││                                                                        │
-│ Dati condivisi                   ││                                                                        │
-│  ● variabili globali             ││                                                                        │
+│ Shared data                      ││                                                                        │
+│  ● global variables              ││                                                                        │
 │                                  ││                                                                        │
 │                                  ││                                                                        │
 │                                  ││                                                                        │
@@ -31,4 +31,4 @@
 │                                  ││                                                                        │
 ╰──────────────────────────────────╯╰────────────────────────────────────────────────────────────────────────╯
 
-  ↑↓  scorri   Invio  più dettaglio   Esc  meno dettaglio   r  esegui   E  modifica   q  esci   ?  aiuto
+  ↑↓  move   Enter  more detail   Esc  less detail   r  run   E  edit   q  quit   ?  help

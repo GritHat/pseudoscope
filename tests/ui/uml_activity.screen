@@ -1,8 +1,8 @@
- ◆ PSEUDOSCOPE  guess_activity.puml ▸ diagramma ▸ Guess the number
+ ◆ PSEUDOSCOPE  guess_activity.puml ▸ diagram ▸ Guess the number
 
 ╭─ Guess the number ─────────────────────────────────────────────────────────────────────────────────────────╮
 │                                                                                                            │
-│ ╭────────────────────────╮                                              │ Il cammino fatto                 │
+│ ╭────────────────────────╮                                              │ The way so far                   │
 │ │           ●            │────▶ choose a secret number                  │                                  │
 │ ╰────────────────────────╯                                              │  ●                               │
 │ ╭────────────────────────╮                                              │  choose a secret number          │
@@ -29,4 +29,4 @@
 │ ╰────────────────────────╯                                              │                                  │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-  ↑↓  quale freccia   →  segui   ←  indietro   Spazio  va da solo   0  da capo   Esc  file   ?  aiuto
+  ↑↓  which arrow   →  follow   ←  back   Space  play   0  restart   Esc  files   ?  help

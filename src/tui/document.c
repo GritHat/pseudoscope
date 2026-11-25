@@ -1,6 +1,6 @@
 #include "ui.h"
 
-#include "plike/parser.h"
+#include "pseudoscope/parser.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -305,7 +305,7 @@ Document *document_load(const char *path, const Config *config) {
     Config wanted = *config;
     FileKind kind = file_kind(file, doc->text.data);
     bool diagram = kind == FILE_DIAGRAM;
-    Diag diag = {.source = &doc->source, .out = stderr, .sink = add_message, .italian = ui_italian, .sink_context = doc};
+    Diag diag = {.source = &doc->source, .out = stderr, .sink = add_message, .sink_context = doc};
     if (kind == FILE_DOCUMENT) { /* one of the things it holds, or its outline */
         Source whole = {doc->file, doc->text.data, doc->text.length};
         Blocks *blocks = blocks_read(&whole, &doc->arena);

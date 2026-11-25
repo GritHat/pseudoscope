@@ -1,10 +1,10 @@
- ◆ PSEUDOSCOPE  shop_class.puml ▸ diagramma delle classi ▸ Shop
+ ◆ PSEUDOSCOPE  shop_class.puml ▸ class diagram ▸ Shop
 
 ╭─ Shop ───────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │                                                                                                                      │
 │ ╭───────────────────────────────────╮  ╭───────────────────────────────────╮  │ Book                                 │
 │ │        Product «abstract»         │  │               Book                │  │                                      │
-│ │ +name : string                    │  │ +author : string                  │  │ è un tipo di Product                 │
+│ │ +name : string                    │  │ +author : string                  │  │ is a kind of Product                 │
 │ │ +price : real                     │  │ +tax() : real                     │  │                                      │
 │ │ +{abstract} tax() : real          │  ╰───────────────────────────────────╯  │                                      │
 │ ╰───────────────────────────────────╯                                         │                                      │
@@ -31,4 +31,4 @@
 │                                                                               │                                      │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-  ↑↓  classe   E  modifica   Esc  file   ?  aiuto
+  ↑↓  class   E  edit   Esc  files   ?  help

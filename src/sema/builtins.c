@@ -1,4 +1,4 @@
-#include "plike/builtins.h"
+#include "pseudoscope/builtins.h"
 
 #include <string.h>
 

@@ -1,5 +1,5 @@
-#include "plike/sema.h"
-#include "plike/builtins.h"
+#include "pseudoscope/sema.h"
+#include "pseudoscope/builtins.h"
 
 #include <errno.h>
 #include <limits.h>

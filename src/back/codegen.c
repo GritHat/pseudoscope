@@ -1,5 +1,5 @@
-#include "plike/codegen.h"
-#include "plike/vm.h"
+#include "pseudoscope/codegen.h"
+#include "pseudoscope/vm.h"
 
 #include <string.h>
 
@@ -101,7 +101,7 @@ static void gen_dims(Gen *g, const Type *type, int first) {
 /* Bounds that are not constants are saved when the array comes into scope: the
  * variables they are made of may change later. */
 static const char *saved_bound(Gen *g, const Symbol *sym, int dim, bool upper) {
-    return arena_printf(g->arena, "plike_%s_%s_%d", upper ? "hi" : "lo", sym->c_name, dim + 1);
+    return arena_printf(g->arena, "pscope_%s_%s_%d", upper ? "hi" : "lo", sym->c_name, dim + 1);
 }
 
 static bool saves_hi(Gen *g, const Dim *dim) {
@@ -199,7 +199,7 @@ static void gen_index(Gen *g, const Expr *expr) {
         bool lo_known = constant_lo(g, dim, &lo);
         if (g->config->bounds_check) {
             g->uses_fail = true;
-            put(g, "plike_index(");
+            put(g, "pscope_index(");
             gen_expr(g, index, P_LOWEST);
             if (lo_known) strbuf_printf(g->out, ", %lld, ", lo);
             else strbuf_printf(g->out, ", %s, ", saved_bound(g, sym, skipped + i, false));
@@ -237,7 +237,7 @@ static void gen_call(Gen *g, const Expr *expr) {
     const char *name = callee->c_name;
     if (callee->builtin && strcmp(name, "random_below") == 0) {
         g->uses_random = true;
-        put(g, "plike_random(0, ");
+        put(g, "pscope_random(0, ");
         gen_expr(g, expr->args.items[0], P_ADD);
         put(g, " - 1)");
         return;
@@ -258,7 +258,7 @@ static void gen_call(Gen *g, const Expr *expr) {
     }
     if (callee->builtin && expr->type->kind == TY_STRING) {
         g->uses_text = true;
-        strbuf_printf(g->out, "plike_%s(", name);
+        strbuf_printf(g->out, "pscope_%s(", name);
         for (int i = 0; i < expr->args.count; i++) {
             if (i) put(g, ", ");
             gen_expr(g, expr->args.items[i], P_LOWEST);
@@ -290,7 +290,7 @@ static void gen_call(Gen *g, const Expr *expr) {
     }
     if (callee->builtin && strcmp(name, "random") == 0) {
         g->uses_random = true;
-        name = "plike_random";
+        name = "pscope_random";
     } else if (callee->builtin && expr->type->kind == TY_INT) {
         g->uses_abs = true;
     } else if (callee->builtin) {
@@ -442,14 +442,14 @@ static void gen_field(Gen *g, const Expr *expr) {
 
 static void gen_as_text(Gen *g, const Expr *expr) {
     bool text = expr->type->kind == TY_STRING;
-    if (!text) put(g, expr->type->kind == TY_REAL ? "plike_real_text(" : "plike_int_text(");
+    if (!text) put(g, expr->type->kind == TY_REAL ? "pscope_real_text(" : "pscope_int_text(");
     gen_expr(g, expr, P_LOWEST);
     if (!text) put(g, ")");
 }
 
 static void gen_text_op(Gen *g, const Expr *expr) {
     g->uses_text = true;
-    put(g, expr->type->kind == TY_STRING ? "plike_concat(" : "strcmp(");
+    put(g, expr->type->kind == TY_STRING ? "pscope_concat(" : "strcmp(");
     gen_as_text(g, expr->base);
     put(g, ", ");
     gen_as_text(g, expr->right);
@@ -469,8 +469,8 @@ static void gen_expr(Gen *g, const Expr *expr, int min) {
         case EX_NAME:
             if (expr->is_call) gen_call(g, expr);
             else if (expr->symbol->kind == SYM_STATE) strbuf_printf(g->out, "%lld", expr->symbol->value);
-            else if (expr->symbol->kind == SYM_NOW) put(g, "plike_sim.now");
-            else if (expr->symbol->kind == SYM_SENDER) put(g, "plike_who(plike_sim.sender)");
+            else if (expr->symbol->kind == SYM_NOW) put(g, "pscope_sim.now");
+            else if (expr->symbol->kind == SYM_SENDER) put(g, "pscope_who(pscope_sim.sender)");
             else strbuf_printf(g->out, "%s%s", is_by_reference(expr) ? "*" : "",
                                expr->symbol->c_name);
             break;
@@ -638,20 +638,20 @@ static void gen_read(Gen *g, const Stmt *stmt) {
         if (arg->type->kind == TY_STRING) {
             g->uses_text = true;
             gen_expr(g, arg, P_LOWEST);
-            strbuf_printf(g->out, " = plike_read_text(%d);\n", stmt->loc.line);
+            strbuf_printf(g->out, " = pscope_read_text(%d);\n", stmt->loc.line);
             continue;
         }
         if (arg->type->kind == TY_BOOL) { /* scanf cannot store into a bool */
-            put(g, "{ int plike_input; if (scanf(\"%d\", &plike_input) != 1) ");
-            strbuf_printf(g->out, "plike_fail(\"invalid input\", %d); ", stmt->loc.line);
+            put(g, "{ int pscope_input; if (scanf(\"%d\", &pscope_input) != 1) ");
+            strbuf_printf(g->out, "pscope_fail(\"invalid input\", %d); ", stmt->loc.line);
             gen_expr(g, arg, P_LOWEST);
-            put(g, " = plike_input != 0; }\n");
+            put(g, " = pscope_input != 0; }\n");
             continue;
         }
         strbuf_printf(g->out, "if (scanf(\"%s\", ", arg->type->kind == TY_REAL ? "%f"
                                                     : arg->type->kind == TY_CHAR ? " %c" : "%d");
         gen_address(g, arg, P_LOWEST);
-        strbuf_printf(g->out, ") != 1) plike_fail(\"invalid input\", %d);\n", stmt->loc.line);
+        strbuf_printf(g->out, ") != 1) pscope_fail(\"invalid input\", %d);\n", stmt->loc.line);
     }
 }
 
@@ -663,14 +663,14 @@ static void gen_return(Gen *g, const Stmt *stmt) {
         g->indent++;
         indent(g);
         if (stmt->value) {
-            gen_declarator(g, base_type(g, g->function->type), "", "plike_value = ");
+            gen_declarator(g, base_type(g, g->function->type), "", "pscope_value = ");
             gen_expr(g, stmt->value, P_LOWEST);
             put(g, ";\n");
             indent(g);
         }
-        put(g, "plike_sim.current = plike_before;\n");
+        put(g, "pscope_sim.current = pscope_before;\n");
         indent(g);
-        if (stmt->value) put(g, "return plike_value;\n");
+        if (stmt->value) put(g, "return pscope_value;\n");
         else if (g->function->result) strbuf_printf(g->out, "return %s;\n", g->function->result->c_name);
         else put(g, "return;\n");
         g->indent--;
@@ -781,7 +781,7 @@ static bool mentions_param(const Expr *expr, int from) {
 }
 
 static const char *flat_name(Gen *g, const Symbol *param) {
-    return arena_printf(g->arena, "plike_flat_%s", param->c_name);
+    return arena_printf(g->arena, "pscope_flat_%s", param->c_name);
 }
 
 static void gen_param(Gen *g, const Symbol *param) {
@@ -863,10 +863,10 @@ static void gen_function(Gen *g, const Function *function) {
     }
     for (const VarDecl *v = function->locals; v; v = v->next) gen_variable(g, v, "");
     g->acting = g->systems && function->owner && function->owner->is_component && !function->is_handler && sim_sends(function->body, 0);
-    if (g->acting) put(g, "    int plike_before = plike_sim.current;\n    plike_sim.current = plike_id(self);\n");
+    if (g->acting) put(g, "    int pscope_before = pscope_sim.current;\n    pscope_sim.current = pscope_id(self);\n");
     gen_statements(g, function->body);
     if (!ends_with_return(function->body)) {
-        if (g->acting) put(g, "    plike_sim.current = plike_before;\n");
+        if (g->acting) put(g, "    pscope_sim.current = pscope_before;\n");
         if (sym->result) strbuf_printf(g->out, "    return %s;\n", sym->result->c_name);
         else if (is_main(sym)) put(g, "    return 0;\n");
     }
@@ -887,53 +887,53 @@ static void gen_record(Gen *g, const Record *record) {
 static const struct {
     const char *name, *code;
 } TEXT_HELPERS[] = { /* only those a program uses are written */
-    {"plike_concat(",
-        "static inline const char *plike_concat(const char *a, const char *b) {\n"
-        "    char *text = plike_new_text(strlen(a) + strlen(b));\n"
+    {"pscope_concat(",
+        "static inline const char *pscope_concat(const char *a, const char *b) {\n"
+        "    char *text = pscope_new_text(strlen(a) + strlen(b));\n"
         "    strcpy(text, a);\n"
         "    strcat(text, b);\n"
         "    return text;\n"
         "}\n\n"},
-    {"plike_int_text(",
-        "static inline const char *plike_int_text(int n) {\n"
-        "    char *text = plike_new_text(16);\n"
+    {"pscope_int_text(",
+        "static inline const char *pscope_int_text(int n) {\n"
+        "    char *text = pscope_new_text(16);\n"
         "    snprintf(text, 16, \"%d\", n);\n"
         "    return text;\n"
         "}\n\n"},
-    {"plike_real_text(",
-        "static inline const char *plike_real_text(double x) {\n"
-        "    char *text = plike_new_text(32);\n"
+    {"pscope_real_text(",
+        "static inline const char *pscope_real_text(double x) {\n"
+        "    char *text = pscope_new_text(32);\n"
         "    snprintf(text, 32, \"%.10g\", x);\n"
         "    return text;\n"
         "}\n\n"},
-    {"plike_read_text(",
-        "static inline const char *plike_read_text(int line) {\n"
-        "    char *text = plike_new_text(1999);\n"
+    {"pscope_read_text(",
+        "static inline const char *pscope_read_text(int line) {\n"
+        "    char *text = pscope_new_text(1999);\n"
         "    if (scanf(\" %1999[^\\n]\", text) != 1) {\n"
         "        fprintf(stderr, \"runtime error at line %d: invalid input\\n\", line);\n"
         "        exit(1);\n"
         "    }\n"
         "    return text;\n"
         "}\n\n"},
-    {"plike_upper(",
-        "static inline const char *plike_upper(const char *s) {\n"
-        "    char *text = plike_new_text(strlen(s));\n"
+    {"pscope_upper(",
+        "static inline const char *pscope_upper(const char *s) {\n"
+        "    char *text = pscope_new_text(strlen(s));\n"
         "    for (size_t i = 0; s[i]; i++) text[i] = (char)(s[i] >= 'a' && s[i] <= 'z' ? s[i] - 32 : s[i]);\n"
         "    return text;\n"
         "}\n\n"},
-    {"plike_lower(",
-        "static inline const char *plike_lower(const char *s) {\n"
-        "    char *text = plike_new_text(strlen(s));\n"
+    {"pscope_lower(",
+        "static inline const char *pscope_lower(const char *s) {\n"
+        "    char *text = pscope_new_text(strlen(s));\n"
         "    for (size_t i = 0; s[i]; i++) text[i] = (char)(s[i] >= 'A' && s[i] <= 'Z' ? s[i] + 32 : s[i]);\n"
         "    return text;\n"
         "}\n\n"},
-    {"plike_substring(",
-        "static inline const char *plike_substring(const char *s, int from, int to, int base) {\n"
+    {"pscope_substring(",
+        "static inline const char *pscope_substring(const char *s, int from, int to, int base) {\n"
         "    int length = (int)strlen(s);\n"
         "    from = from - base < 0 ? 0 : from - base;\n"
         "    to = to - base > length - 1 ? length - 1 : to - base;\n"
         "    if (to < from) return \"\";\n"
-        "    char *text = plike_new_text((size_t)(to - from + 1));\n"
+        "    char *text = pscope_new_text((size_t)(to - from + 1));\n"
         "    memcpy(text, s + from, (size_t)(to - from + 1));\n"
         "    return text;\n"
         "}\n\n"},
@@ -971,10 +971,10 @@ void generate(const Program *program, const Config *config, Arena *arena, StrBuf
     if (g->uses_fail || g->uses_abs || g->uses_text || g->systems) strbuf_puts(out, "#include <stdlib.h>\n");
     if (g->uses_text || g->systems) strbuf_puts(out, "#include <string.h>\n");
     strbuf_puts(out, "\n");
-    bool indexes = config->bounds_check && strstr(body.data, "plike_index(");
-    if (strstr(body.data, "plike_fail(") || indexes) {
+    bool indexes = config->bounds_check && strstr(body.data, "pscope_index(");
+    if (strstr(body.data, "pscope_fail(") || indexes) {
         strbuf_puts(out,
-            "static inline void plike_fail(const char *message, int line) {\n"
+            "static inline void pscope_fail(const char *message, int line) {\n"
             "    fflush(stdout);\n"
             "    fprintf(stderr, \"runtime error at line %d: %s\\n\", line, message);\n"
             "    exit(1);\n"
@@ -982,7 +982,7 @@ void generate(const Program *program, const Config *config, Arena *arena, StrBuf
     }
     if (g->uses_text) {
         strbuf_puts(out,
-            "static inline char *plike_new_text(size_t length) {\n"
+            "static inline char *pscope_new_text(size_t length) {\n"
             "    char *text = malloc(length + 1);\n"
             "    if (!text) exit(1);\n"
             "    text[length] = '\\0';\n"
@@ -994,22 +994,22 @@ void generate(const Program *program, const Config *config, Arena *arena, StrBuf
     if (g->uses_random) {
         long long seed = 1;
         if (program->seed) const_int(program->seed, &seed);
-        strbuf_printf(out, "static unsigned plike_seed = %uu;\n\n", (unsigned)seed);
+        strbuf_printf(out, "static unsigned pscope_seed = %uu;\n\n", (unsigned)seed);
         strbuf_puts(out,
-            "static inline int plike_random(int lo, int hi) {\n"
+            "static inline int pscope_random(int lo, int hi) {\n"
             "    unsigned n = 0;\n"
             "    if (hi <= lo) return lo;\n"
             "    for (int i = 0; i < 2; i++) {\n"
-            "        plike_seed = plike_seed * 1103515245u + 12345u;\n"
-            "        n = n << 15 | (plike_seed >> 16 & 0x7fff);\n"
+            "        pscope_seed = pscope_seed * 1103515245u + 12345u;\n"
+            "        n = n << 15 | (pscope_seed >> 16 & 0x7fff);\n"
             "    }\n"
             "    return (int)(lo + (long long)(n % (unsigned)((long long)hi - lo + 1)));\n"
             "}\n\n");
     }
     if (indexes) {
         strbuf_puts(out,
-            "static inline int plike_index(int index, int lo, int hi, int line) {\n"
-            "    if (index < lo || index > hi) plike_fail(\"array index out of bounds\", line);\n"
+            "static inline int pscope_index(int index, int lo, int hi, int line) {\n"
+            "    if (index < lo || index > hi) pscope_fail(\"array index out of bounds\", line);\n"
             "    return index - lo;\n"
             "}\n\n");
     }

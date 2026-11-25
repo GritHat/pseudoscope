@@ -1,6 +1,6 @@
- ◆ out_of_b…  ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
-  ✗ errore   main                                                  ≡ stampe: o
-╭─ main ───────────────────────────╮╭─ Dati ───────────────────────────────────╮
+ ◆ out_of_bounds…  ▐ System ▌▸▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
+  ✗ error   main                                                   ≡ output: o
+╭─ main ───────────────────────────╮╭─ Data ───────────────────────────────────╮
 │    1 procedure main()            ││                                          │
 │    2 var a: array[3] of integer  ││ i  4                                     │
 │    3 var i: integer              ││                                          │
@@ -16,9 +16,9 @@
 │                                  ││                                          │
 │                                  ││                                          │
 ╰──────────────────────────────────╯╰──────────────────────────────────────────╯
-╭─ Cosa è successo ────────────────────────────────────────────────────────────╮
-│ ↻ prossimo giro: i =  4                                                      │
-│ ? i = 4, fino a 4   vero   si entra nel ciclo                                │
-│ ✗ indice fuori dai limiti dell'array   a[4]  validi: 1..3                    │
+╭─ What happened ──────────────────────────────────────────────────────────────╮
+│ ↻ next round: i =  4                                                         │
+│ ? i = 4, up to 4   true   into the loop                                      │
+│ ✗ array index out of bounds   a[4]  valid: 1..3                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
-  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   n  salta   ?  aiuto
+  →  step   ←  back   Space  play   Enter  details   Esc  overview   ?  help

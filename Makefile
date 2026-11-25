@@ -7,26 +7,23 @@ SANITIZE  = -g -O1 -fsanitize=address,undefined -fno-sanitize-recover=all
 
 PREFIX   ?= /usr/local
 BUILD    ?= build
-PLIKE    ?= bin/pseudoscope
+PSEUDOSCOPE    ?= bin/pseudoscope
 
 LIB       = $(wildcard src/util/*.c src/front/*.c src/sema/*.c src/back/*.c src/vm/*.c src/uml/*.c)
 CLI       = $(wildcard src/cli/*.c src/tui/*.c)
 UNIT      = $(wildcard tests/unit/*.c)
 
-LIB_OBJ   = $(LIB:%.c=$(BUILD)/%.o)
+PO        = $(sort $(wildcard lang/*.po))
+
+LIB_OBJ   = $(LIB:%.c=$(BUILD)/%.o) $(BUILD)/catalogs.o
 CLI_OBJ   = $(CLI:%.c=$(BUILD)/%.o)
 UNIT_OBJ  = $(UNIT:%.c=$(BUILD)/%.o)
 
 .PHONY: all test unit e2e syntax targets sanitize fuzz install uninstall clean
 
-all: $(PLIKE) bin/plike
+all: $(PSEUDOSCOPE)
 
-# The name it had when it only translated.
-bin/plike: $(PLIKE)
-	@mkdir -p bin
-	@ln -sf pseudoscope bin/plike
-
-$(PLIKE): $(LIB_OBJ) $(CLI_OBJ)
+$(PSEUDOSCOPE): $(LIB_OBJ) $(CLI_OBJ)
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ -lm
 
@@ -37,39 +34,51 @@ $(BUILD)/%.o: %.c
 	@mkdir -p $(@D)
 	$(CC) $(STD) $(WARN) -Iinclude $(CFLAGS) -MMD -MP -c $< -o $@
 
+# Each language is a catalog in lang/: po2c makes one table of them all, compiled in.
+$(BUILD)/po2c: tools/po2c.c
+	@mkdir -p $(@D)
+	$(CC) $(STD) $(WARN) -O1 $< -o $@
+
+$(BUILD)/catalogs.c: $(PO) $(BUILD)/po2c
+	$(BUILD)/po2c $(PO) > $@.new
+	@mv $@.new $@
+
+$(BUILD)/catalogs.o: $(BUILD)/catalogs.c
+	$(CC) $(STD) $(WARN) -Iinclude $(CFLAGS) -c $< -o $@
+
 test: unit e2e syntax
 
 unit: $(BUILD)/unit
 	$(BUILD)/unit tests/programs/*.plike tests/targets/*.plike examples/*/*.pscope
 
-e2e: $(PLIKE)
-	PLIKE=$(PLIKE) tests/run.sh
+e2e: $(PSEUDOSCOPE)
+	PSEUDOSCOPE=$(PSEUDOSCOPE) tests/run.sh
 
-syntax: $(PLIKE)
+syntax: $(PSEUDOSCOPE)
 	python3 tests/messages.py
-	python3 tests/syntax.py $(PLIKE)
+	python3 tests/fit.py $(PSEUDOSCOPE)
+	python3 tests/syntax.py $(PSEUDOSCOPE)
 
 # Every program translated to every language whose tools are here, and run.
-targets: $(PLIKE)
-	python3 tests/targets.py $(PLIKE)
+targets: $(PSEUDOSCOPE)
+	python3 tests/targets.py $(PSEUDOSCOPE)
 
 # Everything again, with the translator itself under sanitizers.
 sanitize:
-	$(MAKE) test BUILD=build-san PLIKE=build-san/pseudoscope CFLAGS="$(SANITIZE)"
+	$(MAKE) test BUILD=build-san PSEUDOSCOPE=build-san/pseudoscope CFLAGS="$(SANITIZE)"
 
 # Mutated programs must never crash the translator.
 fuzz:
-	$(MAKE) build-san/pseudoscope BUILD=build-san PLIKE=build-san/pseudoscope CFLAGS="$(SANITIZE)"
+	$(MAKE) build-san/pseudoscope BUILD=build-san PSEUDOSCOPE=build-san/pseudoscope CFLAGS="$(SANITIZE)"
 	python3 tests/fuzz.py build-san/pseudoscope
 
-install: $(PLIKE)
+install: $(PSEUDOSCOPE)
 	install -d $(DESTDIR)$(PREFIX)/bin
-	install -m 755 $(PLIKE) $(DESTDIR)$(PREFIX)/bin/pseudoscope
+	install -m 755 $(PSEUDOSCOPE) $(DESTDIR)$(PREFIX)/bin/pseudoscope
 	install -m 755 tools/pseudoscope-window $(DESTDIR)$(PREFIX)/bin/pseudoscope-window
-	ln -sf pseudoscope $(DESTDIR)$(PREFIX)/bin/plike
 
 uninstall:
-	rm -f $(addprefix $(DESTDIR)$(PREFIX)/bin/,pseudoscope pseudoscope-window plike)
+	rm -f $(addprefix $(DESTDIR)$(PREFIX)/bin/,pseudoscope pseudoscope-window)
 
 clean:
 	rm -rf $(BUILD) build-san bin

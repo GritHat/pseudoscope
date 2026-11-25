@@ -1,0 +1,2115 @@
+msgid ""
+msgstr ""
+"Language: pt\n"
+"X-Language-Name: Português\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: src/back/target.c
+msgid "%s has no pointers to plain values: '%s' cannot be translated (C, C++ and Rust have them)"
+msgstr "%s não tem ponteiros para valores simples: '%s' não pode ser traduzido (C, C++ e Rust têm)"
+
+#: src/back/target.c
+msgid "'%s' is not in the file: it cannot be called in %s"
+msgstr "'%s' não está no arquivo: não pode ser chamado em %s"
+
+#: src/back/target.c
+msgid "'%s' comes from a library that only works when the program is run here (exec, ui): it is not translated"
+msgstr "'%s' vem de uma biblioteca que só funciona quando o programa é executado aqui (exec, ui): não é traduzido"
+
+#: src/back/target.c
+msgid "in %s what '%s' changes comes back with its result: call it in a statement of its own"
+msgstr "em %s o que '%s' altera volta junto com o resultado: chame-a em uma instrução própria"
+
+#: src/back/target.c
+msgid "%s has no pointers that move from an element to the next"
+msgstr "%s não tem ponteiros que passem de um elemento ao seguinte"
+
+#: src/back/target.c
+msgid "this expects a call between objects, which only the program run here keeps track of (exec, test, ui)"
+msgstr "isto espera uma chamada entre objetos, que só o programa executado aqui acompanha (exec, test, ui)"
+
+#: src/back/target.c
+msgid "C has no classes that extend others: '%s' can be translated to C++, Java, TypeScript or Python"
+msgstr "C não tem classes que estendem outras: '%s' pode ser traduzido para C++, Java, TypeScript ou Python"
+
+#: src/back/target.c
+msgid "Rust has no classes that extend classes: '%s' could only extend an interface (a trait), and '%s' is not"
+msgstr "Rust não tem classes que estendem classes: '%s' só poderia estender uma interface (um trait), e '%s' não é"
+
+#: src/back/target.c
+msgid "in %s a class extends one class only: '%s' has both '%s' and '%s' (C++ and Python allow it; or make one an interface)"
+msgstr "em %s uma classe estende uma só classe: '%s' tem '%s' e '%s' (C++ e Python permitem; ou torne uma delas interface)"
+
+#: src/back/target.c
+msgid "C has no abstract classes or interfaces: '%s' can be translated to C++, Java, TypeScript or Python"
+msgstr "C não tem classes abstratas nem interfaces: '%s' pode ser traduzido para C++, Java, TypeScript ou Python"
+
+#: src/cli/driver.c
+msgid "pseudoscope: cannot open '%s': %s\n"
+msgstr "pseudoscope: não foi possível abrir '%s': %s\n"
+
+#: src/cli/driver.c
+msgid "pseudoscope: cannot read '%s': %s\n"
+msgstr "pseudoscope: não foi possível ler '%s': %s\n"
+
+#: src/cli/driver.c
+msgid "pseudoscope: cannot write '%s': %s\n"
+msgstr "pseudoscope: não foi possível escrever '%s': %s\n"
+
+#: src/cli/driver.c
+msgid "pseudoscope: cannot write '%s'\n"
+msgstr "pseudoscope: não foi possível escrever '%s'\n"
+
+#: src/cli/driver.c
+msgid "standard output"
+msgstr "a saída padrão"
+
+#: src/cli/driver.c
+msgid "pseudoscope: cannot run '%s': %s\n"
+msgstr "pseudoscope: não foi possível executar '%s': %s\n"
+
+#: src/cli/driver.c
+msgid "pseudoscope: '%s' was killed by signal %d\n"
+msgstr "pseudoscope: '%s' foi interrompido pelo sinal %d\n"
+
+#: src/cli/driver.c
+msgid "pseudoscope: compiling with %s\n"
+msgstr "pseudoscope: compilando com %s\n"
+
+#: src/cli/driver.c
+msgid "pseudoscope: the %s compiler failed\n"
+msgstr "pseudoscope: o compilador de %s falhou\n"
+
+#: src/cli/driver.c
+msgid "pseudoscope: there is nothing to run: declare a procedure 'main' without parameters\n"
+msgstr "pseudoscope: não há nada para executar: declare um procedimento 'main' sem parâmetros\n"
+
+#: src/cli/driver.c
+msgid "pseudoscope: cannot create a temporary directory: %s\n"
+msgstr "pseudoscope: não foi possível criar uma pasta temporária: %s\n"
+
+#: src/cli/driver.c
+msgid "pseudoscope: compiling with tsc\n"
+msgstr "pseudoscope: compilando com tsc\n"
+
+#: src/cli/driver.c
+msgid "pseudoscope: the TypeScript compiler failed\n"
+msgstr "pseudoscope: o compilador de TypeScript falhou\n"
+
+#: src/cli/driver.c
+msgid "pseudoscope: running with %s\n"
+msgstr "pseudoscope: executando com %s\n"
+
+#: src/cli/driver.c
+msgid "pseudoscope: running\n"
+msgstr "pseudoscope: executando\n"
+
+#: src/cli/driver.c
+msgid "pseudoscope: the executable would overwrite the input\n"
+msgstr "pseudoscope: o executável sobrescreveria o arquivo de entrada\n"
+
+#: src/cli/driver.c
+msgid "pseudoscope: too many steps, stopped\n"
+msgstr "pseudoscope: passos demais, interrompido\n"
+
+#: src/cli/driver.c
+msgid "runtime error at line %d: %s\n"
+msgstr "erro de execução na linha %d: %s\n"
+
+#: src/cli/driver.c
+msgid "runtime error: %s\n"
+msgstr "erro de execução: %s\n"
+
+#: src/cli/driver.c src/tui/explore.c src/tui/system.c
+msgid "line"
+msgstr "linha"
+
+#: src/cli/driver.c
+msgid "a test cannot read input"
+msgstr "um teste não pode ler dados"
+
+#: src/cli/driver.c
+msgid "too many steps, stopped"
+msgstr "passos demais, interrompido"
+
+#: src/cli/driver.c
+msgid "%d tests, %d failed\n"
+msgstr "%d testes, %d falharam\n"
+
+#: src/cli/driver.c
+msgid "pseudoscope: a diagram can be opened with ui, check and ast\n"
+msgstr "pseudoscope: um diagrama se abre com ui, check e ast\n"
+
+#: src/cli/driver.c
+msgid "pseudoscope: warnings are treated as errors\n"
+msgstr "pseudoscope: os avisos contam como erros\n"
+
+#: src/cli/driver.c
+msgid "pseudoscope: build makes an executable, and %s programs are run as they are: use translate, or run\n"
+msgstr "pseudoscope: build produz um executável, e os programas em %s são executados como estão: use translate, ou run\n"
+
+#: src/cli/driver.c
+msgid "pseudoscope: the output would overwrite the input\n"
+msgstr "pseudoscope: a saída sobrescreveria o arquivo de entrada\n"
+
+#: src/cli/driver.c
+msgid "pseudoscope: there are no tests in this program\n"
+msgstr "pseudoscope: não há testes neste programa\n"
+
+#: src/cli/driver.c
+msgid "pseudoscope: '%s' holds %d programs and diagrams, not %d\n"
+msgstr "pseudoscope: '%s' contém %d programas e diagramas, não %d\n"
+
+#: src/cli/driver.c
+msgid "pseudoscope: '%s' holds %d programs: say which with %s#N (ast lists them)\n"
+msgstr "pseudoscope: '%s' contém %d programas: diga qual com %s#N (ast os lista)\n"
+
+#: src/cli/driver.c
+msgid "pseudoscope: %s: %d programs and diagrams checked\n"
+msgstr "pseudoscope: %s: %d programas e diagramas verificados\n"
+
+#: src/cli/driver.c
+msgid "reading tokens"
+msgstr "lendo os símbolos"
+
+#: src/cli/driver.c
+msgid "parsing"
+msgstr "analisando a sintaxe"
+
+#: src/cli/driver.c
+msgid "checking names and types"
+msgstr "verificando nomes e tipos"
+
+#: src/cli/driver.c
+msgid "executing"
+msgstr "executando"
+
+#: src/cli/driver.c
+msgid "translating"
+msgstr "traduzindo"
+
+#: src/cli/options.c
+msgid "Usage: pseudoscope [COMMAND] [OPTIONS] FILE [OUTPUT]\n\nPseudocode, and designs, brought to life. FILE may be - for the standard input.\n"
+msgstr "Uso: pseudoscope [COMANDO] [OPÇÕES] ARQUIVO [SAÍDA]\n\nPseudocódigo e projetos que ganham vida. ARQUIVO pode ser - para a entrada padrão.\n"
+
+#: src/cli/options.c
+msgid "\nCommands:\n  ui          explore programs and watch them run (FILE may be a folder;\n              the default without arguments)\n  translate   write the program in C or in another language (the default command)\n  check       only report errors and warnings\n  build       translate and compile to an executable (C, C++, Rust)\n  run         translate, and execute with the tools of that language\n  exec        execute here, without other tools, checking every access\n  test        run the tests of the program (with --to: translated)\n  tokens      list the tokens\n  ast         print the syntax tree\n"
+msgstr "\nComandos:\n  ui          explore os programas e veja-os funcionar (ARQUIVO pode ser uma pasta;\n              é o comando usado quando não há argumentos)\n  translate   escreve o programa em C ou em outra linguagem (o comando padrão)\n  check       só informa erros e avisos\n  build       traduz e compila para um executável (C, C++, Rust)\n  run         traduz, e executa com as ferramentas dessa linguagem\n  exec        executa aqui, sem outras ferramentas, verificando cada acesso\n  test        roda os testes do programa (com --to: traduzidos)\n  tokens      lista os símbolos\n  ast         imprime a árvore sintática\n"
+
+#: src/cli/options.c
+msgid "\nLanguage of the program:\n      --dialect=NAME        plike, pseint, visualg, portugol or cambridge\n                            (default: from the extension .pscope .plike .psc .alg .por\n                            .pse, or from how the file begins)\n  -a, --assignment=STYLE    colon-equals (default) or equals\n  -i, --indexing=BASE       first index of arrays without a range:\n                            one (default) or zero\n  -p, --params=STYLE        where parameter types go: decl, body or mixed (default)\n      --operators=STYLE     standard (and), dotted (.and.) or mixed (default)\n  -m, --mixed-arrays=BOOL   accept a(i) for a[i]: true (default) or false\n"
+msgstr "\nLinguagem do programa:\n      --dialect=NOME        plike, pseint, visualg, portugol ou cambridge\n                            (padrão: pela extensão .pscope .plike .psc .alg .por\n                            .pse, ou por como o arquivo começa)\n  -a, --assignment=ESTILO   colon-equals (padrão) ou equals\n  -i, --indexing=BASE       primeiro índice dos vetores sem intervalo:\n                            one (padrão) ou zero\n  -p, --params=ESTILO       onde ficam os tipos dos parâmetros: decl, body ou mixed (padrão)\n      --operators=ESTILO    standard (and), dotted (.and.) ou mixed (padrão)\n  -m, --mixed-arrays=BOOL   aceita a(i) no lugar de a[i]: true (padrão) ou false\n"
+
+#: src/cli/options.c
+msgid "\nOutput:\n  -t, --to=LANGUAGE         c (default), cpp, java, rust, ts, js or python;\n                            translate also tells from the extension of the output\n  -o, --output=FILE         translate: where to write (default: standard output)\n                            build: executable (default: FILE without extension)\n  -b, --bounds-check        stop with an error on array indices out of bounds\n      --cc=COMMAND          the compiler, or what runs the program, for build and run\n                            (default: $CC or cc, c++, rustc, java, node, python3)\n      --steps=N             exec: stop after N steps\n      --canvas=FILE         exec: save what the program drew, as a PPM picture\n      --dot                 ast: Graphviz format\n"
+msgstr "\nSaída:\n  -t, --to=LINGUAGEM        c (padrão), cpp, java, rust, ts, js ou python;\n                            translate também deduz pela extensão da saída\n  -o, --output=ARQUIVO      translate: onde escrever (padrão: a saída padrão)\n                            build: o executável (padrão: ARQUIVO sem extensão)\n  -b, --bounds-check        interrompe com um erro os índices fora dos limites\n      --cc=COMANDO          o compilador, ou o que executa o programa, para build e run\n                            (padrão: $CC ou cc, c++, rustc, java, node, python3)\n      --steps=N             exec: para depois de N passos\n      --canvas=ARQUIVO      exec: salva o que o programa desenhou, como imagem PPM\n      --dot                 ast: formato Graphviz\n"
+
+#: src/cli/options.c
+msgid "\nMessages and interface:\n      --lang=LANGUAGE       the language to speak (default: $PSEUDOSCOPE_LANG, or the\n                            language of the system, or English):"
+msgstr "\nMensagens e interface:\n      --lang=IDIOMA         o idioma a falar (padrão: $PSEUDOSCOPE_LANG, ou o do\n                            sistema, ou o inglês):"
+
+#: src/cli/options.c
+msgid "\n      --color=WHEN          auto (default), always or never\n  -q, --quiet               no warnings\n  -W, --werror              treat warnings as errors\n  -v, --verbose             show the steps\n  -h, --help                show this help\n  -V, --version             show the version\n"
+msgstr "\n      --color=QUANDO        auto (padrão), always ou never\n  -q, --quiet               sem avisos\n  -W, --werror              trata os avisos como erros\n  -v, --verbose             mostra os passos\n  -h, --help                mostra esta ajuda\n  -V, --version             mostra a versão\n"
+
+#: src/cli/options.c
+msgid "\nExit status: 0 success, 1 errors in the program, 2 wrong usage, 3 files or\ncompiler. run exits with the status of the program.\n"
+msgstr "\nEstado de saída: 0 sucesso, 1 erros no programa, 2 uso incorreto, 3 arquivos ou\ncompilador. run sai com o estado do programa.\n"
+
+#: src/cli/options.c
+msgid "pseudoscope: invalid value '%s' for --%s (use"
+msgstr "pseudoscope: '%s' não é um valor válido para --%s (use"
+
+#: src/cli/options.c
+msgid " or"
+msgstr " ou"
+
+#: src/cli/options.c
+msgid "pseudoscope: invalid value '%s' for --to (use c, cpp, java, rust, ts, js or python)\n"
+msgstr "pseudoscope: '%s' não é um valor válido para --to (use c, cpp, java, rust, ts, js ou python)\n"
+
+#: src/cli/options.c
+msgid "pseudoscope: '%s' is not a language I speak (I speak"
+msgstr "pseudoscope: '%s' não é um idioma que eu fale (falo"
+
+#: src/cli/options.c
+msgid "pseudoscope: invalid value '%s' for --size\n"
+msgstr "pseudoscope: '%s' não é um valor válido para --size\n"
+
+#: src/cli/options.c
+msgid "pseudoscope: invalid value '%s' for --steps\n"
+msgstr "pseudoscope: '%s' não é um valor válido para --steps\n"
+
+#: src/cli/options.c
+msgid "Try 'pseudoscope --help'.\n"
+msgstr "Tente 'pseudoscope --help'.\n"
+
+#: src/cli/options.c
+msgid "pseudoscope: no input file\nTry 'pseudoscope --help'.\n"
+msgstr "pseudoscope: falta o arquivo de entrada\nTente 'pseudoscope --help'.\n"
+
+#: src/cli/options.c
+msgid "pseudoscope: unexpected argument '%s'\n"
+msgstr "pseudoscope: argumento inesperado: '%s'\n"
+
+#: src/front/dialect.c src/front/lexer.c
+msgid "comment is never closed"
+msgstr "o comentário nunca é fechado"
+
+#: src/front/dialect.c
+msgid "the library '%s' has no '%s' here"
+msgstr "a biblioteca '%s' não tem '%s' aqui"
+
+#: src/front/dialect.c src/front/lexer.c
+msgid "unterminated %s"
+msgstr "falta o fechamento do texto%.0s"
+
+#: src/front/dialect.c src/front/lexer.c
+msgid "unexpected character '%c'"
+msgstr "caractere inesperado '%c'"
+
+#: src/front/dialect.c src/front/lexer.c
+msgid "unexpected byte 0x%02x"
+msgstr "byte inesperado 0x%02x"
+
+#: src/front/foreign.inc src/front/parser.c
+msgid "a variable name"
+msgstr "um nome de variável"
+
+#: src/front/foreign.inc src/front/parser.c
+msgid "':' and a type"
+msgstr "':' e um tipo"
+
+#: src/front/foreign.inc src/front/parser.c
+msgid "a type"
+msgstr "um tipo"
+
+#: src/front/foreign.inc
+msgid "the end of the cases"
+msgstr "o fim dos casos"
+
+#: src/front/foreign.inc
+msgid "a function name"
+msgstr "um nome de função"
+
+#: src/front/foreign.inc src/front/parser.c
+msgid "a parameter name"
+msgstr "um nome de parâmetro"
+
+#: src/front/foreign.inc src/front/parser.c
+msgid "')' after the parameters"
+msgstr "')' depois dos parâmetros"
+
+#: src/front/foreign.inc src/front/parser.c
+msgid "a procedure name"
+msgstr "um nome de procedimento"
+
+#: src/front/foreign.inc src/front/parser.c
+msgid "a type name"
+msgstr "um nome de tipo"
+
+#: src/front/foreign.inc src/front/parser.c
+msgid "'end' after the record fields"
+msgstr "'end' depois dos campos do registro"
+
+#: src/front/foreign.inc src/front/parser.c
+msgid "an assignment"
+msgstr "uma atribuição"
+
+#: src/front/foreign.inc src/front/parser.c
+msgid "a statement"
+msgstr "uma instrução"
+
+#: src/front/foreign.inc
+msgid "the end of the program"
+msgstr "o fim do programa"
+
+#: src/front/foreign.inc src/front/parser.c
+msgid "a declaration (function, procedure, var or type)"
+msgstr "uma declaração (function, procedure, var ou type)"
+
+#: src/front/lexer.c
+msgid "end of file"
+msgstr "o fim do arquivo"
+
+#: src/front/lexer.c
+msgid "identifier"
+msgstr "um nome"
+
+#: src/front/lexer.c
+msgid "integer number"
+msgstr "um número inteiro"
+
+#: src/front/lexer.c
+msgid "real number"
+msgstr "um número real"
+
+#: src/front/lexer.c
+msgid "string"
+msgstr "um texto"
+
+#: src/front/lexer.c
+msgid "character"
+msgstr "um caractere"
+
+#: src/front/lexer.c
+msgid "array dimension"
+msgstr "a dimensão de um vetor"
+
+#: src/front/lexer.c
+msgid "invalid number '%.*s'"
+msgstr "número inválido '%.*s'"
+
+#: src/front/lexer.c
+msgid "'%.*s' starts with 0, so it is octal, but has the digit %c"
+msgstr "'%.*s' começa com 0, então é octal, mas tem o dígito %c"
+
+#: src/front/lexer.c
+msgid "unknown escape sequence"
+msgstr "sequência de escape desconhecida"
+
+#: src/front/lexer.c
+msgid "a character literal holds exactly one character"
+msgstr "um caractere entre aspas contém exatamente um caractere"
+
+#: src/front/parser.c
+msgid "'%s' or 'end %s'"
+msgstr "'%s' ou 'end %s'"
+
+#: src/front/parser.c
+msgid "'end %s'"
+msgstr "'end %s'"
+
+#: src/front/parser.c
+msgid "expected %s, found '%s'"
+msgstr "esperava-se %s, encontrou-se '%s'"
+
+#: src/front/parser.c
+msgid "expected %s, found %s"
+msgstr "esperava-se %s, encontrou-se %s"
+
+#: src/front/parser.c
+msgid "code is nested too deeply"
+msgstr "o código está aninhado demais"
+
+#: src/front/parser.c
+msgid "expression is too long"
+msgstr "a expressão é longa demais"
+
+#: src/front/parser.c
+msgid "missing array index"
+msgstr "falta o índice do vetor"
+
+#: src/front/parser.c
+msgid "an array has between 1 and 16 dimensions"
+msgstr "um vetor tem entre 1 e 16 dimensões"
+
+#: src/front/parser.c
+msgid "a %dd array was given %d dimensions"
+msgstr "um vetor de %d dimensões recebeu %d"
+
+#: src/front/parser.c
+msgid "read needs a variable"
+msgstr "read precisa de uma variável"
+
+#: src/front/parser.c
+msgid "'%s' compares; to assign use ':='%s"
+msgstr "'%s' compara; para atribuir use ':='%s"
+
+#: src/front/parser.c
+msgid "an expression"
+msgstr "uma expressão"
+
+#: src/front/parser.c
+msgid "a field name"
+msgstr "um nome de campo"
+
+#: src/front/parser.c
+msgid "a size: only the first dimension can be left out"
+msgstr "um tamanho: só a primeira dimensão pode ser omitida"
+
+#: src/front/parser.c
+msgid "the name of a state"
+msgstr "o nome de um estado"
+
+#: src/front/parser.c
+msgid "the name of a class"
+msgstr "o nome de uma classe"
+
+#: src/front/parser.c
+msgid "a variable, a procedure or a function of the class"
+msgstr "uma variável, um procedimento ou uma função da classe"
+
+#: src/front/parser.c
+msgid "'delay' or 'loss'"
+msgstr "'delay' ou 'loss'"
+
+#: src/front/parser.c
+msgid "a loop variable"
+msgstr "a variável do laço"
+
+#: src/front/parser.c
+msgid "a text between quotes"
+msgstr "um texto entre aspas"
+
+#: src/front/parser.c
+msgid "the name of a message"
+msgstr "o nome de uma mensagem"
+
+#: src/sema/sema.c
+msgid "'%s' is not declared, using '%s'"
+msgstr "'%s' não está declarado, usando '%s'"
+
+#: src/sema/sema.c
+msgid "'%s' is already declared at line %d"
+msgstr "'%s' já está declarado na linha %d"
+
+#: src/sema/sema.c
+msgid "type '%s' is not declared, using '%s'"
+msgstr "o tipo '%s' não está declarado, usando '%s'"
+
+#: src/sema/sema.c
+msgid "type '%s' is already declared at line %d"
+msgstr "o tipo '%s' já está declarado na linha %d"
+
+#: src/sema/sema.c
+msgid "the size of %s must be constant"
+msgstr "o tamanho de %s deve ser constante"
+
+#: src/sema/sema.c
+msgid "record '%s' contains itself; use a pointer"
+msgstr "o registro '%s' contém a si mesmo; use um ponteiro"
+
+#: src/sema/sema.c
+msgid "field '%s' is already declared"
+msgstr "o campo '%s' já está declarado"
+
+#: src/sema/sema.c
+msgid "an array bound must be an integer, not %s"
+msgstr "o limite de um vetor deve ser um inteiro, não %s"
+
+#: src/sema/sema.c
+msgid "unknown type '%s'"
+msgstr "o tipo '%s' não existe"
+
+#: src/sema/sema.c
+msgid "'%s' has %d dimension%s here but its type has %d"
+msgstr "'%s' tem aqui %d dimensão(ões)%.0s, mas seu tipo tem %d"
+
+#: src/sema/sema.c
+msgid "the size of '%s' is missing"
+msgstr "falta o tamanho de '%s'"
+
+#: src/sema/sema.c
+msgid "the size of an array must be positive"
+msgstr "o tamanho de um vetor deve ser positivo"
+
+#: src/sema/sema.c
+msgid "a procedure has no value"
+msgstr "um procedimento não tem valor"
+
+#: src/sema/sema.c
+msgid "%s cannot be %s"
+msgstr "%s não pode ser %s"
+
+#: src/sema/sema.c
+msgid "'%s' takes a text, not %s"
+msgstr "'%s' recebe um texto, não %s"
+
+#: src/sema/sema.c
+msgid "'%s' takes numbers, not %s"
+msgstr "'%s' recebe números, não %s"
+
+#: src/sema/sema.c
+msgid "'%s' is an %s parameter: it needs a variable"
+msgstr "'%s' é um parâmetro %s: precisa de uma variável"
+
+#: src/sema/sema.c
+msgid "parameter '%s' of '%s' is %s, not %s"
+msgstr "o parâmetro '%s' de '%s' é %s, não %s"
+
+#: src/sema/sema.c
+msgid "'%s' takes %d argument%s, not %d"
+msgstr "'%s' recebe %d argumento(s)%.0s, não %d"
+
+#: src/sema/sema.c
+msgid "'%s' is not defined in this file"
+msgstr "'%s' não está definido neste arquivo"
+
+#: src/sema/sema.c
+msgid "an array index must be an integer, not %s"
+msgstr "o índice de um vetor deve ser um inteiro, não %s"
+
+#: src/sema/sema.c
+msgid "a pointer takes one index, not %d"
+msgstr "um ponteiro recebe um só índice, não %d"
+
+#: src/sema/sema.c
+msgid "%s is not an array"
+msgstr "%s não é um vetor"
+
+#: src/sema/sema.c
+msgid "the array has %d dimension%s but %d indices were given"
+msgstr "o vetor tem %d dimensão(ões)%.0s, mas foram dados %d índices"
+
+#: src/sema/sema.c
+msgid "no class that '%s' extends has '%s'"
+msgstr "nenhuma classe que '%s' estende tem '%s'"
+
+#: src/sema/sema.c
+msgid "'%s' has no '%s' that '%s' could use"
+msgstr "'%s' não tem nenhum '%s' que '%s' possa usar"
+
+#: src/sema/sema.c
+msgid "'%s' is abstract: there is nothing to call"
+msgstr "'%s' é abstrato: não há nada para chamar"
+
+#: src/sema/sema.c
+msgid "%s is not a record"
+msgstr "%s não é um registro"
+
+#: src/sema/sema.c
+msgid "there is no field '%s' in %s"
+msgstr "não há nenhum campo '%s' em %s"
+
+#: src/sema/sema.c
+msgid "%s is not a pointer"
+msgstr "%s não é um ponteiro"
+
+#: src/sema/sema.c
+msgid "only a variable has an address"
+msgstr "só uma variável tem endereço"
+
+#: src/sema/sema.c
+msgid "%s cannot be applied to %s"
+msgstr "%s não pode ser aplicado a %s"
+
+#: src/sema/sema.c
+msgid "%s cannot be applied to %s and %s"
+msgstr "%s não pode ser aplicado a %s e %s"
+
+#: src/sema/sema.c
+msgid "'%s' is not declared"
+msgstr "'%s' não está declarado"
+
+#: src/sema/sema.c
+msgid "this is not a function"
+msgstr "isto não é uma função"
+
+#: src/sema/sema.c
+msgid "arrays are accessed with [] (see --mixed-arrays)"
+msgstr "os vetores são acessados com [] (veja --mixed-arrays)"
+
+#: src/sema/sema.c src/vm/vm.c
+msgid "the number does not fit an integer"
+msgstr "o número não cabe em um integer"
+
+#: src/sema/sema.c
+msgid "'%s' is a component: it must be a global variable"
+msgstr "'%s' é um componente: deve ser uma variável global"
+
+#: src/sema/sema.c
+msgid "'%s' is a function: it cannot be assigned"
+msgstr "'%s' é uma função: não pode receber atribuição"
+
+#: src/sema/sema.c
+msgid "this cannot be assigned"
+msgstr "isto não pode receber atribuição"
+
+#: src/sema/sema.c
+msgid "%s cannot be assigned to %s"
+msgstr "%s não pode ser atribuído a %s"
+
+#: src/sema/sema.c
+msgid "a procedure cannot return a value"
+msgstr "um procedimento não pode devolver um valor"
+
+#: src/sema/sema.c
+msgid "'%s' returns %s, not %s"
+msgstr "'%s' devolve %s, não %s"
+
+#: src/sema/sema.c
+msgid "a loop variable must be a number"
+msgstr "a variável de um laço deve ser um número"
+
+#: src/sema/sema.c
+msgid "a loop bound must be a number, not %s"
+msgstr "o limite de um laço deve ser um número, não %s"
+
+#: src/sema/sema.c
+msgid "the step cannot be 0"
+msgstr "o passo não pode ser 0"
+
+#: src/sema/sema.c
+msgid "read needs a variable of a basic type"
+msgstr "read precisa de uma variável de um tipo básico"
+
+#: src/sema/sema.c
+msgid "cannot print %s"
+msgstr "não é possível imprimir %s"
+
+#: src/sema/sema.c
+msgid "'%s' is not a component"
+msgstr "'%s' não é um componente"
+
+#: src/sema/sema.c
+msgid "messages are sent to components, not to %s"
+msgstr "as mensagens são enviadas a componentes, não a %s"
+
+#: src/sema/sema.c
+msgid "a time must be an integer, not %s"
+msgstr "um tempo deve ser um inteiro, não %s"
+
+#: src/sema/sema.c
+msgid "'%s' does not handle the message '%s'"
+msgstr "'%s' não trata a mensagem '%s'"
+
+#: src/sema/sema.c
+msgid "no component handles the message '%s'"
+msgstr "nenhum componente trata a mensagem '%s'"
+
+#: src/sema/sema.c
+msgid "%s is not a component or an object"
+msgstr "%s não é um componente nem um objeto"
+
+#: src/sema/sema.c
+msgid "this value is not used"
+msgstr "este valor não é usado"
+
+#: src/sema/sema.c
+msgid "taking '%s' as the parameter '%s'"
+msgstr "tomando '%s' como o parâmetro '%s'"
+
+#: src/sema/sema.c
+msgid "parameter '%s' already has a type, ignoring this one"
+msgstr "o parâmetro '%s' já tem tipo, este é ignorado"
+
+#: src/sema/sema.c
+msgid "the type of '%s' belongs in the parameter list (see --params)"
+msgstr "o tipo de '%s' fica na lista de parâmetros (veja --params)"
+
+#: src/sema/sema.c
+msgid "the type of '%s' belongs in the body (see --params)"
+msgstr "o tipo de '%s' fica no corpo (veja --params)"
+
+#: src/sema/sema.c
+msgid "parameter '%s' has no type"
+msgstr "o parâmetro '%s' não tem tipo"
+
+#: src/sema/sema.c
+msgid "the bounds of '%s' depend on itself"
+msgstr "os limites de '%s' dependem dele mesmo"
+
+#: src/sema/sema.c
+msgid "only the first dimension of '%s' can be left out"
+msgstr "só a primeira dimensão de '%s' pode ser omitida"
+
+#: src/sema/sema.c
+msgid "function '%s' has no result type"
+msgstr "a função '%s' não tem tipo de resultado"
+
+#: src/sema/sema.c
+msgid "a function cannot return an array; use an out parameter"
+msgstr "uma função não pode devolver um vetor; use um parâmetro out"
+
+#: src/sema/sema.c
+msgid "class '%s' ends up extending itself"
+msgstr "a classe '%s' acaba estendendo a si mesma"
+
+#: src/sema/sema.c
+msgid "'%s' is extended twice"
+msgstr "'%s' é estendida duas vezes"
+
+#: src/sema/sema.c
+msgid "there is no class '%s'"
+msgstr "não existe a classe '%s'"
+
+#: src/sema/sema.c
+msgid "components do not extend, and are not extended: only classes"
+msgstr "os componentes não estendem nem são estendidos: só as classes"
+
+#: src/sema/sema.c
+msgid "an interface can only extend interfaces, and '%s' is a class"
+msgstr "uma interface só pode estender interfaces, e '%s' é uma classe"
+
+#: src/sema/sema.c
+msgid "an interface has no variables: only what its classes must be able to do"
+msgstr "uma interface não tem variáveis: só o que suas classes devem saber fazer"
+
+#: src/sema/sema.c
+msgid "there can be no '%s': nobody has written '%s' (use a class that extends it, or a pointer)"
+msgstr "não pode haver um '%s': ninguém escreveu '%s' (use uma classe que o estenda, ou um ponteiro)"
+
+#: src/sema/sema.c
+msgid "there can be no '%s': it is an interface (use a class that extends it, or a pointer)"
+msgstr "não pode haver um '%s': é uma interface (use uma classe que a estenda, ou um ponteiro)"
+
+#: src/sema/sema.c
+msgid "there can be no '%s': it is abstract (use a class that extends it, or a pointer)"
+msgstr "não pode haver um '%s': é abstrato (use uma classe que o estenda, ou um ponteiro)"
+
+#: src/sema/sema.c
+msgid "'%s' replaces '%s': it must take and give the same"
+msgstr "'%s' substitui '%s': deve receber e devolver o mesmo"
+
+#: src/sema/sema.c
+msgid "'%s' gets '%s' from both '%s' and '%s': it must have its own"
+msgstr "'%s' recebe '%s' tanto de '%s' quanto de '%s': deve ter o seu"
+
+#: src/sema/sema.c
+msgid "'%s' has no state '%s'"
+msgstr "'%s' não tem o estado '%s'"
+
+#: src/sema/sema.c
+msgid "a message carries simple values: '%s' cannot be one"
+msgstr "uma mensagem leva valores simples: '%s' não pode ser um"
+
+#: src/sema/sema.c
+msgid "the message '%s' has other parameters at line %d"
+msgstr "a mensagem '%s' tem outros parâmetros na linha %d"
+
+#: src/sema/sema.c
+msgid "the message 'start' has no parameters"
+msgstr "a mensagem 'start' não tem parâmetros"
+
+#: src/sema/sema.c
+msgid "a link joins components, not %s"
+msgstr "uma ligação une componentes, não %s"
+
+#: src/tui/app.c
+msgid "Help"
+msgstr "Ajuda"
+
+#: src/tui/app.c
+msgid "Keys"
+msgstr "Teclas"
+
+#: src/tui/app.c
+msgid "one step forward, one back"
+msgstr "um passo à frente, um atrás"
+
+#: src/tui/app.c src/tui/run.c src/tui/umlview.c
+msgid "Space"
+msgstr "Espaço"
+
+#: src/tui/app.c
+msgid "plays / pauses"
+msgstr "avança sozinho / para"
+
+#: src/tui/app.c
+msgid "faster, slower"
+msgstr "mais rápido, mais lento"
+
+#: src/tui/app.c
+msgid "steps over the call"
+msgstr "pula a chamada"
+
+#: src/tui/app.c
+msgid "out of the subprogram"
+msgstr "sai do subprograma"
+
+#: src/tui/app.c
+msgid "to the end (or to ●)"
+msgstr "até o fim (ou até ●)"
+
+#: src/tui/app.c
+msgid "starts again"
+msgstr "começa de novo"
+
+#: src/tui/app.c
+msgid "breakpoint ● on the line"
+msgstr "parada ● na linha"
+
+#: src/tui/app.c src/tui/explore.c src/tui/files.c src/tui/run.c src/tui/system.c src/tui/trial.c
+msgid "Enter"
+msgstr "Enter"
+
+#: src/tui/app.c src/tui/explore.c
+msgid "more detail"
+msgstr "mais detalhe"
+
+#: src/tui/app.c src/tui/explore.c
+msgid "less detail"
+msgstr "subir"
+
+#: src/tui/app.c
+msgid "straight to a level"
+msgstr "direto a um nível"
+
+#: src/tui/app.c
+msgid "other view or variable"
+msgstr "outra visão ou variável"
+
+#: src/tui/app.c
+msgid "other component (States)"
+msgstr "outro componente (Estados)"
+
+#: src/tui/app.c
+msgid "code or activity diagram"
+msgstr "código, ou seu diagrama"
+
+#: src/tui/app.c
+msgid "arrays as cells or bars"
+msgstr "vetores: células ou barras"
+
+#: src/tui/app.c
+msgid "what was printed"
+msgstr "o que foi impresso"
+
+#: src/tui/app.c
+msgid "what was drawn"
+msgstr "o que foi desenhado"
+
+#: src/tui/app.c
+msgid "the whole story"
+msgstr "toda a história"
+
+#: src/tui/app.c
+msgid "back to exploring"
+msgstr "voltar a explorar"
+
+#: src/tui/app.c src/tui/explore.c src/tui/files.c
+msgid "quit"
+msgstr "sair"
+
+#: src/tui/app.c src/tui/explore.c src/tui/umlview.c
+msgid "move"
+msgstr "mover"
+
+#: src/tui/app.c
+msgid "run, or try"
+msgstr "executar, ou testar"
+
+#: src/tui/app.c
+msgid "all the tests"
+msgstr "todos os testes"
+
+#: src/tui/app.c
+msgid "open in the editor"
+msgstr "abrir no editor"
+
+#: src/tui/app.c
+msgid "Levels: the deeper, the more"
+msgstr "Níveis: mais fundo, mais se vê"
+
+#: src/tui/app.c src/tui/explore.c
+msgid "Map"
+msgstr "Mapa"
+
+#: src/tui/app.c
+msgid "what the program contains"
+msgstr "o que o programa contém"
+
+#: src/tui/app.c src/tui/explore.c src/tui/run.c
+msgid "Code"
+msgstr "Código"
+
+#: src/tui/app.c
+msgid "how it is written"
+msgstr "como está escrito"
+
+#: src/tui/app.c
+msgid "how it becomes C, in memory"
+msgstr "como vira C, na memória"
+
+#: src/tui/app.c
+msgid "in another language"
+msgstr "em outra linguagem"
+
+#: src/tui/app.c
+msgid "Colours"
+msgstr "Cores"
+
+#: src/tui/app.c
+msgid "being read"
+msgstr "sendo lido"
+
+#: src/tui/app.c
+msgid "just written, result"
+msgstr "recém-escrito, resultado"
+
+#: src/tui/app.c
+msgid "where we are"
+msgstr "onde estamos"
+
+#: src/tui/app.c
+msgid "procedures and functions"
+msgstr "procedimentos e funções"
+
+#: src/tui/app.c
+msgid "types and records"
+msgstr "tipos e registros"
+
+#: src/tui/app.c
+msgid "pointers"
+msgstr "ponteiros"
+
+#: src/tui/app.c
+msgid "error, false"
+msgstr "erro, falso"
+
+#: src/tui/app.c
+msgid "no value yet"
+msgstr "ainda sem valor"
+
+#: src/tui/app.c
+msgid "Level: what you see, and the step"
+msgstr "Nível: o que se vê, e o passo"
+
+#: src/tui/app.c
+msgid "System: a message"
+msgstr "Sistema: uma mensagem"
+
+#: src/tui/app.c
+msgid "Program: a call"
+msgstr "Programa: uma chamada"
+
+#: src/tui/app.c
+msgid "Function: a statement"
+msgstr "Função: uma instrução"
+
+#: src/tui/app.c
+msgid "Statement: a piece of it"
+msgstr "Instrução: uma parte"
+
+#: src/tui/app.c
+msgid "Memory: a read or a write"
+msgstr "Memória: ler ou escrever"
+
+#: src/tui/app.c
+msgid "any key"
+msgstr "qualquer tecla"
+
+#: src/tui/app.c src/tui/run.c
+msgid "close"
+msgstr "fechar"
+
+#: src/tui/app.c
+msgid "Window too small"
+msgstr "Janela pequena demais"
+
+#: src/tui/app.c
+msgid "at least %dx%d characters are needed (now %dx%d)"
+msgstr "são necessários pelo menos %dx%d caracteres (agora %dx%d)"
+
+#: src/tui/app.c
+msgid "Translation to"
+msgstr "Tradução para"
+
+#: src/tui/app.c
+msgid "pseudoscope: cannot open '%s'\n"
+msgstr "pseudoscope: não foi possível abrir '%s'\n"
+
+#: src/tui/app.c
+msgid "pseudoscope: the interface needs a terminal\n"
+msgstr "pseudoscope: a interface precisa de um terminal\n"
+
+#: src/tui/behaviour.c src/tui/system.c
+msgid "Nobody has talked to anybody yet."
+msgstr "Ninguém falou com ninguém ainda."
+
+#: src/tui/behaviour.c
+msgid "No objects, for now."
+msgstr "Sem objetos, por enquanto."
+
+#: src/tui/behaviour.c
+msgid "no"
+msgstr "não"
+
+#: src/tui/behaviour.c
+msgid "yes"
+msgstr "sim"
+
+#: src/tui/behaviour.c
+msgid "↺ back to the question"
+msgstr "↺ volta à pergunta"
+
+#: src/tui/behaviour.c
+msgid "↺ again"
+msgstr "↺ de novo"
+
+#: src/tui/behaviour.c
+msgid "◉ returns %s"
+msgstr "◉ devolve %s"
+
+#: src/tui/behaviour.c
+msgid "≡ print %s"
+msgstr "≡ imprime %s"
+
+#: src/tui/behaviour.c
+msgid "» read %s"
+msgstr "» lê %s"
+
+#: src/tui/behaviour.c
+msgid "▷ send %s"
+msgstr "▷ envia %s"
+
+#: src/tui/chartview.c
+msgid "day"
+msgstr "dia"
+
+#: src/tui/chartview.c
+msgid "done"
+msgstr "feitas"
+
+#: src/tui/chartview.c
+msgid "in progress:"
+msgstr "em andamento:"
+
+#: src/tui/chartview.c
+msgid "nothing"
+msgstr "nada"
+
+#: src/tui/chartview.c
+msgid "waits for"
+msgstr "espera"
+
+#: src/tui/chartview.c
+msgid "   critical"
+msgstr "   crítica"
+
+#: src/tui/chartview.c
+msgid "How to get here"
+msgstr "Como se chega aqui"
+
+#: src/tui/chartview.c
+msgid "below in all"
+msgstr "abaixo no total"
+
+#: src/tui/chartview.c src/tui/run.c
+msgid "up to"
+msgstr "até"
+
+#: src/tui/chartview.c
+msgid "of"
+msgstr "de"
+
+#: src/tui/chartview.c
+msgid "that is"
+msgstr "ou seja,"
+
+#: src/tui/chartview.c
+msgid "%d branch"
+msgid_plural "%d branches"
+msgstr[0] "%d ramo"
+msgstr[1] "%d ramos"
+
+#: src/tui/data.c
+msgid "  result"
+msgstr "  resultado"
+
+#: src/tui/data.c
+msgid "points nowhere yet"
+msgstr "ainda não aponta para nada"
+
+#: src/tui/data.c
+msgid "✗ gone"
+msgstr "✗ não existe mais"
+
+#: src/tui/data.c
+msgid "goes back"
+msgstr "volta"
+
+#: src/tui/data.c
+msgid "globals"
+msgstr "globais"
+
+#: src/tui/data.c
+msgid "This statement uses no variables."
+msgstr "Esta instrução não usa variáveis."
+
+#: src/tui/data.c
+msgid "There are no variables here."
+msgstr "Aqui não há variáveis."
+
+#: src/tui/data.c
+msgid "▼ more (Tab)"
+msgstr "▼ mais (Tab)"
+
+#: src/tui/data.c
+msgid "address"
+msgstr "endereço"
+
+#: src/tui/data.c
+msgid "name"
+msgstr "nome"
+
+#: src/tui/data.c
+msgid "value"
+msgstr "valor"
+
+#: src/tui/data.c
+msgid "byte"
+msgstr "byte"
+
+#: src/tui/data.c src/tui/trial.c
+msgid "try"
+msgstr "testar"
+
+#: src/tui/data.c
+msgid "           … %d more"
+msgstr "           … mais %d"
+
+#: src/tui/explore.c
+msgid "Cannot read %s"
+msgstr "Não foi possível ler %s"
+
+#: src/tui/explore.c
+msgid "result"
+msgstr "resultado"
+
+#: src/tui/explore.c
+msgid "none"
+msgstr "nenhum"
+
+#: src/tui/explore.c
+msgid "reacts to a message"
+msgstr "reage a uma mensagem"
+
+#: src/tui/explore.c
+msgid "function: computes a result"
+msgstr "função: calcula um resultado"
+
+#: src/tui/explore.c
+msgid "procedure: performs actions"
+msgstr "procedimento: realiza ações"
+
+#: src/tui/explore.c src/tui/umlview.c
+msgid "uses"
+msgstr "usa"
+
+#: src/tui/explore.c
+msgid "used by"
+msgstr "usada por"
+
+#: src/tui/explore.c
+msgid "recursive: calls itself"
+msgstr "recursiva: chama a si mesma"
+
+#: src/tui/explore.c
+msgid "run the program"
+msgstr "executar o programa"
+
+#: src/tui/explore.c
+msgid "try it with values of your choice"
+msgstr "teste com os valores que quiser"
+
+#: src/tui/explore.c
+msgid "component: lives on its own and exchanges messages"
+msgstr "componente: vive por conta própria e troca mensagens"
+
+#: src/tui/explore.c
+msgid "interface: what its classes must be able to do"
+msgstr "interface: o que suas classes devem saber fazer"
+
+#: src/tui/explore.c
+msgid "abstract class: those that extend it complete it"
+msgstr "classe abstrata: as que a estendem a completam"
+
+#: src/tui/explore.c
+msgid "class: data and operations together"
+msgstr "classe: dados e operações juntos"
+
+#: src/tui/explore.c
+msgid "extends"
+msgstr "estende"
+
+#: src/tui/explore.c
+msgid "Its states"
+msgstr "Seus estados"
+
+#: src/tui/explore.c src/tui/system.c
+msgid "watch it run"
+msgstr "veja funcionar"
+
+#: src/tui/explore.c
+msgid "run all the tests"
+msgstr "rodar todos os testes"
+
+#: src/tui/explore.c
+msgid "record: several values together, each with a name"
+msgstr "registro: vários valores juntos, cada um com seu nome"
+
+#: src/tui/explore.c
+msgid "Global variables"
+msgstr "Variáveis globais"
+
+#: src/tui/explore.c
+msgid "visible from the whole program"
+msgstr "visíveis em todo o programa"
+
+#: src/tui/explore.c src/tui/system.c
+msgid "Components"
+msgstr "Componentes"
+
+#: src/tui/explore.c
+msgid "Classes"
+msgstr "Classes"
+
+#: src/tui/explore.c src/tui/system.c
+msgid "Tests"
+msgstr "Testes"
+
+#: src/tui/explore.c
+msgid "Subprograms"
+msgstr "Subprogramas"
+
+#: src/tui/explore.c
+msgid "Structures (records)"
+msgstr "Estruturas (registros)"
+
+#: src/tui/explore.c
+msgid "Shared data"
+msgstr "Dados compartilhados"
+
+#: src/tui/explore.c
+msgid "global variables"
+msgstr "variáveis globais"
+
+#: src/tui/explore.c
+msgid "starts here"
+msgstr "começa aqui"
+
+#: src/tui/explore.c
+msgid "The program is empty."
+msgstr "O programa está vazio."
+
+#: src/tui/explore.c
+msgid "padding"
+msgstr "preenchimento"
+
+#: src/tui/explore.c src/tui/run.c
+msgid "another language"
+msgstr "outra linguagem"
+
+#: src/tui/explore.c
+msgid "Pseudocode"
+msgstr "Pseudocódigo"
+
+#: src/tui/explore.c
+msgid "In memory"
+msgstr "Na memória"
+
+#: src/tui/explore.c
+msgid "To fix before going on"
+msgstr "Para corrigir antes de continuar"
+
+#: src/tui/explore.c src/tui/files.c src/tui/system.c
+msgid "choose"
+msgstr "escolher"
+
+#: src/tui/explore.c src/tui/umlview.c
+msgid "edit"
+msgstr "editar"
+
+#: src/tui/explore.c src/tui/umlview.c
+msgid "files"
+msgstr "arquivos"
+
+#: src/tui/explore.c src/tui/files.c src/tui/run.c src/tui/system.c src/tui/umlview.c
+msgid "help"
+msgstr "ajuda"
+
+#: src/tui/explore.c src/tui/trial.c
+msgid "run"
+msgstr "executar"
+
+#: src/tui/explore.c src/tui/system.c
+msgid "tests"
+msgstr "testes"
+
+#: src/tui/explore.c
+msgid "There is no main: choose a subprogram to try"
+msgstr "Não há main: escolha um subprograma para testar"
+
+#: src/tui/explore.c
+msgid "This program has no tests"
+msgstr "Este programa não tem testes"
+
+#: src/tui/explore.c
+msgctxt "masculine"
+msgid "used by"
+msgstr "usado por"
+
+#: src/tui/explore.c
+msgid "%d byte"
+msgid_plural "%d bytes"
+msgstr[0] "%d byte"
+msgstr[1] "%d bytes"
+
+#: src/tui/explore.c
+msgid "%d byte in all"
+msgid_plural "%d bytes in all"
+msgstr[0] "%d byte no total"
+msgstr[1] "%d bytes no total"
+
+#: src/tui/files.c
+msgid "≡ outline"
+msgstr "≡ índice"
+
+#: src/tui/files.c
+msgid "Cannot open %s"
+msgstr "Não foi possível abrir %s"
+
+#: src/tui/files.c
+msgid "no errors"
+msgstr "sem erros"
+
+#: src/tui/files.c
+msgid "Files"
+msgstr "Arquivos"
+
+#: src/tui/files.c
+msgid "No programs or diagrams in this folder."
+msgstr "Não há programas nem diagramas nesta pasta."
+
+#: src/tui/files.c
+msgid "Preview"
+msgstr "Prévia"
+
+#: src/tui/files.c
+msgid "open"
+msgstr "abrir"
+
+#: src/tui/files.c
+msgid "parent folder"
+msgstr "pasta acima"
+
+#: src/tui/files.c
+msgid "%d subprogram"
+msgid_plural "%d subprograms"
+msgstr[0] "%d subprograma"
+msgstr[1] "%d subprogramas"
+
+#: src/tui/files.c
+msgid "%d record"
+msgid_plural "%d records"
+msgstr[0] "%d registro"
+msgstr[1] "%d registros"
+
+#: src/tui/files.c
+msgid "%d line"
+msgid_plural "%d lines"
+msgstr[0] "%d linha"
+msgstr[1] "%d linhas"
+
+#: src/tui/files.c
+msgid "%d error"
+msgid_plural "%d errors"
+msgstr[0] "%d erro"
+msgstr[1] "%d erros"
+
+#: src/tui/files.c
+msgid "%d warning"
+msgid_plural "%d warnings"
+msgstr[0] "%d aviso"
+msgstr[1] "%d avisos"
+
+#: src/tui/run.c
+msgid "becomes"
+msgstr "passa a valer"
+
+#: src/tui/run.c
+msgid "it was"
+msgstr "antes era"
+
+#: src/tui/run.c
+msgid "next round:"
+msgstr "próxima volta:"
+
+#: src/tui/run.c
+msgid "the loop starts with"
+msgstr "o laço começa com"
+
+#: src/tui/run.c
+msgid "this branch runs"
+msgstr "este ramo é executado"
+
+#: src/tui/run.c
+msgid "this branch is skipped"
+msgstr "este ramo é pulado"
+
+#: src/tui/run.c
+msgid "the loop ends"
+msgstr "o laço termina"
+
+#: src/tui/run.c
+msgid "once more"
+msgstr "repete"
+
+#: src/tui/run.c
+msgid "into the loop"
+msgstr "entra-se no laço"
+
+#: src/tui/run.c
+msgid " true "
+msgstr " verdadeiro "
+
+#: src/tui/run.c
+msgid " false "
+msgstr " falso "
+
+#: src/tui/run.c
+msgid "entering"
+msgstr "entra-se em"
+
+#: src/tui/run.c
+msgid "returns"
+msgstr "devolve"
+
+#: src/tui/run.c
+msgid "is done"
+msgstr "terminou"
+
+#: src/tui/run.c
+msgid "prints"
+msgstr "imprime"
+
+#: src/tui/run.c
+msgid "reads"
+msgstr "lê"
+
+#: src/tui/run.c
+msgid "valid:"
+msgstr "válidos:"
+
+#: src/tui/run.c
+msgid "sends"
+msgstr "envia"
+
+#: src/tui/run.c
+msgid "to"
+msgstr "a"
+
+#: src/tui/run.c
+msgid "reaches"
+msgstr "chega a"
+
+#: src/tui/run.c
+msgid "got lost between"
+msgstr "perdeu-se entre"
+
+#: src/tui/run.c
+msgid "and"
+msgstr "e"
+
+#: src/tui/run.c
+msgid "does not matter to"
+msgstr "não interessa a"
+
+#: src/tui/run.c
+msgid ", which is in "
+msgstr ", que está em "
+
+#: src/tui/run.c
+msgid "is only designed: the code will go here"
+msgstr "está só projetado: o código virá aqui"
+
+#: src/tui/run.c
+msgid "remains"
+msgstr "fica"
+
+#: src/tui/run.c
+msgid "the program is over"
+msgstr "programa terminado"
+
+#: src/tui/run.c
+msgid "No subprogram is running."
+msgstr "Nenhum subprograma em andamento."
+
+#: src/tui/run.c
+msgid "… %d more below"
+msgstr "… mais %d abaixo"
+
+#: src/tui/run.c
+msgid "▲ waits for it to end"
+msgstr "▲ espera que termine"
+
+#: src/tui/run.c
+msgid "Nobody is working now: the next message is awaited."
+msgstr "Agora ninguém está trabalhando: espera-se a próxima mensagem."
+
+#: src/tui/run.c
+msgid "Statement"
+msgstr "Instrução"
+
+#: src/tui/run.c
+msgid "How it is computed"
+msgstr "Como se calcula"
+
+#: src/tui/run.c
+msgid "→ to compute one piece at a time"
+msgstr "→ para calcular uma parte de cada vez"
+
+#: src/tui/run.c
+msgid "Values involved"
+msgstr "Valores envolvidos"
+
+#: src/tui/run.c
+msgid "Translated to"
+msgstr "Traduzido para"
+
+#: src/tui/run.c
+msgid "Memory"
+msgstr "Memória"
+
+#: src/tui/run.c
+msgid "The program waits for a value"
+msgstr "O programa espera um valor"
+
+#: src/tui/run.c
+msgid "Type"
+msgstr "Digite"
+
+#: src/tui/run.c
+msgid "What happened"
+msgstr "O que aconteceu"
+
+#: src/tui/run.c
+msgid "Ready: → takes a step, Space plays."
+msgstr "Tudo pronto: → dá um passo, Espaço avança sozinho."
+
+#: src/tui/run.c src/util/diag.c
+msgid "error"
+msgstr "erro"
+
+#: src/tui/run.c
+msgid "waiting"
+msgstr "espera"
+
+#: src/tui/run.c
+msgid "working"
+msgstr "trabalha"
+
+#: src/tui/run.c
+msgid "playing"
+msgstr "avança sozinho"
+
+#: src/tui/run.c
+msgid "paused"
+msgstr "em pausa"
+
+#: src/tui/run.c
+msgid "speed"
+msgstr "velocidade"
+
+#: src/tui/run.c
+msgid "output: o"
+msgstr "saída: o"
+
+#: src/tui/run.c
+msgid "drawing: d"
+msgstr "desenho: d"
+
+#: src/tui/run.c
+msgid "Nothing."
+msgstr "Nada."
+
+#: src/tui/run.c
+msgid "What the program drew"
+msgstr "O que o programa desenhou"
+
+#: src/tui/run.c
+msgid "What the program printed"
+msgstr "O que o programa imprimiu"
+
+#: src/tui/run.c
+msgid "Everything that happened"
+msgstr "Tudo o que aconteceu"
+
+#: src/tui/run.c
+msgid "System"
+msgstr "Sistema"
+
+#: src/tui/run.c
+msgid "Program"
+msgstr "Programa"
+
+#: src/tui/run.c
+msgid "Function"
+msgstr "Função"
+
+#: src/tui/run.c
+msgid "step"
+msgstr "passo"
+
+#: src/tui/run.c src/tui/system.c src/tui/trial.c src/tui/umlview.c
+msgid "back"
+msgstr "voltar"
+
+#: src/tui/run.c
+msgid "to the end"
+msgstr "fim"
+
+#: src/tui/run.c
+msgid "scroll"
+msgstr "rolar"
+
+#: src/tui/run.c
+msgid "Calls"
+msgstr "Chamadas"
+
+#: src/tui/run.c
+msgid "Stack: who waits for whom"
+msgstr "Pilha: quem espera quem"
+
+#: src/tui/run.c
+msgid "What it printed"
+msgstr "O que imprimiu"
+
+#: src/tui/run.c
+msgid "In the end"
+msgstr "No fim"
+
+#: src/tui/run.c
+msgid "Data"
+msgstr "Dados"
+
+#: src/tui/run.c
+msgid "confirm"
+msgstr "confirmar"
+
+#: src/tui/run.c
+msgid "end of input"
+msgstr "fim dos dados"
+
+#: src/tui/run.c
+msgid "pause"
+msgstr "pausa"
+
+#: src/tui/run.c
+msgid "details"
+msgstr "detalhes"
+
+#: src/tui/run.c
+msgid "overview"
+msgstr "resumo"
+
+#: src/tui/run.c
+msgid "other view"
+msgstr "outra visão"
+
+#: src/tui/run.c
+msgid "over"
+msgstr "pular"
+
+#: src/tui/run.c
+msgctxt "state"
+msgid "becomes"
+msgstr "passa a"
+
+#: src/tui/run.c
+msgctxt "run"
+msgid "done"
+msgstr "terminado"
+
+#: src/tui/run.c
+msgctxt "short"
+msgid "play"
+msgstr "avança"
+
+#: src/tui/run.c
+msgid "%d stroke"
+msgid_plural "%d strokes"
+msgstr[0] "%d traço"
+msgstr[1] "%d traços"
+
+#: src/tui/screen.c
+msgid "pseudoscope: out of memory\n"
+msgstr "pseudoscope: memória esgotada\n"
+
+#: src/tui/system.c
+msgid "States"
+msgstr "Estados"
+
+#: src/tui/system.c
+msgid "Timing"
+msgstr "Tempos"
+
+#: src/tui/system.c
+msgid "Communication"
+msgstr "Comunicação"
+
+#: src/tui/system.c
+msgid "Objects"
+msgstr "Objetos"
+
+#: src/tui/system.c
+msgid "Checks"
+msgstr "Verificações"
+
+#: src/tui/system.c
+msgid "Sequence"
+msgstr "Sequência"
+
+#: src/tui/system.c
+msgid "time"
+msgstr "tempo"
+
+#: src/tui/system.c
+msgid "No message on its way."
+msgstr "Nenhuma mensagem a caminho."
+
+#: src/tui/system.c
+msgid "waiting:"
+msgstr "em espera:"
+
+#: src/tui/system.c
+msgid "On their way"
+msgstr "A caminho"
+
+#: src/tui/system.c
+msgid "it does not end"
+msgstr "não termina"
+
+#: src/tui/system.c
+msgid "passed"
+msgstr "passaram"
+
+#: src/tui/system.c
+msgid "What it checks"
+msgstr "O que verifica"
+
+#: src/tui/system.c
+msgctxt "run"
+msgid "running"
+msgstr "em andamento"
+
+#: src/tui/system.c
+msgctxt "run"
+msgid "passed"
+msgstr "passou"
+
+#: src/tui/system.c
+msgctxt "run"
+msgid "failed"
+msgstr "falhou"
+
+#: src/tui/trial.c
+msgid "random"
+msgstr "aleatórios"
+
+#: src/tui/trial.c
+msgid "increasing"
+msgstr "crescentes"
+
+#: src/tui/trial.c
+msgid "decreasing"
+msgstr "decrescentes"
+
+#: src/tui/trial.c
+msgid "all equal"
+msgstr "todos iguais"
+
+#: src/tui/trial.c
+msgid "your own"
+msgstr "os seus"
+
+#: src/tui/trial.c
+msgid "With which values?"
+msgstr "Com quais valores?"
+
+#: src/tui/trial.c
+msgid "Choose the values to pass, then press Enter to see what happens."
+msgstr "Escolha os valores a passar e pressione Enter para ver o que acontece."
+
+#: src/tui/trial.c
+msgid "values"
+msgstr "valores"
+
+#: src/tui/trial.c
+msgid "filled in by the subprogram"
+msgstr "o subprograma preenche"
+
+#: src/tui/trial.c
+msgid "field"
+msgstr "campo"
+
+#: src/tui/trial.c
+msgid "other values"
+msgstr "outros valores"
+
+#: src/tui/trial.c
+msgid "Cannot understand the values of '%s'"
+msgstr "Não foi possível entender os valores de '%s'"
+
+#: src/tui/trial.c
+msgid "The value of '%s' is missing"
+msgstr "Falta o valor de '%s'"
+
+#: src/tui/trial.c
+msgid "With these values the sizes of the arrays are not valid"
+msgstr "Com estes valores os tamanhos dos vetores não são válidos"
+
+#: src/tui/umlview.c
+msgid "The way so far"
+msgstr "O caminho até aqui"
+
+#: src/tui/umlview.c
+msgid "zero or more"
+msgstr "zero ou mais"
+
+#: src/tui/umlview.c
+msgid "one or more"
+msgstr "um ou mais"
+
+#: src/tui/umlview.c
+msgid "zero or one"
+msgstr "zero ou um"
+
+#: src/tui/umlview.c
+msgid "one"
+msgstr "um"
+
+#: src/tui/umlview.c
+msgid "sequence diagram"
+msgstr "diagrama de sequência"
+
+#: src/tui/umlview.c
+msgid "state diagram"
+msgstr "diagrama de estados"
+
+#: src/tui/umlview.c
+msgid "class diagram"
+msgstr "diagrama de classes"
+
+#: src/tui/umlview.c
+msgid "diagram"
+msgstr "diagrama"
+
+#: src/tui/umlview.c
+msgid "plan (Gantt)"
+msgstr "plano (Gantt)"
+
+#: src/tui/umlview.c
+msgid "entities and relationships"
+msgstr "entidades e relacionamentos"
+
+#: src/tui/umlview.c
+msgid "tree"
+msgstr "árvore"
+
+#: src/tui/umlview.c
+msgid "pie"
+msgstr "gráfico de pizza"
+
+#: src/tui/umlview.c
+msgid "mind map"
+msgstr "mapa mental"
+
+#: src/tui/umlview.c
+msgid "work breakdown (WBS)"
+msgstr "estrutura analítica (EAP)"
+
+#: src/tui/umlview.c
+msgid "timeline"
+msgstr "linha do tempo"
+
+#: src/tui/umlview.c
+msgid "journey"
+msgstr "jornada"
+
+#: src/tui/umlview.c
+msgid "outline"
+msgstr "índice"
+
+#: src/tui/umlview.c
+msgid "is a kind of"
+msgstr "é um tipo de"
+
+#: src/tui/umlview.c
+msgid "implements"
+msgstr "implementa"
+
+#: src/tui/umlview.c
+msgid "is made of"
+msgstr "é feito de"
+
+#: src/tui/umlview.c
+msgid "contains"
+msgstr "contém"
+
+#: src/tui/umlview.c
+msgid "knows"
+msgstr "conhece"
+
+#: src/tui/umlview.c
+msgid "of this"
+msgstr "desta"
+
+#: src/tui/umlview.c
+msgid "this"
+msgstr "esta"
+
+#: src/tui/umlview.c
+msgid "play"
+msgstr "avança sozinho"
+
+#: src/tui/umlview.c
+msgid "message"
+msgstr "mensagem"
+
+#: src/tui/umlview.c
+msgid "all"
+msgstr "tudo"
+
+#: src/tui/umlview.c
+msgid "other branch"
+msgstr "outro ramo"
+
+#: src/tui/umlview.c
+msgid "restart"
+msgstr "reiniciar"
+
+#: src/tui/umlview.c
+msgid "entity"
+msgstr "entidade"
+
+#: src/tui/umlview.c
+msgid "class"
+msgstr "classe"
+
+#: src/tui/umlview.c
+msgid "on in time"
+msgstr "avançar no tempo"
+
+#: src/tui/umlview.c
+msgid "task"
+msgstr "tarefa"
+
+#: src/tui/umlview.c
+msgid "into"
+msgstr "dentro"
+
+#: src/tui/umlview.c
+msgid "out"
+msgstr "fora"
+
+#: src/tui/umlview.c
+msgid "slice"
+msgstr "fatia"
+
+#: src/tui/umlview.c
+msgid "which arrow"
+msgstr "qual seta"
+
+#: src/tui/umlview.c
+msgid "follow"
+msgstr "seguir"
+
+#: src/uml/charts.inc src/uml/uml.c
+msgid "there is no diagram in this file"
+msgstr "não há nenhum diagrama neste arquivo"
+
+#: src/uml/uml.c
+msgid "this line of the diagram is not understood: %.60s"
+msgstr "esta linha do diagrama não foi entendida: %.60s"
+
+#: src/uml/uml.c
+msgid "this kind of diagram is not known: %.40s"
+msgstr "este tipo de diagrama não é conhecido: %.40s"
+
+#: src/util/diag.c
+msgid "too many errors, stopping here\n"
+msgstr "erros demais, parando aqui\n"
+
+#: src/util/diag.c
+msgid "warning"
+msgstr "aviso"
+
+#: src/vm/vm.c
+msgid "the text has no end: a character 0 is missing"
+msgstr "o texto não termina: falta um caractere 0"
+
+#: src/vm/vm.c
+msgid "null pointer"
+msgstr "o ponteiro está vazio (null): não há nada para acessar"
+
+#: src/vm/vm.c
+msgid "the variable pointed to no longer exists"
+msgstr "a variável apontada não existe mais"
+
+#: src/vm/vm.c
+msgid "access outside of the variable"
+msgstr "acesso fora da variável"
+
+#: src/vm/vm.c
+msgid "internal error: empty stack"
+msgstr "erro interno: a pilha está vazia"
+
+#: src/vm/vm.c
+msgid "division by zero"
+msgstr "divisão por zero"
+
+#: src/vm/vm.c
+msgid "shift by a negative number, or by more bits than there are"
+msgstr "deslocamento de bits negativo ou grande demais"
+
+#: src/vm/vm.c
+msgid "integer overflow"
+msgstr "o número é grande demais para um integer"
+
+#: src/vm/vm.c
+msgid "too many files are open"
+msgstr "há arquivos demais abertos"
+
+#: src/vm/vm.c
+msgid "the file cannot be opened"
+msgstr "não foi possível abrir o arquivo"
+
+#: src/vm/vm.c
+msgid "the file is not open for writing"
+msgstr "o arquivo não está aberto para escrita"
+
+#: src/vm/vm.c
+msgid "the file is not open"
+msgstr "o arquivo não está aberto"
+
+#: src/vm/vm.c
+msgid "too many dimensions"
+msgstr "dimensões demais"
+
+#: src/vm/vm.c
+msgid "the size of the array is not valid"
+msgstr "o tamanho do vetor não é válido"
+
+#: src/vm/vm.c
+msgid "too many nested calls: is the recursion ever going to end?"
+msgstr "chamadas aninhadas demais: a recursão termina alguma hora?"
+
+#: src/vm/vm.c
+msgid "the record passed does not exist"
+msgstr "o registro passado não existe"
+
+#: src/vm/vm.c
+msgid "array index out of bounds"
+msgstr "índice fora dos limites do vetor"
+
+#: src/vm/vm.c
+msgid "invalid input"
+msgstr "o valor lido não é do tipo certo"
+
+#: src/vm/vm.c
+msgid "too many values in a message"
+msgstr "valores demais em uma mensagem"
+
+#: src/vm/vm.c
+msgid "the message has nobody to go to"
+msgstr "a mensagem não tem destinatário"
+
+#: src/vm/vm.c
+msgid "used before it was given a value"
+msgstr "usada antes de receber um valor"
+
+#: src/vm/vm.c
+msgid "this method is abstract: there is nothing to execute"
+msgstr "este método é abstrato: não há nada para executar"
+
+#: src/vm/vm.c
+msgid "this function is not defined in the file: it cannot be executed"
+msgstr "esta função não está definida no arquivo: não pode ser executada"
+
+#: src/vm/vm.c
+msgid "this cannot be executed here"
+msgstr "isto não pode ser executado aqui"

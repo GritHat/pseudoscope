@@ -1,6 +1,6 @@
- ◆ PSEUDOSCOPE  election.pscope                       ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
-  ‖ fermo   one leader, and another one when it crashes ▸ Node.Beat
-  Sequenza   Componenti   Stati   Tempi   Comunicazione   Verifiche                               tempo t = 28
+ ◆ PSEUDOSCOPE  election.pscope                            ▐ System ▌▸▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
+  ‖ paused   one leader, and another one when it crashes ▸ Node.Beat
+  Sequence   Components   States   Timing   Communication   Checks                                time t = 28
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │               0              5              10             15             20             25             30           │
 │               ╷              ╷              ╷              ╷              ╷              ╷           │  ╷            │
@@ -26,9 +26,9 @@
 │                                                                                                                      │
 │                                                                                                                      │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Cosa è successo ────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ▷ nodes[1] manda  Heartbeat  a nodes[4]                                                                              │
-│ ▷ nodes[1] manda  Heartbeat  a nodes[5]                                                                              │
-│ ▷ nodes[1] manda  Beat  a nodes[1]                                                                                   │
+╭─ What happened ──────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ ▷ nodes[1] sends  Heartbeat  to nodes[4]                                                                             │
+│ ▷ nodes[1] sends  Heartbeat  to nodes[5]                                                                             │
+│ ▷ nodes[1] sends  Beat  to nodes[1]                                                                                  │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   Tab  altra vista   g  alla fine   ?  aiuto
+  →  step   ←  back   Space  play   Enter  details   Esc  overview   Tab  other view   g  to the end   ?  help

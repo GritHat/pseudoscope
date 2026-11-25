@@ -1,20 +1,20 @@
- ◆ PSEUDOSCOPE  login.pscope                ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
-  ✓ finito
-  Sequenza   Componenti   Stati   Tempi   Comunicazione   Verifiche                     tempo t = 9
+ ◆ PSEUDOSCOPE  login.pscope                     ▐ System ▌▸▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
+  ✓ done
+  Sequence   Components   States   Timing   Communication   Checks                      time t = 9
 ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ the right password logs in                                                                                 │
-│  ✓ superato   7 / 7                                                                                        │
+│  ✓ passed   7 / 7                                                                                          │
 │                                                                                                            │
 │ ● the user types the password                                                                              │
 │ ● the request goes through the whole system                                                                │
-│    ✓ test -> client: Click   riga 84                                                                       │
-│    ✓ client -> server: Login   riga 85                                                                     │
-│    ✓ server -> database: Find   riga 86                                                                    │
-│    ✓ database -> server: Found   riga 87                                                                   │
-│    ✓ server -> client: Welcome   riga 88                                                                   │
+│    ✓ test -> client: Click   line 84                                                                       │
+│    ✓ client -> server: Login   line 85                                                                     │
+│    ✓ server -> database: Find   line 86                                                                    │
+│    ✓ database -> server: Found   line 87                                                                   │
+│    ✓ server -> client: Welcome   line 88                                                                   │
 │ ● and the client is in                                                                                     │
-│    ✓ client.state = LoggedIn   riga 90                                                                     │
-│    ✓ server.sessions = 1   riga 91                                                                         │
+│    ✓ client.state = LoggedIn   line 90                                                                     │
+│    ✓ server.sessions = 1   line 91                                                                         │
 │                                                                                                            │
 │                                                                                                            │
 │                                                                                                            │
@@ -24,9 +24,9 @@
 │                                                                                                            │
 │                                                                                                            │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Cosa è successo ──────────────────────────────────────────────────────────────────────────────────────────╮
+╭─ What happened ────────────────────────────────────────────────────────────────────────────────────────────╮
 │  ✓  client.state = LoggedIn                                                                                │
 │  ✓  server.sessions = 1                                                                                    │
-│ ✓ programma terminato                                                                                      │
+│ ✓ the program is over                                                                                      │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   Tab  altra vista   ?  aiuto
+  →  step   ←  back   Space  play   Enter  details   Esc  overview   Tab  other view   ?  help

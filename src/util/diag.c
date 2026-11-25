@@ -1,4 +1,4 @@
-#include "plike/diag.h"
+#include "pseudoscope/diag.h"
 
 #include <stdarg.h>
 #include <string.h>
@@ -22,7 +22,7 @@ static void print_source_line(Diag *diag, Loc loc) {
 
 static void report(Diag *diag, Loc loc, const char *label, const char *color,
                    const char *format, va_list args) {
-    format = diag_text(diag, format);
+    format = tr(format);
     if (diag->sink) {
         char message[512];
         vsnprintf(message, sizeof message, format, args);
@@ -49,11 +49,11 @@ void diag_error(Diag *diag, Loc loc, const char *format, ...) {
     diag->last_error = loc;
     va_list args;
     va_start(args, format);
-    report(diag, loc, diag->italian ? "errore" : "error", "31", format, args);
+    report(diag, loc, T("error"), "31", format, args);
     va_end(args);
     if (diag->errors >= DIAG_MAX_ERRORS) {
         diag->too_many = true;
-        if (!diag->sink) fputs("too many errors, stopping here\n", diag->out);
+        if (!diag->sink) fputs(T("too many errors, stopping here\n"), diag->out);
     }
 }
 
@@ -62,6 +62,6 @@ void diag_warning(Diag *diag, Loc loc, const char *format, ...) {
     diag->warnings++;
     va_list args;
     va_start(args, format);
-    report(diag, loc, diag->italian ? "avviso" : "warning", "35", format, args);
+    report(diag, loc, T("warning"), "35", format, args);
     va_end(args);
 }

@@ -2,8 +2,8 @@
  * and the one of the Cambridge exams (English). Their words become the tokens
  * of the language, so that most of the parser is the same for all. */
 
-#include "plike/blocks.h"
-#include "plike/lexer.h"
+#include "pseudoscope/blocks.h"
+#include "pseudoscope/lexer.h"
 
 #include <stdlib.h>
 #include <string.h>

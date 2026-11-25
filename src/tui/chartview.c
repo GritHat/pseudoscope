@@ -18,7 +18,7 @@ static long plan_length(const Uml *u) {
 
 static void day_text(const Uml *u, long day, char *out, size_t size) {
     if (u->first_day < 0) {
-        snprintf(out, size, "%s %ld", L("giorno", "day"), day + 1);
+        snprintf(out, size, "%s %ld", T("day"), day + 1);
         return;
     }
     int y, m, d;
@@ -118,8 +118,8 @@ void draw_uml_plan(App *app, int x, int y, int w, int h) {
         snprintf(line + n, sizeof line - n, "%s%s", running++ ? ", " : "", t->name);
     }
     hline(x, y + h - 4, w, S_FAINT, "┄");
-    print_at(x, y + h - 3, w, S_TEXT, M_CHIP_FOCUS " %s " M_RESET "  " M_DIM "%s %d / %d", date, L("finite", "done"), done, u->task_count);
-    print_at(x, y + h - 2, w, S_TEXT, M_DIM "%s " M_RESET "%s", L("in corso:", "in progress:"), running ? line : L("niente", "nothing"));
+    print_at(x, y + h - 3, w, S_TEXT, M_CHIP_FOCUS " %s " M_RESET "  " M_DIM "%s %d / %d", date, T("done"), done, u->task_count);
+    print_at(x, y + h - 2, w, S_TEXT, M_DIM "%s " M_RESET "%s", T("in progress:"), running ? line : T("nothing"));
     const UmlTask *sel = app->walk.selected < u->task_count ? &u->tasks[app->walk.selected] : NULL;
     if (sel) {
         char from[32], to[32];
@@ -127,10 +127,10 @@ void draw_uml_plan(App *app, int x, int y, int w, int h) {
         day_text(u, sel->end > sel->start ? sel->end - 1 : sel->start, to, sizeof to);
         if (sel->after >= 0)
             print_at(x, y + h - 1, w, S_TEXT, M_BOLD "%s" M_RESET M_DIM "  %s → %s   %s " M_POINTER "%s", sel->name, from, to,
-                     L("aspetta", "waits for"), u->tasks[sel->after].name);
+                     T("waits for"), u->tasks[sel->after].name);
         else
             print_at(x, y + h - 1, w, S_TEXT, M_BOLD "%s" M_RESET M_DIM "  %s → %s%s", sel->name, from, to,
-                     sel->critical ? L("   critica", "   critical") : "");
+                     sel->critical ? T("   critical") : "");
     }
 }
 
@@ -175,7 +175,7 @@ void draw_uml_tree(App *app, int x, int y, int w, int h) {
     if (!side) return;
     int sx = x + w - side + 2, row = y;
     vline(sx - 2, y, h, S_FAINT, "│");
-    print_at(sx, row, side - 2, S_BOLD, "%s", L("Come ci si arriva", "How to get here"));
+    print_at(sx, row, side - 2, S_BOLD, "%s", T("How to get here"));
     row += 2;
     int chain[40], n = 0;
     for (int i = at; i >= 0 && n < 40; i = u->nodes[i].parent) chain[n++] = i;
@@ -187,8 +187,11 @@ void draw_uml_tree(App *app, int x, int y, int w, int h) {
         children += u->nodes[i].parent == at;
         leaves++;
     }
-    if (row + 2 < y + h)
-        print_at(sx, row + 1, side - 2, S_DIM, "%d %s, %d %s", children, L("rami", "branches"), leaves, L("in tutto sotto", "below in all"));
+    if (row + 2 < y + h) {
+        char branches[48];
+        snprintf(branches, sizeof branches, TN("%d branch", "%d branches", children), children);
+        print_at(sx, row + 1, side - 2, S_DIM, "%s, %d %s", branches, leaves, T("below in all"));
+    }
 }
 
 /* ---- pies ---- */
@@ -224,7 +227,7 @@ void draw_uml_pie(App *app, int x, int y, int w, int h) {
     }
     if (app->walk.selected < u->node_count) {
         const UmlNode *n = &u->nodes[app->walk.selected];
-        print_at(x, y + h - 1, w, S_DIM, "%s " M_RESET M_BOLD "%s" M_RESET M_DIM ": %g %s %g   %s %.1f%%", L("fino a", "up to"), n->text,
-                 before + n->value, L("su", "of"), total, L("cioè il", "that is"), (before + n->value) / total * 100);
+        print_at(x, y + h - 1, w, S_DIM, "%s " M_RESET M_BOLD "%s" M_RESET M_DIM ": %g %s %g   %s %.1f%%", T("up to"), n->text,
+                 before + n->value, T("of"), total, T("that is"), (before + n->value) / total * 100);
     }
 }

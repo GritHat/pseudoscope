@@ -25,13 +25,13 @@ bool run_system_has(const App *app, SystemView view) {
 
 static const char *view_name(SystemView view) {
     switch (view) {
-        case SYS_COMPONENTS: return L("Componenti", "Components");
-        case SYS_STATES: return L("Stati", "States");
-        case SYS_TIMING: return L("Tempi", "Timing");
-        case SYS_COMMUNICATION: return L("Comunicazione", "Communication");
-        case SYS_OBJECTS: return L("Oggetti", "Objects");
-        case SYS_CHECKS: return L("Verifiche", "Checks");
-        default: return L("Sequenza", "Sequence");
+        case SYS_COMPONENTS: return T("Components");
+        case SYS_STATES: return T("States");
+        case SYS_TIMING: return T("Timing");
+        case SYS_COMMUNICATION: return T("Communication");
+        case SYS_OBJECTS: return T("Objects");
+        case SYS_CHECKS: return T("Checks");
+        default: return T("Sequence");
     }
 }
 
@@ -45,7 +45,7 @@ static int draw_tabs(App *app, int x, int y, int w) {
     const Vm *vm = app->run.vm;
     if (has_components(app->doc->program))
         print_at(w - 12 - (w - x > 24 ? 10 : 0), y, 20, S_DIM, w - x > 24 ? "%s " M_FOCUS M_BOLD "t = %ld" : "%.0s" M_FOCUS M_BOLD "t = %ld",
-                 L("tempo", "time"), vm_time(vm));
+                 T("time"), vm_time(vm));
     return x;
 }
 
@@ -129,7 +129,7 @@ static void draw_live_sequence(App *app, int x, int y, int w, int h) {
                          .rows = rows, .row_count = n, .back = app->run.system_back, .flying = flying,
                          .flying_count = flying_count};
     if (view.life_count <= 0) {
-        print_at(x + 2, y + 2, w - 4, S_DIM, "%s", L("Ancora nessuno ha parlato con nessuno.", "Nobody has talked to anybody yet."));
+        print_at(x + 2, y + 2, w - 4, S_DIM, "%s", T("Nobody has talked to anybody yet."));
         return;
     }
     draw_sequence(x, y, w, h, &view);
@@ -221,9 +221,9 @@ static void draw_lanes(App *app, int x, int y, int w, int h) {
         }
         shown++;
     }
-    if (shown == 0) print_at(x + 2, y, w - 4, S_FAINT, "%s", L("Nessun messaggio in viaggio.", "No message on its way."));
+    if (shown == 0) print_at(x + 2, y, w - 4, S_FAINT, "%s", T("No message on its way."));
     if (waiting && shown * 2 + 1 < h) {
-        int at = x + 2 + print_at(x + 2, y + (shown ? shown * 2 : 2), w, S_DIM, "%s ", L("in attesa:", "waiting:"));
+        int at = x + 2 + print_at(x + 2, y + (shown ? shown * 2 : 2), w, S_DIM, "%s ", T("waiting:"));
         for (int i = 0; i < n; i++) {
             const Event *e = vm_queued(vm, i);
             if ((e->from_life != e->to_life && e->from_life != 0) || at > x + w - 24) continue;
@@ -250,7 +250,7 @@ static void draw_components(App *app, int x, int y, int w, int h) {
     }
     int lanes = y + rows * height + 1;
     if (lanes + 2 < y + h) {
-        print_at(x, lanes, w, S_BOLD, "%s", L("In viaggio", "On their way"));
+        print_at(x, lanes, w, S_BOLD, "%s", T("On their way"));
         draw_lanes(app, x, lanes + 2, w, y + h - lanes - 2);
     }
 }
@@ -338,9 +338,8 @@ static void draw_checks(App *app, int x, int y, int w, int h) {
     print_at(x, row, w, S_BOLD, "%s", title);
     VmStatus status = vm_status(vm);
     bool over = status == VM_FINISHED || status == VM_FAILED, ok = passed == total && status != VM_FAILED;
-    print_at(x, row + 1, w, S_TEXT, "%s" M_RESET M_DIM "  %d / %d", !over ? L(M_CHIP_READ " in corso ", M_CHIP_READ " running ")
-             : ok ? L(M_CHIP_WRITE " ✓ superato ", M_CHIP_WRITE " ✓ passed ") : L(M_CHIP_ERROR " ✗ fallito ", M_CHIP_ERROR " ✗ failed "),
-             passed, total);
+    print_at(x, row + 1, w, S_TEXT, "%s %s " M_RESET M_DIM "  %d / %d", !over ? M_CHIP_READ : ok ? M_CHIP_WRITE " ✓" : M_CHIP_ERROR " ✗",
+             !over ? TC("run", "running") : ok ? TC("run", "passed") : TC("run", "failed"), passed, total);
     row += 3;
     /* steps and checks in the order they came */
     int lines = 0, rows = vm_message_count(vm);
@@ -355,7 +354,7 @@ static void draw_checks(App *app, int x, int y, int w, int h) {
         if (n++ < skip) continue;
         if (m->kind == MSG_STEP) print_at(x, row++, w, S(C_FOCUS, C_DEFAULT, A_BOLD), "● %s", m->name);
         else print_at(x + 3, row++, w - 3, S_TEXT, "%s" M_RESET " %s" M_FAINT "   %s %d", m->ok ? M_WRITE M_BOLD "✓" : M_ERROR M_BOLD "✗", m->args,
-                      L("riga", "line"), m->stmt ? m->stmt->loc.line : 0);
+                      T("line"), m->stmt ? m->stmt->loc.line : 0);
     }
 }
 
@@ -394,8 +393,8 @@ static void run_one(App *app, TestResult *t) {
         if (i < 64) t->items[i] = *vm_check(vm, i);
     }
     t->ok = vm_status(vm) == VM_FINISHED && !t->failed;
-    if (vm_status(vm) == VM_FAILED) snprintf(t->message, sizeof t->message, "%s", vm_message(vm));
-    else if (vm_status(vm) != VM_FINISHED) snprintf(t->message, sizeof t->message, "%s", L("non finisce", "it does not end"));
+    if (vm_status(vm) == VM_FAILED) snprintf(t->message, sizeof t->message, "%s", tr(vm_message(vm)));
+    else if (vm_status(vm) != VM_FINISHED) snprintf(t->message, sizeof t->message, "%s", T("it does not end"));
     vm_destroy(vm);
 }
 
@@ -419,17 +418,17 @@ void tests_draw(App *app) {
     int w = screen_width(), h = screen_height(), list = w * 45 / 100, passed = 0;
     char path[200];
     const char *name = strrchr(app->doc->path, '/');
-    snprintf(path, sizeof path, M_TEXT "%s" M_FAINT " ▸ " M_TEXT "%s", name ? name + 1 : app->doc->path, L("prove", "tests"));
+    snprintf(path, sizeof path, M_TEXT "%s" M_FAINT " ▸ " M_TEXT "%s", name ? name + 1 : app->doc->path, T("tests"));
     draw_header(path, NULL, 0, 0, 0);
     for (int i = 0; i < t->count; i++) passed += t->results[i].ok;
-    draw_box(0, 2, list, h - 4, passed == t->count ? C_WRITE : C_ERROR, L("Prove", "Tests"));
-    print_at(2, 3, list - 4, S_DIM, M_WRITE M_BOLD "%d" M_RESET M_DIM " / %d %s", passed, t->count, L("superate", "passed"));
+    draw_box(0, 2, list, h - 4, passed == t->count ? C_WRITE : C_ERROR, T("Tests"));
+    print_at(2, 3, list - 4, S_DIM, M_WRITE M_BOLD "%d" M_RESET M_DIM " / %d %s", passed, t->count, T("passed"));
     int top = scroll_to(0, t->selected, 0, t->count - 1, h - 8);
     for (int i = top; i < t->count && i - top < h - 8; i++) {
         const TestResult *r = &t->results[i];
         draw_table_row(1, 5 + i - top, list - 2, i == t->selected, "%s" M_RESET " %s", r->ok ? M_WRITE "✓" : M_ERROR "✗", r->test->name);
     }
-    draw_box(list, 2, w - list, h - 4, C_BORDER, L("Cosa verifica", "What it checks"));
+    draw_box(list, 2, w - list, h - 4, C_BORDER, T("What it checks"));
     if (t->count) {
         const TestResult *r = &t->results[t->selected];
         int row = 4;
@@ -437,8 +436,8 @@ void tests_draw(App *app) {
             print_at(list + 3, row++, w - list - 6, S_TEXT, "%s" M_RESET " %s", r->items[i].ok ? M_WRITE "✓" : M_ERROR "✗", r->items[i].text);
         if (r->message[0]) print_at(list + 3, row++, w - list - 6, S(C_ERROR, C_DEFAULT, A_BOLD), "✗ %s", r->message);
     }
-    const Hint hints[] = {{"↑↓", L("scegli", "choose")}, {L("Invio", "Enter"), L("guardala mentre gira", "watch it run")},
-                          {"Esc", L("indietro", "back")}, {"?", L("aiuto", "help")}};
+    const Hint hints[] = {{"↑↓", T("choose")}, {T("Enter"), T("watch it run")},
+                          {"Esc", T("back")}, {"?", T("help")}};
     draw_footer(hints, 4);
 }
 

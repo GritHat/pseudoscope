@@ -10,11 +10,11 @@ enum { PRESET_CUSTOM, PRESET_RANDOM, PRESET_UP, PRESET_DOWN, PRESET_EQUAL, PRESE
 
 static const char *preset_name(int preset) {
     switch (preset) {
-        case PRESET_RANDOM: return L("casuali", "random");
-        case PRESET_UP: return L("crescenti", "increasing");
-        case PRESET_DOWN: return L("decrescenti", "decreasing");
-        case PRESET_EQUAL: return L("tutti uguali", "all equal");
-        default: return L("scritti da te", "your own");
+        case PRESET_RANDOM: return T("random");
+        case PRESET_UP: return T("increasing");
+        case PRESET_DOWN: return T("decreasing");
+        case PRESET_EQUAL: return T("all equal");
+        default: return T("your own");
     }
 }
 
@@ -164,12 +164,11 @@ void trial_draw(App *app) {
     char path[200];
     const char *name = strrchr(app->doc->path, '/');
     snprintf(path, sizeof path, M_TEXT "%s" M_FAINT " ▸ " M_CALL "%s" M_FAINT " ▸ " M_TEXT "%s",
-             name ? name + 1 : app->doc->path, t->function->name, L("prova", "try"));
+             name ? name + 1 : app->doc->path, t->function->name, T("try"));
     draw_header(path, NULL, 0, 0, 0);
-    draw_box(0, 2, w, h - 4, C_CALL, L("Con quali valori?", "With which values?"));
+    draw_box(0, 2, w, h - 4, C_CALL, T("With which values?"));
     print_at(3, 4, w - 6, S_DIM, "%s",
-             L("Scegli i valori da passare, poi premi Invio per vedere cosa succede.",
-               "Choose the values to pass, then press Enter to see what happens."));
+             T("Choose the values to pass, then press Enter to see what happens."));
     int row = 6;
     for (int i = 0; i < t->count && row < h - 4; i++) {
         const Symbol *param = t->function->symbol->params[i];
@@ -179,10 +178,10 @@ void trial_draw(App *app) {
         put_text(3, row, S(C_FOCUS, C_DEFAULT, A_BOLD), selected ? "▸" : " ");
         print_at(5, row, 16, S(param->mode == MODE_IN ? C_READ : C_WRITE, C_DEFAULT, A_BOLD), "%s", param->name);
         print_at(22, row, w - 50, S_FAINT, "%s", type);
-        if (is_list(param) && !is_output(param)) print_at(w - 28, row, 25, S_DIM, "%s: " M_FOCUS "%s", L("valori", "values"), preset_name(t->preset[i]));
+        if (is_list(param) && !is_output(param)) print_at(w - 28, row, 25, S_DIM, "%s: " M_FOCUS "%s", T("values"), preset_name(t->preset[i]));
         row++;
         if (is_output(param)) {
-            print_at(5, row, w - 8, S_FAINT, "%s", L("lo riempie il sottoprogramma", "filled in by the subprogram"));
+            print_at(5, row, w - 8, S_FAINT, "%s", T("filled in by the subprogram"));
         } else {
             fill(5, row, w - 9, 1, S(C_TEXT, selected ? C_SELECT : C_PANEL, 0));
             int width = text_width(t->text[i]), room = w - 12;
@@ -193,8 +192,8 @@ void trial_draw(App *app) {
         row += 2;
     }
     if (t->error[0]) print_at(3, h - 4, w - 6, S(C_ERROR, C_DEFAULT, A_BOLD), "✗ %s", t->error);
-    const Hint hints[] = {{"↑↓", L("campo", "field")}, {L("Invio", "Enter"), L("esegui", "run")},
-                          {"Tab", L("altri valori", "other values")}, {"Esc", L("indietro", "back")}};
+    const Hint hints[] = {{"↑↓", T("field")}, {T("Enter"), T("run")},
+                          {"Tab", T("other values")}, {"Esc", T("back")}};
     draw_footer(hints, 4);
 }
 
@@ -230,7 +229,7 @@ void trial_key(App *app, int key) {
             int bad;
             TrialArgument *args = parse_all(t, &bad);
             if (bad >= 0) {
-                snprintf(t->error, sizeof t->error, L("Non capisco i valori di '%s'", "Cannot understand the values of '%s'"),
+                snprintf(t->error, sizeof t->error, T("Cannot understand the values of '%s'"),
                          t->function->symbol->params[bad]->name);
             } else {
                 for (int i = 0; i < t->count; i++) {
@@ -238,14 +237,13 @@ void trial_key(App *app, int key) {
                     if (!is_list(p) && !is_output(p) && p->type->kind != TY_POINTER && args[i].count < 1) bad = i;
                 }
                 if (bad >= 0)
-                    snprintf(t->error, sizeof t->error, L("Manca il valore di '%s'", "The value of '%s' is missing"),
+                    snprintf(t->error, sizeof t->error, T("The value of '%s' is missing"),
                              t->function->symbol->params[bad]->name);
                 else if (run_open(app, t->function, args, t->count))
                     return; /* the run keeps the arguments */
                 else
                     snprintf(t->error, sizeof t->error, "%s",
-                             L("Con questi valori le dimensioni degli array non sono valide",
-                               "With these values the sizes of the arrays are not valid"));
+                             T("With these values the sizes of the arrays are not valid"));
             }
             free_args(args, t->count);
             return;

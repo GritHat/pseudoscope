@@ -1,4 +1,5 @@
-#include "plike/cli.h"
+#include "pseudoscope/cli.h"
+#include "pseudoscope/i18n.h"
 
 #include <getopt.h>
 #include <stdio.h>
@@ -16,68 +17,74 @@ static const struct {
 };
 
 static void print_help(FILE *out) {
-    fputs(
-        "Usage: pseudoscope [COMMAND] [OPTIONS] FILE [OUTPUT]\n"
-        "\n"
-        "Pseudocode, and designs, brought to life. FILE may be - for the standard input.\n"
-        "\n"
-        "Commands:\n"
-        "  ui          explore programs and watch them run (FILE may be a folder;\n"
-        "              the default without arguments)\n"
-        "  translate   write the program in C or in another language (the default command)\n"
-        "  check       only report errors and warnings\n"
-        "  build       translate and compile to an executable (C, C++, Rust)\n"
-        "  run         translate, and execute with the tools of that language\n"
-        "  exec        execute here, without other tools, checking every access\n"
-        "  test        run the tests of the program (with --to: translated)\n"
-        "  tokens      list the tokens\n"
-        "  ast         print the syntax tree\n"
-        "\n"
-        "Language:\n"
-        "      --dialect=NAME        plike, pseint, visualg, portugol or cambridge\n"
-        "                            (default: from the extension .pscope .plike .psc .alg .por\n"
-        "                            .pse, or from how the file begins)\n"
-        "  -a, --assignment=STYLE    colon-equals (default) or equals\n"
-        "  -i, --indexing=BASE       first index of arrays without a range:\n"
-        "                            one (default) or zero\n"
-        "  -p, --params=STYLE        where parameter types go: decl, body or mixed (default)\n"
-        "      --operators=STYLE     standard (and), dotted (.and.) or mixed (default)\n"
-        "  -m, --mixed-arrays=BOOL   accept a(i) for a[i]: true (default) or false\n"
-        "\n"
-        "Output:\n"
-        "  -t, --to=LANGUAGE         c (default), cpp, java, rust, ts, js or python;\n"
-        "                            translate also tells from the extension of the output\n"
-        "  -o, --output=FILE         translate: where to write (default: standard output)\n"
-        "                            build: executable (default: FILE without extension)\n"
-        "  -b, --bounds-check        stop with an error on array indices out of bounds\n"
-        "      --cc=COMMAND          the compiler, or what runs the program, for build and run\n"
-        "                            (default: $CC or cc, c++, rustc, java, node, python3)\n"
-        "      --steps=N             exec: stop after N steps\n"
-        "      --canvas=FILE         exec: save what the program drew, as a PPM picture\n"
-        "      --lang=LANG           it or en (default: $PSEUDOSCOPE_LANG, or it for ui and en for\n"
-        "                            the other commands)\n"
-        "      --dot                 ast: Graphviz format\n"
-        "\n"
-        "Messages:\n"
-        "      --color=WHEN          auto (default), always or never\n"
-        "  -q, --quiet               no warnings\n"
-        "  -W, --werror              treat warnings as errors\n"
-        "  -v, --verbose             show the steps\n"
-        "  -h, --help                show this help\n"
-        "  -V, --version             show the version\n"
-        "\n"
-        "Exit status: 0 success, 1 errors in the program, 2 wrong usage, 3 files or\n"
-        "compiler. run exits with the status of the program.\n",
-        out);
+    fputs(T("Usage: pseudoscope [COMMAND] [OPTIONS] FILE [OUTPUT]\n"
+            "\n"
+            "Pseudocode, and designs, brought to life. FILE may be - for the standard input.\n"),
+          out);
+    fputs(T("\n"
+            "Commands:\n"
+            "  ui          explore programs and watch them run (FILE may be a folder;\n"
+            "              the default without arguments)\n"
+            "  translate   write the program in C or in another language (the default command)\n"
+            "  check       only report errors and warnings\n"
+            "  build       translate and compile to an executable (C, C++, Rust)\n"
+            "  run         translate, and execute with the tools of that language\n"
+            "  exec        execute here, without other tools, checking every access\n"
+            "  test        run the tests of the program (with --to: translated)\n"
+            "  tokens      list the tokens\n"
+            "  ast         print the syntax tree\n"),
+          out);
+    fputs(T("\n"
+            "Language of the program:\n"
+            "      --dialect=NAME        plike, pseint, visualg, portugol or cambridge\n"
+            "                            (default: from the extension .pscope .plike .psc .alg .por\n"
+            "                            .pse, or from how the file begins)\n"
+            "  -a, --assignment=STYLE    colon-equals (default) or equals\n"
+            "  -i, --indexing=BASE       first index of arrays without a range:\n"
+            "                            one (default) or zero\n"
+            "  -p, --params=STYLE        where parameter types go: decl, body or mixed (default)\n"
+            "      --operators=STYLE     standard (and), dotted (.and.) or mixed (default)\n"
+            "  -m, --mixed-arrays=BOOL   accept a(i) for a[i]: true (default) or false\n"),
+          out);
+    fputs(T("\n"
+            "Output:\n"
+            "  -t, --to=LANGUAGE         c (default), cpp, java, rust, ts, js or python;\n"
+            "                            translate also tells from the extension of the output\n"
+            "  -o, --output=FILE         translate: where to write (default: standard output)\n"
+            "                            build: executable (default: FILE without extension)\n"
+            "  -b, --bounds-check        stop with an error on array indices out of bounds\n"
+            "      --cc=COMMAND          the compiler, or what runs the program, for build and run\n"
+            "                            (default: $CC or cc, c++, rustc, java, node, python3)\n"
+            "      --steps=N             exec: stop after N steps\n"
+            "      --canvas=FILE         exec: save what the program drew, as a PPM picture\n"
+            "      --dot                 ast: Graphviz format\n"),
+          out);
+    fputs(T("\n"
+            "Messages and interface:\n"
+            "      --lang=LANGUAGE       the language to speak (default: $PSEUDOSCOPE_LANG, or the\n"
+            "                            language of the system, or English):"),
+          out);
+    for (int i = 0; i < locale_count(); i++) fprintf(out, " %s", locale_code(i));
+    fputs(T("\n"
+            "      --color=WHEN          auto (default), always or never\n"
+            "  -q, --quiet               no warnings\n"
+            "  -W, --werror              treat warnings as errors\n"
+            "  -v, --verbose             show the steps\n"
+            "  -h, --help                show this help\n"
+            "  -V, --version             show the version\n"),
+          out);
+    fputs(T("\n"
+            "Exit status: 0 success, 1 errors in the program, 2 wrong usage, 3 files or\n"
+            "compiler. run exits with the status of the program.\n"),
+          out);
 }
 
-/* Index of value among the NULL-terminated choices, or -1 with a message. */
 static int choose(const char *option, const char *value, const char *const *choices) {
     for (int i = 0; choices[i]; i++)
         if (strcmp(value, choices[i]) == 0) return i;
-    fprintf(stderr, "pseudoscope: invalid value '%s' for --%s (use", value, option);
+    fprintf(stderr, T("pseudoscope: invalid value '%s' for --%s (use"), value, option);
     for (int i = 0; choices[i]; i++)
-        fprintf(stderr, "%s %s", i == 0 ? "" : choices[i + 1] ? "," : " or", choices[i]);
+        fprintf(stderr, "%s %s", i == 0 ? "" : choices[i + 1] ? "," : T(" or"), choices[i]);
     fputs(")\n", stderr);
     return -1;
 }
@@ -116,7 +123,6 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
     static const char *const OPERATORS[] = {"standard", "dotted", "mixed", NULL};
     static const char *const BOOLEAN[] = {"false", "true", NULL};
     static const char *const DIALECTS[] = {"plike", "pseint", "visualg", "portugol", "cambridge", NULL};
-    static const char *const LANGUAGES[] = {"it", "en", NULL};
     static const char *const COLOR[] = {"auto", "always", "never", NULL};
 
     *options = (Options){.command = CMD_TRANSLATE, .config = CONFIG_DEFAULT, .width = 100, .height = 30};
@@ -166,7 +172,7 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
             case 'o': options->output = optarg; break;
             case 't':
                 if (!lang_from_name(optarg, &options->target)) {
-                    fprintf(stderr, "pseudoscope: invalid value '%s' for --to (use c, cpp, java, rust, ts, js or python)\n", optarg);
+                    fprintf(stderr, T("pseudoscope: invalid value '%s' for --to (use c, cpp, java, rust, ts, js or python)\n"), optarg);
                     return false;
                 }
                 options->target_given = true;
@@ -179,14 +185,19 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
                 options->config.dialect_given = true;
                 break;
             case OPT_LANG:
-                value = choose("lang", optarg, LANGUAGES);
+                value = locale_choose(optarg) ? 0 : -1;
+                if (value < 0) {
+                    fprintf(stderr, T("pseudoscope: '%s' is not a language I speak (I speak"), optarg);
+                    for (int i = 0; i < locale_count(); i++) fprintf(stderr, " %s", locale_code(i));
+                    fputs(")\n", stderr);
+                }
                 options->lang = optarg;
                 break;
             case OPT_KEYS: options->keys = optarg; break;
             case OPT_SIZE:
                 if (sscanf(optarg, "%dx%d", &options->width, &options->height) != 2 ||
                     options->width < 1 || options->width > 500 || options->height < 1 || options->height > 200) {
-                    fprintf(stderr, "pseudoscope: invalid value '%s' for --size\n", optarg);
+                    fprintf(stderr, T("pseudoscope: invalid value '%s' for --size\n"), optarg);
                     return false;
                 }
                 break;
@@ -194,7 +205,7 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
                 char *end;
                 options->max_steps = strtol(optarg, &end, 10);
                 if (*end || end == optarg || options->max_steps <= 0) {
-                    fprintf(stderr, "pseudoscope: invalid value '%s' for --steps\n", optarg);
+                    fprintf(stderr, T("pseudoscope: invalid value '%s' for --steps\n"), optarg);
                     return false;
                 }
                 break;
@@ -209,11 +220,11 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
                 *status = EXIT_OK;
                 return false;
             case 'V':
-                puts("pseudoscope " PLIKE_VERSION);
+                puts("pseudoscope " PSEUDOSCOPE_VERSION);
                 *status = EXIT_OK;
                 return false;
             default:
-                fputs("Try 'pseudoscope --help'.\n", stderr);
+                fputs(T("Try 'pseudoscope --help'.\n"), stderr);
                 return false;
         }
         if (value < 0) return false;
@@ -226,13 +237,13 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
         return true;
     }
     if (optind >= argc) {
-        fputs("pseudoscope: no input file\nTry 'pseudoscope --help'.\n", stderr);
+        fputs(T("pseudoscope: no input file\nTry 'pseudoscope --help'.\n"), stderr);
         return false;
     }
     options->input = argv[optind++];
     if (optind < argc && !options->output) options->output = argv[optind++];
     if (optind < argc) {
-        fprintf(stderr, "pseudoscope: unexpected argument '%s'\n", argv[optind]);
+        fprintf(stderr, T("pseudoscope: unexpected argument '%s'\n"), argv[optind]);
         return false;
     }
     return true;

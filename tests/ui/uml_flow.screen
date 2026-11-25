@@ -1,8 +1,8 @@
- ◆ PSEUDOSCOPE  binary_search.mmd ▸ diagramma
+ ◆ PSEUDOSCOPE  binary_search.mmd ▸ diagram
 
 ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │                                                                                                            │
-│ ╭────────────────╮                                                      │ Il cammino fatto                 │
+│ ╭────────────────╮                                                      │ The way so far                   │
 │ │     start      │────▶ lo <= hi ?                                      │                                  │
 │ ╰────────────────╯                                                      │  start                           │
 │ ╭────────────────╮── no ──▶ not found                                   │  lo <= hi ?                      │
@@ -29,4 +29,4 @@
 │                                                                         │                                  │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-  ↑↓  quale freccia   →  segui   ←  indietro   Spazio  va da solo   0  da capo   Esc  file   ?  aiuto
+  ↑↓  which arrow   →  follow   ←  back   Space  play   0  restart   Esc  files   ?  help
