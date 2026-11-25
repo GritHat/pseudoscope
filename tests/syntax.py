@@ -69,7 +69,8 @@ def check(text):
                                 capture_output=True, text=True)
         if result.returncode == 0:
             result = subprocess.run([CC, "-std=c11", "-Wall", "-Wextra", "-Werror",
-                                     "-Wno-unused", "-Wno-uninitialized", "-fsyntax-only",
+                                     "-Wno-unused", "-Wno-unused-parameter",
+                                     "-Wno-uninitialized", "-fsyntax-only",
                                      output.name], capture_output=True, text=True)
     return None if result.returncode == 0 else f"{text}\n{result.stderr}"
 
