@@ -2,7 +2,7 @@
 
 Translates P-like, a Pascal-like pseudocode, to C.
 
-It started as a first-year project, to run the pseudocode used in our algorithms
+It started as a first-year project, to run the pseudocode used in our
 lectures. That pseudocode never had a fixed syntax, so the point of the translator
 is to accept all of the spellings: types in the parameter list or in the body,
 `A[i,j]`, `A[i][j]` or `A(i,j)`, `and`, `.AND.` or `&&`, `end f` or `endfunction`,
