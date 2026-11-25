@@ -104,7 +104,7 @@ successo.
 | Piani, entità, mappe mentali | `examples/diagrams` | un Gantt giorno per giorno |
 | Appunti e articoli | `examples/documents` | Markdown e LaTeX, aperti come cartelle |
 | File e disegni | `examples/libraries` | `d`: ciò che disegna un programma Portugol |
-| Come nel libro di Cormen | `examples/cormen` | `r` su una procedura: non si dichiara niente |
+| Come nel libro di Cormen | `examples/cormen` | `r` su una procedura: non si dichiara niente; `graphs.clrs` per insiemi, `G.V` e `G.Adj[u]`, `btree.clrs` per gli array dentro gli oggetti |
 
 I componenti si scambiano messaggi su collegamenti che li ritardano e li perdono; le prove
 dicono che cosa deve succedere da un capo all'altro:

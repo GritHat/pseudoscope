@@ -1,4 +1,5 @@
 #include "pseudoscope/vm.h"
+#include "pseudoscope/i18n.h"
 
 #include <limits.h>
 #include <math.h>
@@ -210,7 +211,15 @@ static Value *cell_of(const Vm *vm, Pointer p) {
     return &vm->s.cells.items[object->base + p.offset];
 }
 
+/* Inside what we added to run what the writer did not have to write: nothing
+ * of it is shown, and what goes wrong there went wrong where it was asked. */
+static bool quiet(const Vm *vm) {
+    const State *s = &vm->s;
+    return s->frames.count && s->frames.items[s->frames.count - 1].function && s->frames.items[s->frames.count - 1].function->is_quiet;
+}
+
 static void add_log(Vm *vm, LogEntry entry) {
+    if (quiet(vm)) return;
     entry.number = vm->s.log_count;
     entry.depth = vm->s.frames.count;
     vm->log[vm->s.log_count % LOG_SIZE] = entry;
@@ -221,8 +230,23 @@ static const Stmt *current_stmt(const Vm *vm) {
     return vm->s.frames.count ? vm->s.frames.items[vm->s.frames.count - 1].stmt : NULL;
 }
 
+static void drop_objects(Vm *vm, int count);
+
 static void fail(Vm *vm, const char *message) {
     if (vm->s.status == VM_FAILED) return;
+    if (quiet(vm)) { /* the store of objects, or of the elements of collections, has an end */
+        State *s = &vm->s;
+        while (quiet(vm)) {
+            Frame frame = s->frames.items[s->frames.count - 1];
+            drop_objects(vm, frame.objects);
+            s->bounds.count = frame.bounds;
+            s->vars.count = frame.vars;
+            s->stack.count = frame.stack;
+            s->evals.count = frame.evals;
+            s->frames.count--;
+        }
+        message = N_("no room is left: too many objects, or too many elements in the collections");
+    }
     vm->s.status = VM_FAILED;
     vm->s.message = message;
     vm->s.exit_status = 1;
@@ -1068,7 +1092,7 @@ static void enter_function(Vm *vm, const Function *function, const Expr *expr, i
     }
     s->stack.count = first_arg;
 
-    if (s->node_count < MAX_NODES) {
+    if (s->node_count < MAX_NODES && !function->is_quiet) {
         vm->nodes = grow(vm->nodes, &vm->node_capacity, s->node_count + 1, sizeof *vm->nodes);
         CallNode *node = &vm->nodes[s->node_count];
         *node = (CallNode){.parent = s->node, .function = function, .start = s->steps,
@@ -1084,6 +1108,7 @@ static void enter_function(Vm *vm, const Function *function, const Expr *expr, i
 /* At OP_ENTER, when the parameters have their bounds. */
 static void announce_call(Vm *vm) {
     Frame *frame = top_frame(vm);
+    if (frame->function->is_quiet) return;
     LogEntry entry = {.kind = LOG_CALL, .function = frame->function, .stmt = NULL};
     format_call(vm, frame->function, entry.value, sizeof entry.value);
     add_log(vm, entry);
@@ -1119,6 +1144,7 @@ static void leave_function(Vm *vm, const Type *type) {
         memcpy(record, from, (size_t)record_slots * sizeof(Value));
     }
     LogEntry entry = {.kind = LOG_RETURN, .function = frame.function, .stmt = frame.stmt, .truth = has_value};
+    bool silent = frame.function->is_quiet;
     if (has_value && type->kind != TY_RECORD)
         vm_format(vm, &result, type, entry.value, sizeof entry.value);
     else if (has_value)
@@ -1129,7 +1155,7 @@ static void leave_function(Vm *vm, const Type *type) {
         snprintf(node->result, sizeof node->result, "%.31s", entry.value);
         s->node = node->parent;
     }
-    vm->event = LEVEL_CALL;
+    vm->event = silent ? LEVEL_NONE : LEVEL_CALL;
     if (frame.message >= 0) {
         vm->messages[frame.message].end = s->message_count;
         if (has_value && !frame.function->is_handler) {
@@ -1146,7 +1172,7 @@ static void leave_function(Vm *vm, const Type *type) {
     s->stack.count = frame.stack;
     s->evals.count = frame.evals;
     s->frames.count--;
-    add_log(vm, entry);
+    if (!silent) add_log(vm, entry);
     s->pc = frame.return_pc;
     if (record) {
         Pointer at = new_object(vm, NULL, (Type *)type, record_slots, false);
@@ -1736,6 +1762,9 @@ static void store(Vm *vm, const Instr *in) {
             add_message(vm, m);
         }
     }
+    /* what is put in a name of ours (the place of a result, where a "for each" has got to) is not the writer's business */
+    size_t named = strspn(entry.target, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_");
+    if (named && entry.target[named - 1] == '_' && !entry.target[named] && vm->config->dialect != DIALECT_PLIKE) return;
     add_log(vm, entry);
 }
 
@@ -1892,6 +1921,9 @@ static void step(Vm *vm) {
             LogEntry entry = {.kind = LOG_CONDITION, .stmt = in->stmt, .expr = in->expr,
                               .truth = truth(s->stack.items[s->stack.count - 1])};
             const Expr *test = in->expr;
+            if (test && test->kind == EX_BINARY && test->base->kind == EX_NAME && test->base->text[strlen(test->base->text) - 1] == '_' &&
+                vm->config->dialect != DIALECT_PLIKE)
+                break; /* whether a "for each" has more to go through: it shows in what it takes next */
             if (in->stmt->kind == ST_FOR) {
                 int count;
                 const Eval *evals = vm_evals(vm, &count);
@@ -1921,6 +1953,7 @@ static void step(Vm *vm) {
             break;
         default: system_op(vm, in); break;
     }
+    if (s->status == VM_READY && quiet(vm)) vm->event = LEVEL_NONE;
 }
 
 /* ---- snapshots ---- */
@@ -2504,14 +2537,108 @@ const Var *vm_trial_var(const Vm *vm, int index) { return &vm->s.vars.items[vm->
 
 /* ---- text ---- */
 
+static int field_slot(const Record *record, const char *name, const Type **type) {
+    for (const VarDecl *f = record ? record->fields : NULL; f; f = f->next) {
+        if (strcmp(f->name, name) != 0 || !f->symbol) continue;
+        if (type) *type = f->symbol->type;
+        return f->symbol->slot;
+    }
+    return -1;
+}
+
+static bool is_collection(const Type *type) {
+    return type && type->kind == TY_POINTER && type->base && type->base->kind == TY_RECORD && type->base->record->name &&
+           strcmp(type->base->record->name, "set_") == 0 && field_slot(type->base->record, "first_", NULL) >= 0;
+}
+
+static const Value *slot_at(const Vm *vm, Pointer p, int slot) {
+    return slot < 0 ? NULL : vm_cell(vm, (Pointer){p.object, p.offset + slot, p.serial});
+}
+
+/* An object, in a word: its name if it has one, else its key. */
+static void object_word(const Vm *vm, Pointer p, const Type *type, char *out, size_t size) {
+    static const char *const BY[] = {"name", "key", "id", NULL};
+    snprintf(out, size, "\xe2\x80\xa2");
+    for (int i = 0; BY[i] && type && type->base && type->base->kind == TY_RECORD; i++) {
+        const Type *held = NULL;
+        const Value *v = slot_at(vm, p, field_slot(type->base->record, BY[i], &held));
+        if (!v || !v->known || v->kind == V_POINTER) continue;
+        if (v->kind == V_TEXT) snprintf(out, size, "%s", v->as.i < vm->s.pool_count ? vm->pool[v->as.i] : "");
+        else vm_format(vm, v, held, out, size);
+        if (out[0]) return;
+    }
+}
+
+/* A collection of ours, as mathematics writes it: {4, 9}, {a, b}, {(u, v)}, {u: 3}. */
+static void collection_text(const Vm *vm, Pointer set, const Type *type, int depth, char *out, size_t size) {
+    const Record *record = type->base->record;
+    const Type *cell_type = NULL;
+    const Value *at = slot_at(vm, set, field_slot(record, "first_", &cell_type));
+    const Record *cell = cell_type && cell_type->base && cell_type->base->kind == TY_RECORD ? cell_type->base->record : NULL;
+    size_t used = (size_t)snprintf(out, size, "{");
+    for (int n = 0; cell && at && at->known && at->kind == V_POINTER && at->as.p.object && used + 8 < size; n++) {
+        Pointer c = at->as.p;
+        char part[2][40] = {"", ""};
+        bool pair = false;
+        for (int i = 0; i < 2; i++) {
+            const Type *object_type = NULL;
+            const Value *k = slot_at(vm, c, field_slot(cell, i ? "k2_" : "k1_", NULL));
+            const Value *o = slot_at(vm, c, field_slot(cell, i ? "o2_" : "o1_", &object_type));
+            if (o && o->known && o->kind == V_POINTER && o->as.p.object) {
+                object_word(vm, o->as.p, object_type, part[i], sizeof part[i]);
+                pair |= i == 1;
+            } else {
+                snprintf(part[i], sizeof part[i], "%d", k && k->known ? k->as.i : 0);
+                pair |= i == 1 && k && k->known && k->as.i != 0;
+            }
+        }
+        char value[40] = "";
+        static const char *const VALUES[] = {"vs_", "vo_", "vt_", "vr_", "vi_", "vb_", NULL};
+        for (int i = 0; VALUES[i] && !value[0]; i++) { /* what is kept under the key, if anything is */
+            const Type *held = NULL;
+            const Value *v = slot_at(vm, c, field_slot(cell, VALUES[i], &held));
+            if (!v || !v->known) continue;
+            if (v->kind == V_POINTER && !v->as.p.object) continue;
+            if (v->kind == V_TEXT && !(v->as.i < vm->s.pool_count && vm->pool[v->as.i][0])) continue;
+            if ((v->kind == V_FLOAT || v->kind == V_DOUBLE) && as_double(*v) == 0) continue;
+            if (v->kind == V_INT && v->as.i == 0) continue;
+            if (is_collection(held)) {
+                if (depth < 2) collection_text(vm, v->as.p, held, depth + 1, value, sizeof value);
+                else snprintf(value, sizeof value, "{\xe2\x80\xa6}");
+            } else if (v->kind == V_POINTER) {
+                object_word(vm, v->as.p, held, value, sizeof value);
+            } else {
+                vm_format(vm, v, held, value, sizeof value);
+            }
+        }
+        char one[130];
+        if (pair) snprintf(one, sizeof one, "(%s, %s)", part[0], part[1]);
+        else snprintf(one, sizeof one, "%s", part[0]);
+        if (value[0]) snprintf(one + strlen(one), sizeof one - strlen(one), ": %s", value);
+        if (n >= 24 || used + strlen(one) + 8 > size) {
+            used += (size_t)snprintf(out + used, size - used, "%s\xe2\x80\xa6", n ? ", " : "");
+            break;
+        }
+        used += (size_t)snprintf(out + used, size - used, "%s%s", n ? ", " : "", one);
+        at = slot_at(vm, c, field_slot(cell, "next_", NULL));
+    }
+    if (used + 1 < size) snprintf(out + used, size - used, "}");
+}
+
 void vm_format(const Vm *vm, const Value *v, const Type *type, char *out, size_t size) {
     if (!v->known) {
         snprintf(out, size, "?");
         return;
     }
     if (v->kind == V_POINTER) {
+        bool ours = type && type->kind == TY_POINTER && type->base && type->base->kind == TY_RECORD && type->base->record->name &&
+                    strcmp(type->base->record->name, "object") == 0 && vm->config->cormen;
         if (v->as.p.object == 0) {
-            snprintf(out, size, "null");
+            snprintf(out, size, is_collection(type) ? "{}" : ours ? "NIL" : "null");
+        } else if (is_collection(type)) {
+            collection_text(vm, v->as.p, type, 0, out, size);
+        } else if (ours && (object_word(vm, v->as.p, type, out, size), strcmp(out, "\xe2\x80\xa2") != 0)) {
+            /* an object of Cormen's book, by its name or its key */
         } else {
             char name[64];
             vm_place_name(vm, v->as.p, name, sizeof name);

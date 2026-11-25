@@ -39,6 +39,7 @@ typedef struct {
     int pointers;
     bool is_array;
     int rank;           /* from "2d array"; 0 if not given */
+    int holds;          /* a collection worked out from use: what is in it */
     DimList dims;
 } TypeSpec;
 
@@ -107,6 +108,7 @@ struct VarDecl {
     DimList dims;
     TypeSpec *spec;     /* NULL for a parameter typed in the body */
     bool inferred;      /* its type was not written */
+    bool is_map;        /* indexed by anything, not an array: worked out from use */
     bool spec_inherited;/* "a" in "a, b : real" inside a parameter list */
     ParamMode mode;
     Symbol *symbol;
@@ -134,6 +136,7 @@ struct Function {
     bool is_test;
     bool is_abstract;       /* only its signature: the classes that extend say what it does */
     bool is_virtual;        /* replaced in some class, or replacing: chosen by the object */
+    bool is_quiet;          /* ours, added to run what the writer did not have to write: not shown */
     StateName *guards;
     Class *owner;
     TypeSpec *result;   /* NULL for procedures or when declared in the body */

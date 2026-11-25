@@ -262,6 +262,10 @@ msgid "the length of '%s' is not known here: it is neither made here nor taken b
 msgstr "aquí no se conoce la longitud de '%s': no se crea aquí ni lo recibe el procedimiento"
 
 #: src/front/cormen.c
+msgid "an array has no attributes here ('%s'): keep that number in a name of its own, and hand it on beside the array"
+msgstr "aquí un arreglo no tiene atributos ('%s'): guarda ese número en un nombre propio, y pásalo junto al arreglo"
+
+#: src/front/cormen.c
 msgid "an array begins at 0 or at 1 here, not at '%s'"
 msgstr "aquí un arreglo empieza en 0 o en 1, no en '%s'"
 
@@ -270,8 +274,8 @@ msgid "this 'let' is not understood: write 'let A[1:n] be a new array'%.0s"
 msgstr "este 'let' no se entiende: escribe 'let A[1:n] be a new array'%.0s"
 
 #: src/front/cormen.c
-msgid "'for each' goes through an array made here or taken by the procedure: sets are not read yet%.0s"
-msgstr "'for each' recorre un arreglo creado aquí o recibido por el procedimiento: los conjuntos aún no se leen%.0s"
+msgid "this 'for each' is not understood: write 'for each x in S'%.0s"
+msgstr "este 'for each' no se entiende: escribe 'for each x in S'%.0s"
 
 #: src/front/cormen.c
 msgid "'%s' has nothing above it to go with"
@@ -308,6 +312,38 @@ msgstr "carácter inesperado '%c'"
 #: src/front/dialect.c src/front/lexer.c
 msgid "unexpected byte 0x%02x"
 msgstr "byte inesperado 0x%02x"
+
+#: src/front/foreign.inc
+msgid "a collection holds whole numbers and objects, and is indexed by them: nothing else"
+msgstr "una colección contiene números enteros y objetos, y tiene por índices esos: nada más"
+
+#: src/front/foreign.inc
+msgid "what is indexed by anything takes one index, or two"
+msgstr "lo que tiene por índice cualquier cosa lleva un índice, o dos"
+
+#: src/front/foreign.inc
+msgid "whether something is in a collection can be asked: this is not a collection"
+msgstr "se puede preguntar si algo está en una colección: esto no lo es"
+
+#: src/front/foreign.inc
+msgid "'for each' goes through a collection, or through an array made here or taken with its length"
+msgstr "'for each' recorre una colección, o un arreglo creado aquí o recibido con su longitud"
+
+#: src/front/foreign.inc
+msgid "the least of a collection of objects is the one with the least 'key', or 'd': these have neither"
+msgstr "el mínimo de una colección de objetos es el de menor 'key', o 'd': estos no tienen ni uno ni otro"
+
+#: src/front/foreign.inc
+msgid "this is not something done with a collection"
+msgstr "esto no se hace con una colección"
+
+#: src/front/foreign.inc
+msgid "collections are joined, met, taken away from one another and compared: nothing else"
+msgstr "las colecciones se unen, se intersecan, se restan y se comparan: nada más"
+
+#: src/front/foreign.inc
+msgid "a collection is printed one thing at a time: go through it with 'for each'"
+msgstr "una colección se escribe elemento a elemento: recórrela con 'for each'"
 
 #: src/front/foreign.inc src/front/parser.c
 msgid "a variable name"
@@ -2053,6 +2089,10 @@ msgstr "demasiados errores, me detengo aquí\n"
 #: src/util/diag.c
 msgid "warning"
 msgstr "aviso"
+
+#: src/vm/vm.c
+msgid "no room is left: too many objects, or too many elements in the collections"
+msgstr "no queda sitio: demasiados objetos, o demasiados elementos en las colecciones"
 
 #: src/vm/vm.c
 msgid "the text has no end: a character 0 is missing"

@@ -1,0 +1,61 @@
+// Sets as mathematics writes them, what goes through them, queues, and what is handed to procedures.
+SUM(A)
+    total = 0
+    for each x in A
+        total = total + x
+    return total
+
+TOTAL(S)
+    total = 0
+    for each x in S
+        total = total + x
+    return total
+
+FILL(S, n)
+    for i = 1 to n
+        S = S ∪ {i}
+
+A = {4, 9, 2}
+B = {9, 11}
+C = A ∪ B
+print |C|
+for each x ∈ C
+    print x
+D = C − A
+for each x in D
+    print x
+if 9 ∈ A and 11 ∉ A
+    print "yes"
+E = A ∩ B
+print |E|
+S = ∅
+for i = 1 to 5
+    S = S ∪ {i * i}
+S = S − {9}
+print |S|
+if S ≠ ∅
+    print "not empty"
+if A ∩ {100} == ∅
+    print "empty"
+let N[1:3] be a new array
+N[1] = 4
+N[2] = 5
+N[3] = 6
+print SUM(N)
+S2 = {10, 20, 30}
+print TOTAL(S2)
+FILL(S2, 3)
+print |S2|
+for each x in S2
+    if x < 10
+        S2 = S2 − {x + 1}
+print |S2|
+for each x in S2
+    for each y in S2
+        if x < y
+            print x, y
+Q = ∅
+for i = 1 to 5000
+    ENQUEUE(Q, i)
+    j = DEQUEUE(Q)
+print j, |Q|

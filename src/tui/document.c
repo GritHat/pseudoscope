@@ -112,7 +112,7 @@ void visit_statements(const Stmt *s, ExprVisitor visit, void *context) {
 static void note_call(void *context, const Expr *e) {
     Item *item = context;
     if (!e->is_call || !e->symbol || !e->symbol->function) return;
-    if (strcmp(e->symbol->function->name, "new_object_") == 0) return; /* ours: where a new object comes from */
+    if (e->symbol->function->is_quiet) return; /* ours: where a new object comes from, what is done with collections */
     for (int i = 0; i < item->call_count; i++)
         if (item->calls[i] == e->symbol->function) return;
     if (item->call_count < 64) item->calls[item->call_count++] = e->symbol->function;
@@ -244,7 +244,7 @@ static void list_items(Document *doc) {
     list_classes(doc, false);
     for (const Function *f = doc->program->functions; f; f = f->next) {
         if (f->owner || f->is_test) continue;
-        if (doc->shown && strcmp(f->name, "new_object_") == 0) continue; /* ours: where a new object comes from */
+        if (f->is_quiet) continue; /* ours: where a new object comes from, what is done with collections */
         add_function(doc, f, ITEM_FUNCTION);
         doc->item_count--;
         if (!f->is_test && strcmp(f->name, "main") == 0 && !f->params) doc->main_item = doc->item_count;
@@ -252,6 +252,7 @@ static void list_items(Document *doc) {
     }
     for (const TypeDecl *t = doc->program->types; t; t = t->next) {
         if (t->record->klass) continue;
+        if (doc->shown && t->name[strlen(t->name) - 1] == '_') continue; /* ours: what collections are made of */
         Item *item = &doc->items[doc->item_count++];
         item->kind = ITEM_RECORD;
         item->name = t->name;

@@ -1,0 +1,97 @@
+// B-trees, as in "Introduction to Algorithms": a node x has x.n keys, in
+// x.key[1..x.n], and its children in x.c[1..x.n + 1]. Arrays inside objects are
+// not made: they begin to be where something is first put in them.
+B-TREE-SEARCH(x, k)
+    i = 1
+    while i ≤ x.n and k > x.key[i]
+        i = i + 1
+    if i ≤ x.n and k == x.key[i]
+        return (x, i)
+    elseif x.leaf
+        return (NIL, 0)
+    else return B-TREE-SEARCH(x.c[i], k)
+
+B-TREE-CREATE(T)
+    let x be a new node
+    x.leaf = TRUE
+    x.n = 0
+    T.root = x
+
+B-TREE-SPLIT-CHILD(x, i, t)
+    y = x.c[i]                      // full node to split
+    let z be a new node             // z will take half of y
+    z.leaf = y.leaf
+    z.n = t − 1
+    for j = 1 to t − 1              // z gets y's greatest keys...
+        z.key[j] = y.key[j + t]
+    if not y.leaf
+        for j = 1 to t              // ...and its corresponding children
+            z.c[j] = y.c[j + t]
+    y.n = t − 1                     // y keeps t − 1 keys
+    for j = x.n + 1 downto i + 1    // shift x's children to the right...
+        x.c[j + 1] = x.c[j]
+    x.c[i + 1] = z                  // ...to make room for z as a child
+    for j = x.n downto i            // shift the corresponding keys in x
+        x.key[j + 1] = x.key[j]
+    x.key[i] = y.key[t]             // insert y's median key
+    x.n = x.n + 1                   // x has gained a child
+
+B-TREE-INSERT(T, k, t)
+    r = T.root
+    if r.n == 2 · t − 1
+        let s be a new node
+        T.root = s
+        s.leaf = FALSE
+        s.n = 0
+        s.c[1] = r
+        B-TREE-SPLIT-CHILD(s, 1, t)
+        B-TREE-INSERT-NONFULL(s, k, t)
+    else B-TREE-INSERT-NONFULL(r, k, t)
+
+B-TREE-INSERT-NONFULL(x, k, t)
+    i = x.n
+    if x.leaf                       // inserting into a leaf?
+        while i ≥ 1 and k < x.key[i]    // shift keys in x to make room for k
+            x.key[i + 1] = x.key[i]
+            i = i − 1
+        x.key[i + 1] = k            // insert key k in x
+        x.n = x.n + 1               // now x has 1 more key
+    else while i ≥ 1 and k < x.key[i]   // find the child where k belongs
+            i = i − 1
+        i = i + 1
+        if x.c[i].n == 2 · t − 1    // split the child if it's full
+            B-TREE-SPLIT-CHILD(x, i, t)
+            if k > x.key[i]         // does k go into x.c[i] or x.c[i + 1]?
+                i = i + 1
+        B-TREE-INSERT-NONFULL(x.c[i], k, t)
+
+WALK(x, depth)
+    for i = 1 to x.n
+        if not x.leaf
+            WALK(x.c[i], depth + 1)
+        print depth, x.key[i]
+    if not x.leaf
+        WALK(x.c[x.n + 1], depth + 1)
+
+let T be a new tree
+B-TREE-CREATE(T)
+let K[1:10] be a new array
+K[1] = 7
+K[2] = 3
+K[3] = 12
+K[4] = 5
+K[5] = 9
+K[6] = 1
+K[7] = 14
+K[8] = 8
+K[9] = 2
+K[10] = 11
+for i = 1 to 10
+    B-TREE-INSERT(T, K[i], 2)
+WALK(T.root, 0)
+(found, at) = B-TREE-SEARCH(T.root, 9)
+if found ≠ NIL
+    print "9 is key", at, "of a node with", found.n, "keys"
+(found, at) = B-TREE-SEARCH(T.root, 10)
+if found == NIL
+    print "10 is not there"

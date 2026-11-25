@@ -103,7 +103,7 @@ pasado.
 | Planes, entidades, mapas mentales | `examples/diagrams` | un Gantt día a día |
 | Apuntes y artículos | `examples/documents` | Markdown y LaTeX, abiertos como carpetas |
 | Archivos y dibujos | `examples/libraries` | `d`: lo que dibuja un programa en Portugol |
-| Como en el libro de Cormen | `examples/cormen` | `r` sobre un procedimiento: no se declara nada |
+| Como en el libro de Cormen | `examples/cormen` | `r` sobre un procedimiento: no se declara nada; `graphs.clrs` para conjuntos, `G.V` y `G.Adj[u]`, `btree.clrs` para los arreglos dentro de los objetos |
 
 Los componentes intercambian mensajes por enlaces que los retrasan y los pierden; las
 pruebas dicen qué debe ocurrir de un extremo al otro:

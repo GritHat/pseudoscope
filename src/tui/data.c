@@ -124,6 +124,9 @@ static Style cell_style(const Vm *vm, Pointer at, const Value *v) {
 static void cell_text(const Vm *vm, const Value *v, const Type *type, char *out, size_t size) {
     if (!v || !v->known) {
         snprintf(out, size, "·");
+    } else if (v->kind == V_POINTER && type && type->kind == TY_POINTER && type->base->kind == TY_RECORD && type->base->record->name &&
+               strcmp(type->base->record->name, "set_") == 0) {
+        vm_format(vm, v, type, out, size); /* a collection of ours: what is in it */
     } else if (v->kind == V_POINTER) {
         if (v->as.p.object == 0) snprintf(out, size, "∅");
         else {
@@ -573,8 +576,17 @@ static void node_label(App *app, const Record *record, Pointer p, char *out, siz
     const Vm *vm = app->run.vm;
     out[0] = '\0';
     for (const VarDecl *f = record->fields; f; f = f->next) {
-        if (!is_scalar_type(f->symbol->type) || f->symbol->type->kind == TY_POINTER) continue;
+        const Type *held = f->symbol->type;
+        bool collection = held->kind == TY_POINTER && held->base->kind == TY_RECORD && held->base->record->name &&
+                          strcmp(held->base->record->name, "set_") == 0;
+        if (!is_scalar_type(held) || (held->kind == TY_POINTER && !collection)) continue;
+        if (collection && !(vm_cell(vm, moved(p, f->symbol->slot)) && vm_cell(vm, moved(p, f->symbol->slot))->as.p.object)) continue;
         char text[40];
+        const Value *held_value = vm_cell(vm, moved(p, f->symbol->slot));
+        if (app->doc->shown && held_value && held_value->kind == V_TEXT) { /* an attribute nobody gave this object: not a word */
+            cell_text(vm, held_value, held, text, sizeof text);
+            if (strcmp(text, "\"\"") == 0) continue;
+        }
         cell_text(vm, vm_cell(vm, moved(p, f->symbol->slot)), f->symbol->type, text, sizeof text);
         size_t used = strlen(out);
         snprintf(out + used, size - used, "%s%s", used ? " " : "", text);
@@ -650,8 +662,18 @@ static void draw_chain(App *app, const Block *block, int x, int y, int w, int bo
             }
         }
         if (n < 64) seen[n] = p;
-        char label[60];
+        char label[160];
         node_label(app, record, p, label, sizeof label);
+        if (n == 0 && cx + text_width(label) + 8 > x + w) { /* the first is shown as far as it goes */
+            int room = x + w - cx - 10;
+            size_t cut = 0, kept = 0;
+            for (int cells = 0; label[cut] && cells < room; cells++) {
+                kept = cut;
+                cut++;
+                while ((label[cut] & 0xC0) == 0x80) cut++;
+            }
+            if (label[cut]) snprintf(label + kept, sizeof label - kept, "…");
+        }
         if (cx + text_width(label) + 8 > x + w || n >= 60) {
             put_text(cx, y, S_DIM, "…");
             return;

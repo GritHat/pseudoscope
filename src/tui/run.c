@@ -1,5 +1,6 @@
 #include "ui.h"
 
+#include <ctype.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -78,12 +79,31 @@ static void expr_text(const Expr *e, char *out, size_t size) {
     strbuf_free(&text);
 }
 
+/* Whether an expression is in words of ours, which the writer never wrote: count_(Q) != 0. */
+static bool in_our_words(const char *text) {
+    for (const char *c = text; *c; c++)
+        if (*c == '_' && (c[1] == '(' || c[1] == ' ' || c[1] == '.' || !c[1]) && c > text && isalnum((unsigned char)c[-1])) return true;
+    return false;
+}
+
+/* The line as it was written, without its margin and its comment. */
+static bool written_line(const Document *doc, int line, char *out, size_t size) {
+    if (!doc->shown || line < 1 || line > doc->line_count) return false;
+    const char *from = doc->shown + doc->shown_lines[line - 1], *end = from + strcspn(from, "\n");
+    while (from < end && (*from == ' ' || *from == '\t' || isdigit((unsigned char)*from))) from++;
+    const char *comment = strstr(from, "//");
+    if (comment && comment < end) end = comment;
+    while (end > from && (end[-1] == ' ' || end[-1] == '\t')) end--;
+    snprintf(out, size, "%.*s", (int)(end - from), from);
+    return end > from;
+}
+
 /* What happened, in a sentence. */
-static void sentence(const LogEntry *e, char *out, size_t size) {
-    char test[120] = "";
+static void sentence(const Document *doc, const LogEntry *e, char *out, size_t size, int room) {
+    char test[160] = "";
     switch (e->kind) {
         case LOG_ASSIGN:
-            if (e->old[0] && strcmp(e->old, "?") != 0)
+            if (e->old[0] && strcmp(e->old, "?") != 0 && !(e->old[0] == '{' && strcmp(e->old, e->value) == 0))
                 snprintf(out, size, M_WRITE "✎ " M_BOLD "%s" M_RESET " %s " M_CHIP_WRITE " %s " M_RESET M_DIM "  %s %s", e->target,
                          T("becomes"), e->value, T("it was"), e->old);
             else
@@ -107,6 +127,8 @@ static void sentence(const LogEntry *e, char *out, size_t size) {
                 expr_text(e->expr, source, sizeof source);
                 bool same = !e->value[0] || strcmp(source, e->value) == 0;
                 snprintf(test, sizeof test, "%.60s%s%.40s", source, same ? "" : "  →  ", same ? "" : e->value);
+                char written[100]; /* what is run is in words of ours: say it as it was written */
+                if (in_our_words(source) && written_line(doc, e->stmt->loc.line, written, sizeof written)) snprintf(test, sizeof test, "%s", written);
             }
             const char *then;
             bool t = e->truth;
@@ -117,6 +139,8 @@ static void sentence(const LogEntry *e, char *out, size_t size) {
             }
             snprintf(out, size, M_FOCUS "? " M_RESET "%s  %s%s" M_RESET M_DIM "  %s", test, t ? M_CHIP_WRITE : M_CHIP_ERROR,
                      t ? T(" true ") : T(" false "), then);
+            if (room > 0 && text_width(out) > room) /* no room to say what follows from it: where the program goes shows it */
+                snprintf(out, size, M_FOCUS "? " M_RESET "%s  %s%s", test, t ? M_CHIP_WRITE : M_CHIP_ERROR, t ? T(" true ") : T(" false "));
             break;
         }
         case LOG_CALL:
@@ -498,7 +522,7 @@ static void draw_events(App *app, int y, int w) {
         if (!e) break;
         at--;
         char text[400];
-        sentence(e, text, sizeof text);
+        sentence(app->doc, e, text, sizeof text, w - 4);
         if (i == 0) {
             print_at(2, y + 3, w - 4, S_TEXT, "%s", text);
         } else { /* older ones without colours */
@@ -628,7 +652,7 @@ static void draw_log(App *app, int w, int h) {
         char text[400];
         int indent = e->depth > 2 ? (e->depth - 2) * 2 : 0;
         if (indent > 20) indent = 20;
-        sentence(e, text, sizeof text);
+        sentence(app->doc, e, text, sizeof text, w - 11 - indent);
         if (e->stmt) print_at(2, h - 4 - i, 5, S_FAINT, "%4d", e->stmt->loc.line);
         print_at(8 + indent, h - 4 - i, w - 11 - indent, S_TEXT, "%s", text);
     }

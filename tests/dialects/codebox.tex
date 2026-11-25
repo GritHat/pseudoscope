@@ -28,4 +28,21 @@
         \End
 \li \Return $\id{max}$
 \end{codebox}
+\begin{codebox}
+\Procname{$\proc{Reach}(G, s)$}
+\li $S \gets \{s\}$
+\li $Q \gets \emptyset$
+\li $\proc{Enqueue}(Q, s)$
+\li \While $Q \neq \emptyset$
+\li     \Do
+            $u \gets \proc{Dequeue}(Q)$
+\li         \For each vertex $v \in \attrib{G}{Adj}[u]$
+\li             \Do \If $v \notin S$
+\li                     \Then $S \gets S \cup \{v\}$
+\li                         $\proc{Enqueue}(Q, v)$
+                        \End
+                \End
+        \End
+\li \Return $|S|$
+\end{codebox}
 \end{document}

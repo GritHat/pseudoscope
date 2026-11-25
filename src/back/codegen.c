@@ -620,7 +620,8 @@ static void gen_print(Gen *g, const Stmt *stmt) {
             static const char *const WORDS[][2] = {{"1", "0"}, {"VERDADERO", "FALSO"}, {"VERDADEIRO", "FALSO"},
                                                    {"verdadeiro", "falso"}, {"TRUE", "FALSE"}};
             gen_expr(g, arg, P_POSTFIX);
-            strbuf_printf(g->out, " ? \"%s\" : \"%s\"", WORDS[g->config->dialect][0], WORDS[g->config->dialect][1]);
+            int words = g->config->cormen ? 4 : g->config->dialect; /* Cormen's book says TRUE and FALSE */
+            strbuf_printf(g->out, " ? \"%s\" : \"%s\"", WORDS[words][0], WORDS[words][1]);
             continue;
         }
         bool address = arg->type->kind == TY_POINTER && arg->type->base->kind != TY_CHAR;

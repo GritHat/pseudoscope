@@ -782,33 +782,66 @@ static void foreign_program(Parser *p) {
 
 /* ---- types that were not written ---- */
 
-enum { IN_UNKNOWN, IN_BOOL, IN_INT, IN_REAL, IN_TEXT, IN_OBJECT };
+/* What a name holds. A collection also says what is in it, when that is known:
+ * IN_SET alone, IN_SET + IN_INT, IN_SET + IN_OBJECT. */
+enum { IN_UNKNOWN, IN_BOOL, IN_INT, IN_REAL, IN_TEXT, IN_OBJECT, IN_CELL, IN_SET = 8 };
 
 /* Objects: what has attributes (x.key, x.next) and can be nothing (nil_). No
  * pseudocode without declarations says what they are made of, so there is one
  * kind of object, with every attribute that is ever named; what an attribute
  * holds is worked out like the type of a variable. They are records of the
- * base language, taken one by one from a store: see add_objects. */
+ * base language, taken one by one from a store: see add_ours.
+ *
+ * Collections: sets, lists, queues, and what is indexed by anything (x.c[i],
+ * G.Adj[u], w[u, v]). They too are records of the base language: a chain of
+ * cells, each with a key of one or two parts (whole numbers or objects) and,
+ * where something is indexed, the value kept under that key. What is done
+ * with them is written with names of ours (set_of_, in_, first_...) by who
+ * rewrites the pseudocode, and turned here into calls of the procedures that
+ * do it, written in the base language and added to the program. */
 static struct {
     const char *name;
     int kind;
+    bool indexed;        /* x.c[i]: under each key, something of that kind */
 } object_fields[64];
 static int object_field_count;
-static bool objects_used;
+static bool objects_used, collections_used;
 static Loc objects_loc;
 static bool infer_changed;
+static bool infer_last;   /* nothing more will tell: what comes out of a collection of who knows what is a whole number */
+
+static void ours_at(Loc loc) {
+    if (!objects_used && !collections_used) objects_loc = loc;
+}
 
 static int *object_field(const char *name, Loc loc) {
     for (int i = 0; i < object_field_count; i++)
         if (strcmp(object_fields[i].name, name) == 0) return &object_fields[i].kind;
     static int spare;
     if (object_field_count == 64) return &spare;
-    if (!objects_used) objects_loc = loc;
+    ours_at(loc);
     objects_used = true;
     object_fields[object_field_count].name = name;
     object_fields[object_field_count].kind = IN_UNKNOWN;
+    object_fields[object_field_count].indexed = false;
     infer_changed = true;
     return &object_fields[object_field_count++].kind;
+}
+
+static void field_indexed(const char *name, Loc loc) {
+    object_field(name, loc);
+    for (int i = 0; i < object_field_count; i++) {
+        if (strcmp(object_fields[i].name, name) != 0 || object_fields[i].indexed) continue;
+        object_fields[i].indexed = true;
+        ours_at(loc);
+        collections_used = infer_changed = true;
+    }
+}
+
+static bool field_is_indexed(const char *name) {
+    for (int i = 0; i < object_field_count; i++)
+        if (strcmp(object_fields[i].name, name) == 0) return object_fields[i].indexed;
+    return false;
 }
 
 typedef struct {
@@ -818,7 +851,7 @@ typedef struct {
 
 static int spec_kind(const TypeSpec *spec) {
     if (!spec) return IN_UNKNOWN;
-    if (spec->base == TOK_IDENT && spec->pointers) return IN_OBJECT;
+    if (spec->base == TOK_IDENT && spec->pointers) return spec->holds ? spec->holds : IN_OBJECT;
     switch (spec->base) {
         case TOK_INTEGER: return IN_INT;
         case TOK_REAL: return IN_REAL;
@@ -826,6 +859,14 @@ static int spec_kind(const TypeSpec *spec) {
         case TOK_STRINGTYPE: return IN_TEXT;
         default: return IN_UNKNOWN;
     }
+}
+
+/* What a collection of this is said to hold: whole numbers, objects, or it is not known. */
+static int elem_of(int kind) { return kind == IN_OBJECT ? IN_OBJECT : kind == IN_INT || kind == IN_BOOL ? IN_INT : IN_UNKNOWN; }
+static int held(int kind) { return kind >= IN_SET ? kind - IN_SET : IN_UNKNOWN; }
+
+static bool calls(const Expr *e, const char *name) {
+    return e && e->kind == EX_APPLY && e->base->kind == EX_NAME && strcmp(e->base->text, name) == 0;
 }
 
 static VarDecl *find_in_statements(Stmt *s, const char *name) {
@@ -853,10 +894,46 @@ static Function *function_named(Parser *p, const char *name) {
     return NULL;
 }
 
+/* A name with brackets after it that is neither a procedure nor a function of ours: w(u, v). */
+static bool applied_variable(Infer *in, const Expr *e) {
+    return in->p->config->cormen && e->kind == EX_APPLY && e->base->kind == EX_NAME && !function_named(in->p, e->base->text) &&
+           infer_find(in, e->base->text);
+}
+
+/* Somewhere a value can be kept: a name, an attribute, an element. */
+static bool is_place(Infer *in, const Expr *e) {
+    if (e->kind == EX_NAME) return strcmp(e->text, "nil_") != 0 && !function_named(in->p, e->text);
+    return e->kind == EX_FIELD || e->kind == EX_INDEX || applied_variable(in, e);
+}
+
 static int infer_expr(Infer *in, const Expr *e) {
     if (e->kind == EX_NAME && strcmp(e->text, "nil_") == 0) return IN_OBJECT;
     if (e->kind == EX_FIELD) return *object_field(e->text, e->loc);
-    if (e->kind == EX_APPLY && e->base->kind == EX_NAME && strcmp(e->base->text, "new_object_") == 0) return IN_OBJECT;
+    if (e->kind == EX_APPLY && e->base->kind == EX_NAME) { /* what is ours */
+        const char *n = e->base->text;
+        const Expr *first = e->args.count ? e->args.items[0] : NULL;
+        if (strcmp(n, "new_object_") == 0) return IN_OBJECT;
+        if (strcmp(n, "set_") == 0) return IN_SET;
+        if (strcmp(n, "set_of_") == 0) {
+            int elem = IN_UNKNOWN;
+            for (int i = 0; i < e->args.count; i++) {
+                int kind = calls(e->args.items[i], "pair_") ? IN_UNKNOWN : elem_of(infer_expr(in, e->args.items[i]));
+                if (kind > elem) elem = kind;
+            }
+            return IN_SET + elem;
+        }
+        if (strcmp(n, "in_") == 0 || strcmp(n, "empty_") == 0 || strcmp(n, "more_") == 0) return IN_BOOL;
+        if (strcmp(n, "count_") == 0) return IN_INT;
+        if (strcmp(n, "first_") == 0 || strcmp(n, "next_") == 0) return IN_CELL;
+        if (strcmp(n, "item_") == 0) return e->args.count > 1 ? held(infer_expr(in, e->args.items[1])) : IN_UNKNOWN;
+        if (strcmp(n, "item2_") == 0 || strcmp(n, "pair_") == 0) return IN_UNKNOWN;
+        if (strcmp(n, "put_last_") == 0 && e->args.count == 2) {
+            int was = infer_expr(in, first);
+            int now = IN_SET + (calls(e->args.items[1], "pair_") ? IN_UNKNOWN : elem_of(infer_expr(in, e->args.items[1])));
+            return was > now ? was : now;
+        }
+        if (strncmp(n, "take_", 5) == 0 && first) return held(infer_expr(in, first));
+    }
     switch (e->kind) {
         case EX_INT: return IN_INT;
         case EX_FLOAT: return IN_REAL;
@@ -872,6 +949,7 @@ static int infer_expr(Infer *in, const Expr *e) {
             const char *n = e->base->text;
             Function *f = function_named(in->p, n);
             if (f) return spec_kind(f->result);
+            if (applied_variable(in, e)) return spec_kind(infer_find(in, n)->spec);
             const Builtin *b = builtin_named(n);
             if (b && b->result == 'i') return IN_INT;
             if (b && b->result == 't') return IN_TEXT;
@@ -896,7 +974,6 @@ static int infer_expr(Infer *in, const Expr *e) {
                 case TOK_MOD: case TOK_IDIV: return IN_INT;
                 default: {
                     int a = infer_expr(in, e->base), b = infer_expr(in, e->right);
-                    if (a == IN_UNKNOWN || b == IN_UNKNOWN) return a > b ? a : b;
                     return a > b ? a : b;
                 }
             }
@@ -906,26 +983,41 @@ static int infer_expr(Infer *in, const Expr *e) {
 
 static TypeSpec *kind_spec(Parser *p, int kind, Loc loc) {
     static const TokenKind BASES[] = {TOK_REAL, TOK_LOGICAL, TOK_INTEGER, TOK_REAL, TOK_STRINGTYPE};
-    if (kind == IN_OBJECT) { /* it is known by where it is: a pointer to the one kind of object */
+    if (kind >= IN_OBJECT) { /* it is known by where it is: a pointer to the one kind of object, or to a collection */
         TypeSpec *spec = simple_spec(p, TOK_IDENT, loc);
-        spec->name = "object";
+        spec->name = kind == IN_OBJECT ? "object" : kind == IN_CELL ? "cell_" : "set_";
         spec->pointers = 1;
+        spec->holds = kind == IN_OBJECT ? 0 : kind;
+        ours_at(loc);
+        if (kind == IN_OBJECT) objects_used = true;
+        else collections_used = true;
         return spec;
     }
     return simple_spec(p, BASES[kind], loc);
 }
 
+/* What is indexed by anything is not an array: w[u, v], d[v] where v is an object. */
+static void mark_map(VarDecl *d, Loc loc) {
+    if (d->is_map) return;
+    ours_at(loc);
+    d->is_map = true;
+    d->has_dims = false;
+    d->dims = (DimList){0};
+    collections_used = infer_changed = true;
+}
+
 /* What is stored in a name tells its type; more than one: the widest. */
 static void infer_store(Infer *in, const Expr *target, int kind) {
-    if (target->kind == EX_FIELD) { /* what an attribute is given tells what it holds */
-        int *held = object_field(target->text, target->loc);
-        if (kind > *held) {
-            *held = kind;
+    bool indexed = target->kind == EX_INDEX || applied_variable(in, target);
+    if (target->kind == EX_FIELD || (indexed && target->base->kind == EX_FIELD)) { /* what an attribute is given tells what it holds */
+        const Expr *field = indexed ? target->base : target;
+        int *kept = object_field(field->text, field->loc);
+        if (kind > *kept) {
+            *kept = kind;
             infer_changed = true;
         }
         return;
     }
-    bool indexed = target->kind == EX_INDEX;
     const Expr *name = indexed ? target->base : target;
     if (name->kind != EX_NAME) return;
     VarDecl *d = infer_find(in, name->text);
@@ -946,8 +1038,17 @@ static void infer_store(Infer *in, const Expr *target, int kind) {
     }
 }
 
+static bool is_ours(const char *name) {
+    static const char *const OURS[] = {"set_", "set_of_", "in_", "empty_", "more_", "count_", "first_", "next_", "item_", "item2_", "pair_",
+                                       "put_last_", "take_first_", "take_last_", "take_min_", "take_max_", NULL};
+    for (int i = 0; OURS[i]; i++)
+        if (strcmp(OURS[i], name) == 0) return true;
+    return false;
+}
+
 static void infer_uses(Infer *in, const Expr *e) {
     if (!e) return;
+    bool cormen = in->p->config->cormen;
     if (e->kind == EX_NAME && strcmp(e->text, "nil_") == 0) objects_used = true;
     if (e->kind == EX_FIELD) { /* what has an attribute is an object */
         object_field(e->text, e->loc);
@@ -955,44 +1056,84 @@ static void infer_uses(Infer *in, const Expr *e) {
     }
     if (e->kind == EX_BINARY && e->right && (e->op == TOK_EQ || e->op == TOK_NE)) { /* and so is what is compared with one */
         int a = infer_expr(in, e->base), b = infer_expr(in, e->right);
-        if (a == IN_OBJECT && b != IN_OBJECT) infer_store(in, e->right, IN_OBJECT);
-        if (b == IN_OBJECT && a != IN_OBJECT) infer_store(in, e->base, IN_OBJECT);
+        if (a == IN_OBJECT && b < IN_OBJECT) infer_store(in, e->right, IN_OBJECT);
+        if (b == IN_OBJECT && a < IN_OBJECT) infer_store(in, e->base, IN_OBJECT);
+        if (a >= IN_SET && b < IN_SET && is_place(in, e->right)) infer_store(in, e->right, IN_SET); /* and with a collection */
+        if (b >= IN_SET && a < IN_SET && is_place(in, e->base)) infer_store(in, e->base, IN_SET);
     }
-    if (e->kind == EX_INDEX && e->base->kind == EX_NAME) { /* a parameter that is indexed is an array */
-        VarDecl *d = find_decl(in->function->params, e->base->text);
-        if (d && !d->has_dims && !(d->spec && d->spec->is_array)) {
+    bool indexing = e->kind == EX_INDEX || applied_variable(in, e);
+    if (indexing && e->base->kind == EX_FIELD && cormen) field_indexed(e->base->text, e->base->loc);
+    if (indexing && e->base->kind == EX_NAME) {
+        VarDecl *d = infer_find(in, e->base->text);
+        bool param = d && find_decl(in->function->params, e->base->text) == d;
+        bool array = d && (d->has_dims || (d->spec && d->spec->is_array));
+        if (cormen && d && !d->is_map) { /* by an object, or never made as an array: indexed by anything */
+            bool by_object = false;
+            for (int i = 0; i < e->args.count; i++) by_object |= infer_expr(in, e->args.items[i]) == IN_OBJECT;
+            if (by_object || (!param && !array)) mark_map(d, e->loc);
+        }
+        if (param && !d->is_map && !array) { /* a parameter that is indexed is an array */
             d->has_dims = true;
             for (int i = 0; i < e->args.count; i++) dim_add(in->p, &d->dims, (Dim){NULL, NULL});
             infer_changed = true;
+        }
+    }
+    if (e->kind == EX_APPLY && e->base->kind == EX_NAME && is_ours(e->base->text)) {
+        ours_at(e->loc);
+        collections_used = true;
+        bool through = calls(e, "first_") || calls(e, "count_") || calls(e, "empty_") || strncmp(e->base->text, "take_", 5) == 0;
+        if (through && e->args.count && is_place(in, e->args.items[0]) && infer_expr(in, e->args.items[0]) < IN_SET) {
+            const Expr *s = e->args.items[0]; /* what is gone through, counted, taken from: a collection */
+            VarDecl *array = s->kind == EX_NAME ? infer_find(in, s->text) : NULL;
+            if (!(array && array->has_dims)) infer_store(in, s, IN_SET);
+        }
+        if (calls(e, "in_") && e->args.count == 2) { /* x ∈ S: S holds what x is, and x is what S holds */
+            const Expr *x = e->args.items[0], *s = e->args.items[1];
+            int kx = calls(x, "pair_") ? IN_UNKNOWN : elem_of(infer_expr(in, x)), ks = infer_expr(in, s);
+            VarDecl *array = s->kind == EX_NAME ? infer_find(in, s->text) : NULL;
+            if (is_place(in, s) && IN_SET + kx > ks && !(array && array->has_dims)) infer_store(in, s, IN_SET + kx);
+            if (held(ks) == IN_OBJECT && kx != IN_OBJECT && is_place(in, x)) infer_store(in, x, IN_OBJECT);
         }
     }
     if (e->kind == EX_APPLY && e->base->kind == EX_NAME) {
         Function *f = function_named(in->p, e->base->text);
         VarDecl *param = f ? f->params : NULL;
         for (int i = 0; i < e->args.count && param; i++, param = param->next) {
-            int kind = infer_expr(in, e->args.items[i]);
+            const Expr *arg = e->args.items[i];
+            int kind = infer_expr(in, arg);
             if ((!param->spec || param->inferred) && kind > spec_kind(param->spec)) {
                 param->spec = kind_spec(in->p, kind, param->loc);
                 param->inferred = true;
                 infer_changed = true;
             }
+            /* what is handed to who takes an object, or a collection, is one */
+            int wanted = spec_kind(param->spec);
+            if (cormen && wanted >= IN_OBJECT && kind < wanted && param->mode == MODE_IN && is_place(in, arg)) infer_store(in, arg, wanted);
             /* what a procedure fills in exists from then on, and is what the procedure makes of it */
-            if (param->mode != MODE_IN && !param->has_dims && e->args.items[i]->kind == EX_NAME && !function_named(in->p, e->args.items[i]->text))
-                infer_store(in, e->args.items[i], spec_kind(param->spec));
+            if (param->mode != MODE_IN && !param->has_dims && arg->kind == EX_NAME && !function_named(in->p, arg->text))
+                infer_store(in, arg, spec_kind(param->spec));
+            /* what is indexed by anything begins to be where it is first handed to who fills it in */
+            if (cormen && param->is_map && arg->kind == EX_NAME && !infer_find(in, arg->text) && !function_named(in->p, arg->text))
+                infer_store(in, arg, spec_kind(param->spec));
+            VarDecl *given = cormen && arg->kind == EX_NAME ? infer_find(in, arg->text) : NULL;
+            if (given && given->is_map != param->is_map) { /* indexed by anything on one side: on the other too */
+                mark_map(given, arg->loc);
+                mark_map(param, arg->loc);
+            }
             /* what is handed on as an array is one, even where nobody looks inside it */
-            if (param->has_dims && e->args.items[i]->kind == EX_NAME) {
-                VarDecl *mine = find_decl(in->function->params, e->args.items[i]->text);
-                if (mine && !mine->has_dims && !(mine->spec && mine->spec->is_array)) {
+            if (param->has_dims && arg->kind == EX_NAME) {
+                VarDecl *mine = find_decl(in->function->params, arg->text);
+                if (mine && !mine->is_map && !mine->has_dims && !(mine->spec && mine->spec->is_array)) {
                     mine->has_dims = true;
                     for (int k = 0; k < param->dims.count; k++) dim_add(in->p, &mine->dims, (Dim){NULL, NULL});
                     infer_changed = true;
                 }
             }
             /* a matrix: its sizes come from what is passed */
-            if (param->has_dims && param->dims.count > 1 && !param->dims.items[1].hi && e->args.items[i]->kind == EX_NAME) {
-                VarDecl *arg = infer_find(in, e->args.items[i]->text);
-                if (arg && arg->dims.count == param->dims.count) {
-                    param->dims = arg->dims;
+            if (param->has_dims && param->dims.count > 1 && !param->dims.items[1].hi && arg->kind == EX_NAME) {
+                VarDecl *from = infer_find(in, arg->text);
+                if (from && from->dims.count == param->dims.count) {
+                    param->dims = from->dims;
                     infer_changed = true;
                 }
             }
@@ -1012,11 +1153,23 @@ static void infer_statements(Infer *in, Stmt *s) {
             infer_uses(in, b->step);
             for (int i = 0; i < b->args.count; i++) infer_uses(in, b->args.items[i]);
             if (b->kind == ST_ASSIGN) {
-                infer_store(in, b->target, infer_expr(in, b->value));
+                int value = infer_expr(in, b->value);
+                infer_store(in, b->target, value);
+                int target = infer_expr(in, b->target);
+                bool place = b->value->kind == EX_FIELD || b->value->kind == EX_NAME || b->value->kind == EX_INDEX;
                 /* and backwards: what goes into an object is one (x = L.head, where x has attributes) */
-                if (infer_expr(in, b->target) == IN_OBJECT && infer_expr(in, b->value) != IN_OBJECT &&
-                    (b->value->kind == EX_FIELD || b->value->kind == EX_NAME || b->value->kind == EX_INDEX))
-                    infer_store(in, b->value, IN_OBJECT);
+                if (target == IN_OBJECT && value != IN_OBJECT) {
+                    if (place) infer_store(in, b->value, IN_OBJECT);
+                    /* and what an object is taken from holds objects */
+                    if (calls(b->value, "item_") && b->value->args.count > 1) infer_store(in, b->value->args.items[1], IN_SET + IN_OBJECT);
+                    if (b->value->kind == EX_APPLY && b->value->base->kind == EX_NAME && strncmp(b->value->base->text, "take_", 5) == 0 &&
+                        b->value->args.count)
+                        infer_store(in, b->value->args.items[0], IN_SET + IN_OBJECT);
+                }
+                if (target >= IN_SET && value < target && place) infer_store(in, b->value, target);
+                bool taken = b->value->kind == EX_APPLY && b->value->base->kind == EX_NAME &&
+                             (strncmp(b->value->base->text, "item", 4) == 0 || strncmp(b->value->base->text, "take_", 5) == 0);
+                if (infer_last && taken && target == IN_UNKNOWN) infer_store(in, b->target, IN_INT);
             }
             if (b->kind == ST_FOR) {
                 int kind = infer_expr(in, b->value);
@@ -1025,6 +1178,393 @@ static void infer_statements(Infer *in, Stmt *s) {
             if (b->kind == ST_READ)
                 for (int i = 0; i < b->args.count; i++) infer_store(in, b->args.items[i], IN_UNKNOWN);
             infer_statements(in, b->body);
+        }
+    }
+}
+
+/* ---- what is ours, in the base language ---- */
+
+/* The procedures that do what is done with collections. `needs` names those
+ * each one calls. In the text, $K is the key as it is taken, $A as it is
+ * handed on, $C that of the cell c, $M whether c has it, $Y the attribute
+ * objects are ordered by; ?x{...} is kept only where x is in use: o objects,
+ * and what is kept under a key: b i r t p (an object) s (a collection). */
+typedef struct {
+    const char *name, *needs, *text;
+} Helper;
+
+static const char OURS_TYPES[] =
+    "type cell_ : record\n    k1_ : integer\n    k2_ : integer\n?o{    o1_ : object*\n    o2_ : object*\n}"
+    "?b{    vb_ : logical\n}?i{    vi_ : integer\n}?r{    vr_ : real\n}?t{    vt_ : string\n}?p{    vo_ : object*\n}?s{    vs_ : set_*\n}"
+    "    next_ : cell_*\n    free_ : cell_*\nend\n"
+    "type set_ : record\n    first_ : cell_*\n    last_ : cell_*\n    count_ : integer\nend\n"
+    "var cells_ : array [1..2048] of cell_\nvar cells_used_ : integer\nvar spare_ : cell_*\n"
+    "var sets_ : array [1..512] of set_\nvar sets_used_ : integer\nvar none_ : cell_\n";
+
+static const Helper HELPERS[] = {
+    {"new_set_", "", "function new_set_() : set_*\nbegin\n    sets_used_ := sets_used_ + 1\n    new_set_ := &sets_[sets_used_]\nend new_set_\n"},
+    {"find_", "",
+     "function find_(s : set_*, $K) : cell_*\nvar c : cell_*\nbegin\n    c := 0\n    if s != 0 then\n        c := s.first_\n"
+     "        while c != 0 and not ($M) do\n            c := c.next_\n        endwhile\n    endif\n    find_ := c\nend find_\n"},
+    {"append_", "new_set_",
+     "function append_(s : set_*, $K) : set_*\nvar c : cell_*\nbegin\n    if s = 0 then\n        s := new_set_()\n    endif\n"
+     "    if spare_ != 0 then\n        c := spare_\n        spare_ := c.free_\n    else\n        cells_used_ := cells_used_ + 1\n"
+     "        c := &cells_[cells_used_]\n    endif\n    c.k1_ := k1\n    c.k2_ := k2\n?o{    c.o1_ := o1\n    c.o2_ := o2\n}"
+     "?b{    c.vb_ := false\n}?i{    c.vi_ := 0\n}?r{    c.vr_ := 0\n}?t{    c.vt_ := \"\"\n}?p{    c.vo_ := 0\n}?s{    c.vs_ := 0\n}"
+     "    c.next_ := 0\n    if s.last_ = 0 then\n        s.first_ := c\n    else\n        s.last_.next_ := c\n    endif\n"
+     "    s.last_ := c\n    s.count_ := s.count_ + 1\n    append_ := s\nend append_\n"},
+    {"add_", "find_ append_",
+     "function add_(s : set_*, $K) : set_*\nbegin\n    if find_(s, $A) = 0 then\n        s := append_(s, $A)\n    endif\n    add_ := s\nend add_\n"},
+    {"has_", "find_", "function has_(s : set_*, $K) : logical\nbegin\n    has_ := find_(s, $A) != 0\nend has_\n"},
+    {"count_", "", "function count_(s : set_*) : integer\nbegin\n    count_ := 0\n    if s != 0 then\n        count_ := s.count_\n    endif\nend count_\n"},
+    {"first_", "", "function first_(s : set_*) : cell_*\nbegin\n    first_ := 0\n    if s != 0 then\n        first_ := s.first_\n    endif\nend first_\n"},
+    {"unlink_", "",
+     "function unlink_(s : set_*, c : cell_*) : cell_*\nvar before : cell_*\nbegin\n    before := 0\n    if s.first_ = c then\n"
+     "        s.first_ := c.next_\n    else\n        before := s.first_\n        while before.next_ != c do\n            before := before.next_\n"
+     "        endwhile\n        before.next_ := c.next_\n    endif\n    if s.last_ = c then\n        s.last_ := before\n    endif\n"
+     "    s.count_ := s.count_ - 1\n    c.free_ := spare_\n    spare_ := c\n    unlink_ := c\nend unlink_\n"},
+    {"remove_", "find_ unlink_",
+     "function remove_(s : set_*, $K) : set_*\nvar c : cell_*\nbegin\n    c := find_(s, $A)\n    if c != 0 then\n        c := unlink_(s, c)\n"
+     "    endif\n    remove_ := s\nend remove_\n"},
+    {"take_first_", "unlink_",
+     "function take_first_(s : set_*) : cell_*\nbegin\n    take_first_ := &none_\n    if s != 0 then\n        if s.first_ != 0 then\n"
+     "            take_first_ := unlink_(s, s.first_)\n        endif\n    endif\nend take_first_\n"},
+    {"take_last_", "unlink_",
+     "function take_last_(s : set_*) : cell_*\nbegin\n    take_last_ := &none_\n    if s != 0 then\n        if s.last_ != 0 then\n"
+     "            take_last_ := unlink_(s, s.last_)\n        endif\n    endif\nend take_last_\n"},
+    {"take_least_", "first_ unlink_",
+     "function take_least_(s : set_*, largest : integer) : cell_*\nvar c, best : cell_*\nvar value, least : real\nbegin\n    best := 0\n"
+     "    least := 0\n    c := first_(s)\n    while c != 0 do\n        value := c.k1_\n        if largest = 1 then\n            value := -value\n"
+     "        endif\n        if best = 0 or value < least then\n            best := c\n            least := value\n        endif\n"
+     "        c := c.next_\n    endwhile\n    take_least_ := &none_\n    if best != 0 then\n        take_least_ := unlink_(s, best)\n    endif\n"
+     "end take_least_\n"},
+    {"take_least_object_", "first_ unlink_",
+     "function take_least_object_(s : set_*, largest : integer) : cell_*\nvar c, best : cell_*\nvar value, least : real\nbegin\n    best := 0\n"
+     "    least := 0\n    c := first_(s)\n    while c != 0 do\n        value := c.o1_.$Y\n        if largest = 1 then\n            value := -value\n"
+     "        endif\n        if best = 0 or value < least then\n            best := c\n            least := value\n        endif\n"
+     "        c := c.next_\n    endwhile\n    take_least_object_ := &none_\n    if best != 0 then\n        take_least_object_ := unlink_(s, best)\n"
+     "    endif\nend take_least_object_\n"},
+    {"add_all_", "first_ add_",
+     "function add_all_(a : set_*, b : set_*) : set_*\nvar c : cell_*\nbegin\n    c := first_(b)\n    while c != 0 do\n"
+     "        a := add_(a, $C)\n        c := c.next_\n    endwhile\n    add_all_ := a\nend add_all_\n"},
+    {"copy_", "new_set_ first_ append_",
+     "function copy_(s : set_*) : set_*\nvar c : cell_*\nvar made : set_*\nbegin\n    made := new_set_()\n    c := first_(s)\n"
+     "    while c != 0 do\n        made := append_(made, $C)\n"
+     "?b{        made.last_.vb_ := c.vb_\n}?i{        made.last_.vi_ := c.vi_\n}?r{        made.last_.vr_ := c.vr_\n}"
+     "?t{        made.last_.vt_ := c.vt_\n}?p{        made.last_.vo_ := c.vo_\n}?s{        made.last_.vs_ := c.vs_\n}"
+     "        c := c.next_\n    endwhile\n    copy_ := made\nend copy_\n"},
+    {"union_", "copy_ add_all_", "function union_(a : set_*, b : set_*) : set_*\nbegin\n    union_ := add_all_(copy_(a), b)\nend union_\n"},
+    {"remove_all_", "first_ remove_",
+     "function remove_all_(a : set_*, b : set_*) : set_*\nvar c : cell_*\nbegin\n    c := first_(b)\n    while c != 0 do\n"
+     "        a := remove_(a, $C)\n        c := c.next_\n    endwhile\n    remove_all_ := a\nend remove_all_\n"},
+    {"minus_", "copy_ remove_all_", "function minus_(a : set_*, b : set_*) : set_*\nbegin\n    minus_ := remove_all_(copy_(a), b)\nend minus_\n"},
+    {"common_", "new_set_ first_ has_ append_",
+     "function common_(a : set_*, b : set_*) : set_*\nvar c : cell_*\nvar made : set_*\nbegin\n    made := new_set_()\n    c := first_(a)\n"
+     "    while c != 0 do\n        if has_(b, $C) then\n            made := append_(made, $C)\n        endif\n        c := c.next_\n"
+     "    endwhile\n    common_ := made\nend common_\n"},
+    {"same_", "count_ first_ has_",
+     "function same_(a : set_*, b : set_*) : logical\nvar c : cell_*\nbegin\n    same_ := count_(a) = count_(b)\n    c := first_(a)\n"
+     "    while c != 0 do\n        if not has_(b, $C) then\n            same_ := false\n        endif\n        c := c.next_\n    endwhile\n"
+     "end same_\n"},
+    {"made_", "new_set_", "function made_(s : set_*) : set_*\nbegin\n    if s = 0 then\n        s := new_set_()\n    endif\n    made_ := s\nend made_\n"},
+    {"slot_", "find_ append_",
+     "function slot_(s : set_*, $K) : cell_*\nvar c : cell_*\nbegin\n    c := find_(s, $A)\n    if c = 0 then\n        s := append_(s, $A)\n"
+     "        c := s.last_\n    endif\n    slot_ := c\nend slot_\n"},
+    {"get_", "find_",
+     "function get_(s : set_*, $K) : cell_*\nvar c : cell_*\nbegin\n    c := find_(s, $A)\n    if c = 0 then\n        c := &none_\n    endif\n"
+     "    get_ := c\nend get_\n"},
+};
+enum { HELPER_COUNT = sizeof HELPERS / sizeof HELPERS[0] };
+
+static unsigned helpers_needed;
+static unsigned values_needed;   /* which of b i r t p s are kept under keys */
+static const char *least_key;    /* the attribute objects are ordered by, when the least of them is taken */
+
+static void need(const char *name) {
+    for (int i = 0; i < HELPER_COUNT; i++) {
+        size_t n = strlen(HELPERS[i].name);
+        if (strncmp(HELPERS[i].name, name, n) != 0 || (name[n] && name[n] != ' ')) continue;
+        if (helpers_needed & (1u << i)) return;
+        helpers_needed |= 1u << i;
+        for (const char *more = HELPERS[i].needs; *more; more += strcspn(more, " "), more += *more == ' ') need(more);
+        return;
+    }
+}
+
+static void ours_text(StrBuf *out, const char *text, size_t length) {
+    static const char VALUES[] = "birtps";
+    for (size_t i = 0; i < length; i++) {
+        if (text[i] == '$' && i + 1 < length) {
+            const char *macro = NULL;
+            switch (text[++i]) {
+                case 'K': macro = "k1 : integer, k2 : integer?o{, o1 : object*, o2 : object*}"; break;
+                case 'A': macro = "k1, k2?o{, o1, o2}"; break;
+                case 'C': macro = "c.k1_, c.k2_?o{, c.o1_, c.o2_}"; break;
+                case 'M': macro = "c.k1_ = k1 and c.k2_ = k2?o{ and c.o1_ = o1 and c.o2_ = o2}"; break;
+                default: macro = least_key ? least_key : "key"; break;
+            }
+            ours_text(out, macro, strlen(macro));
+        } else if (text[i] == '?' && i + 2 < length && text[i + 2] == '{') {
+            char what = text[i + 1];
+            const char *close = memchr(text + i + 3, '}', length - i - 3), *value = strchr(VALUES, what);
+            if (!close) return;
+            bool kept = what == 'o' ? objects_used : value && (values_needed & (1u << (value - VALUES)));
+            if (kept) ours_text(out, text + i + 3, (size_t)(close - text - i - 3));
+            i = (size_t)(close - text);
+        } else {
+            strbuf_append(out, text + i, 1);
+        }
+    }
+}
+
+static Expr *ours_name(Parser *p, Loc loc, const char *name) {
+    Expr *e = new_expr(p, EX_NAME, loc, NULL, NULL);
+    e->text = name;
+    e->op = TOK_IDENT;
+    return e;
+}
+
+static Expr *ours_call(Parser *p, Loc loc, const char *name, Expr *a, Expr *b) {
+    Expr *e = new_expr(p, EX_APPLY, loc, ours_name(p, loc, name), NULL);
+    if (a) list_add(p, &e->args, a);
+    if (b) list_add(p, &e->args, b);
+    need(name);
+    return e;
+}
+
+static Expr *ours_field(Parser *p, Expr *base, const char *name) {
+    Expr *e = new_expr(p, EX_FIELD, base->loc, base, NULL);
+    e->op = TOK_DOT;
+    e->text = name;
+    return e;
+}
+
+static Expr *clone(Parser *p, const Expr *e) {
+    if (!e) return NULL;
+    Expr *copy = new_expr(p, e->kind, e->loc, clone(p, e->base), clone(p, e->right));
+    copy->op = e->op;
+    copy->text = e->text;
+    for (int i = 0; i < e->args.count; i++) list_add(p, &copy->args, clone(p, e->args.items[i]));
+    return copy;
+}
+
+static bool same_expr(const Expr *a, const Expr *b) {
+    if (!a || !b) return a == b;
+    if (a->kind != b->kind || a->args.count != b->args.count) return false;
+    if ((a->kind == EX_NAME || a->kind == EX_FIELD || a->kind == EX_INT) && strcmp(a->text, b->text) != 0) return false;
+    if (a->kind != EX_NAME && a->kind != EX_FIELD && a->kind != EX_INT && a->kind != EX_INDEX && a->kind != EX_APPLY) return false;
+    for (int i = 0; i < a->args.count; i++)
+        if (!same_expr(a->args.items[i], b->args.items[i])) return false;
+    return same_expr(a->base, b->base);
+}
+
+/* The field of a cell that keeps something of this kind under a key. */
+static const char *value_field(int kind) {
+    static const char *const FIELDS[] = {"vr_", "vb_", "vi_", "vr_", "vt_", "vo_"};
+    static const unsigned BITS[] = {4, 1, 2, 4, 8, 16};
+    values_needed |= kind >= IN_CELL ? 32u : BITS[kind];
+    return kind >= IN_CELL ? "vs_" : FIELDS[kind];
+}
+
+static Expr *lower(Infer *in, Expr *e, int want);
+
+/* A key, as the procedures of ours take it: two whole numbers, then two objects. */
+static void keys(Infer *in, Expr *call, Expr *first, Expr *second) {
+    Parser *p = in->p;
+    if (!second && calls(first, "pair_") && first->args.count == 2) second = first->args.items[1], first = first->args.items[0];
+    Expr *parts[2] = {first, second}, *numbers[2], *objects[2];
+    for (int i = 0; i < 2; i++) {
+        int kind = parts[i] ? infer_expr(in, parts[i]) : IN_INT;
+        bool object = parts[i] && kind == IN_OBJECT;
+        if (parts[i] && (kind == IN_TEXT || kind == IN_REAL || kind >= IN_CELL))
+            diag_error(p->diag, parts[i]->loc, "a collection holds whole numbers and objects, and is indexed by them: nothing else");
+        numbers[i] = objects[i] = NULL;
+        if (object) objects[i] = lower(in, parts[i], -1);
+        else if (parts[i] && (kind == IN_INT || kind == IN_BOOL)) numbers[i] = lower(in, parts[i], -1);
+        else if (parts[i]) numbers[i] = ours_call(p, parts[i]->loc, "trunc", lower(in, parts[i], -1), NULL);
+    }
+    for (int i = 0; i < 2; i++) list_add(p, &call->args, numbers[i] ? numbers[i] : int_expr(p, call->loc, "0"));
+    for (int i = 0; i < 2 && objects_used; i++) list_add(p, &call->args, objects[i] ? objects[i] : int_expr(p, call->loc, "0"));
+}
+
+static bool is_map_access(Infer *in, const Expr *e) {
+    if (e->kind != EX_INDEX && !applied_variable(in, e)) return false;
+    if (e->base->kind == EX_FIELD) return field_is_indexed(e->base->text);
+    VarDecl *d = e->base->kind == EX_NAME ? infer_find(in, e->base->text) : NULL;
+    return d && d->is_map;
+}
+
+/* m[k]: the cell kept under k, and in it the field for what m holds. */
+static Expr *map_access(Infer *in, Expr *e, bool store) {
+    Parser *p = in->p;
+    int kind = infer_expr(in, e);
+    if (e->args.count > 2) diag_error(p->diag, e->loc, "what is indexed by anything takes one index, or two");
+    Expr *call = ours_call(p, e->loc, store ? "slot_" : "get_", lower(in, e->base, -1), NULL);
+    keys(in, call, e->args.items[0], e->args.count > 1 ? e->args.items[1] : NULL);
+    return ours_field(p, call, value_field(kind));
+}
+
+static bool is_nothing(const Expr *e) { return calls(e, "set_") || (e->kind == EX_NAME && strcmp(e->text, "nil_") == 0); }
+
+/* An expression with what is ours in it, as calls of the procedures added to
+ * the program. `want` is the kind of what it is stored into, when that tells
+ * which part of a cell to read; -1 otherwise. */
+static Expr *lower(Infer *in, Expr *e, int want) {
+    if (!e) return NULL;
+    Parser *p = in->p;
+    Loc loc = e->loc;
+    if (e->kind == EX_APPLY && e->base->kind == EX_NAME && is_ours(e->base->text) && (e->args.count || e->base->text[3] == '_')) {
+        const char *n = e->base->text;
+        Expr **a = e->args.items;
+        int count = e->args.count;
+        if (strcmp(n, "set_") == 0) return ours_call(p, loc, "new_set_", NULL, NULL);
+        if (strcmp(n, "set_of_") == 0) {
+            Expr *made = ours_call(p, loc, "new_set_", NULL, NULL);
+            for (int i = 0; i < count; i++) {
+                made = ours_call(p, loc, "add_", made, NULL);
+                keys(in, made, a[i], NULL);
+            }
+            return made;
+        }
+        if (strcmp(n, "in_") == 0 && count == 2) {
+            if (infer_expr(in, a[1]) < IN_SET) {
+                diag_error(p->diag, loc, "whether something is in a collection can be asked: this is not a collection");
+                return int_expr(p, loc, "0");
+            }
+            Expr *has = ours_call(p, loc, "has_", lower(in, a[1], -1), NULL);
+            keys(in, has, a[0], NULL);
+            return has;
+        }
+        if (strcmp(n, "count_") == 0) return ours_call(p, loc, "count_", lower(in, a[0], -1), NULL);
+        if (strcmp(n, "empty_") == 0 || strcmp(n, "more_") == 0) {
+            bool empty = n[0] == 'e';
+            Expr *left = empty ? ours_call(p, loc, "count_", lower(in, a[0], -1), NULL) : a[0];
+            Expr *test = new_expr(p, EX_BINARY, loc, left, int_expr(p, loc, "0"));
+            test->op = empty ? TOK_EQ : TOK_NE;
+            return test;
+        }
+        if (strcmp(n, "first_") == 0) {
+            if (infer_expr(in, a[0]) < IN_SET)
+                diag_error(p->diag, loc, "'for each' goes through a collection, or through an array made here or taken with its length");
+            return ours_call(p, loc, "first_", lower(in, a[0], -1), NULL);
+        }
+        if (strcmp(n, "next_") == 0) return ours_field(p, a[0], "next_");
+        if (strcmp(n, "item_") == 0 || strcmp(n, "item2_") == 0) {
+            bool object = want == IN_OBJECT || (want < 0 && count > 1 && held(infer_expr(in, a[1])) == IN_OBJECT);
+            return ours_field(p, a[0], n[4] == '2' ? (object ? "o2_" : "k2_") : (object ? "o1_" : "k1_"));
+        }
+        if (strcmp(n, "put_last_") == 0 && count == 2) {
+            Expr *put = ours_call(p, loc, "append_", lower(in, a[0], -1), NULL);
+            keys(in, put, a[1], NULL);
+            return put;
+        }
+        if (strncmp(n, "take_", 5) == 0) {
+            bool object = want == IN_OBJECT || (want < 0 && held(infer_expr(in, a[0])) == IN_OBJECT);
+            Expr *taken;
+            if (strcmp(n, "take_first_") == 0 || strcmp(n, "take_last_") == 0) {
+                taken = ours_call(p, loc, n, lower(in, a[0], -1), NULL);
+            } else {
+                if (object && !least_key) {
+                    for (int i = 0; i < object_field_count && !least_key; i++)
+                        if (strcmp(object_fields[i].name, "key") == 0) least_key = "key";
+                    for (int i = 0; i < object_field_count && !least_key; i++)
+                        if (strcmp(object_fields[i].name, "d") == 0) least_key = "d";
+                    if (!least_key) diag_error(p->diag, loc, "the least of a collection of objects is the one with the least 'key', or 'd': these have neither");
+                }
+                taken = ours_call(p, loc, object ? "take_least_object_" : "take_least_", lower(in, a[0], -1),
+                                  int_expr(p, loc, strcmp(n, "take_max_") == 0 ? "1" : "0"));
+            }
+            return ours_field(p, taken, object ? "o1_" : "k1_");
+        }
+        diag_error(p->diag, loc, "this is not something done with a collection");
+        return e;
+    }
+    if (e->kind == EX_BINARY && e->right) {
+        int left = infer_expr(in, e->base), right = infer_expr(in, e->right);
+        if (left >= IN_SET || right >= IN_SET) {
+            const char *joined = e->op == TOK_PLUS ? "union_" : e->op == TOK_MINUS ? "minus_" : e->op == TOK_STAR ? "common_" : NULL;
+            if (joined) return ours_call(p, loc, joined, lower(in, e->base, -1), lower(in, e->right, -1));
+            if (e->op == TOK_EQ || e->op == TOK_NE) {
+                if (is_nothing(e->base) || is_nothing(e->right)) { /* S = ∅: there is nothing in it */
+                    Expr *count = ours_call(p, loc, "count_", lower(in, is_nothing(e->right) ? e->base : e->right, -1), NULL);
+                    Expr *test = new_expr(p, EX_BINARY, loc, count, int_expr(p, loc, "0"));
+                    test->op = e->op;
+                    return test;
+                }
+                Expr *same = ours_call(p, loc, "same_", lower(in, e->base, -1), lower(in, e->right, -1));
+                if (e->op == TOK_EQ) return same;
+                Expr *not = new_expr(p, EX_UNARY, loc, same, NULL);
+                not->op = TOK_NOT;
+                return not;
+            }
+            diag_error(p->diag, loc, "collections are joined, met, taken away from one another and compared: nothing else");
+        }
+    }
+    if (is_map_access(in, e)) return map_access(in, e, false);
+    e->base = lower(in, e->base, -1);
+    e->right = lower(in, e->right, -1);
+    for (int i = 0; i < e->args.count; i++) e->args.items[i] = lower(in, e->args.items[i], -1);
+    return e;
+}
+
+/* An assignment. S = S ∪ {x} adds to S where it is; T = S makes T another
+ * collection with the same things in it, as with sets in mathematics; what is
+ * kept under a key goes into a cell, made if it was not there. */
+static void lower_assign(Infer *in, Stmt **at) {
+    Parser *p = in->p;
+    Stmt *s = *at;
+    Expr *t = s->target, *v = s->value;
+    int target = infer_expr(in, t), value = infer_expr(in, v);
+    bool collections = target >= IN_SET || value >= IN_SET;
+    bool ours = (t->kind == EX_NAME && t->text[strlen(t->text) - 1] == '_') || (v->kind == EX_NAME && v->text[strlen(v->text) - 1] == '_');
+    if (collections && v->kind == EX_BINARY && v->right && (v->op == TOK_PLUS || v->op == TOK_MINUS) && same_expr(t, v->base)) {
+        bool plus = v->op == TOK_PLUS;
+        Expr *made = lower(in, v->base, -1);
+        if (calls(v->right, "set_of_")) {
+            for (int i = 0; i < v->right->args.count; i++) {
+                made = ours_call(p, v->loc, plus ? "add_" : "remove_", made, NULL);
+                keys(in, made, v->right->args.items[i], NULL);
+            }
+        } else {
+            made = ours_call(p, v->loc, plus ? "add_all_" : "remove_all_", made, lower(in, v->right, -1));
+        }
+        s->value = made;
+    } else if (collections && !ours && is_place(in, v)) {
+        s->value = ours_call(p, v->loc, "copy_", lower(in, v, -1), NULL);
+    } else {
+        s->value = lower(in, v, target);
+    }
+    if (!is_map_access(in, t)) {
+        s->target = lower(in, t, -1);
+        return;
+    }
+    if (t->base->kind == EX_FIELD) { /* x.c[i] = ...: what x.c is kept in is made the first time */
+        Stmt *make = assign_stmt(p, s->loc, lower(in, clone(p, t->base), -1), ours_call(p, t->loc, "made_", lower(in, clone(p, t->base), -1), NULL));
+        make->next = s;
+        *at = make;
+    }
+    s->target = map_access(in, t, true);
+}
+
+static void lower_statements(Infer *in, Stmt **list) {
+    for (Stmt **at = list; *at; at = &(*at)->next) {
+        Stmt *s = *at;
+        if (s->kind == ST_ASSIGN) {
+            lower_assign(in, at);
+            if (*at != s) at = &(*at)->next; /* past what was put before it */
+            continue;
+        }
+        for (Stmt *b = s; b; b = b->otherwise) {
+            if (b->kind == ST_PRINT)
+                for (int i = 0; i < b->args.count; i++)
+                    if (infer_expr(in, b->args.items[i]) >= IN_SET)
+                        diag_error(in->p->diag, b->args.items[i]->loc, "a collection is printed one thing at a time: go through it with 'for each'");
+            b->target = lower(in, b->target, -1);
+            b->value = lower(in, b->value, -1);
+            b->limit = lower(in, b->limit, -1);
+            b->step = lower(in, b->step, -1);
+            for (int i = 0; i < b->args.count; i++) b->args.items[i] = lower(in, b->args.items[i], -1);
+            lower_statements(in, &b->body);
         }
     }
 }
@@ -1055,18 +1595,28 @@ static void objects_statements(Stmt *s) {
     }
 }
 
-/* The kind of object there is, the store they are taken from, and the taking
- * of one: written in the base language, which has all it takes, and added to
- * the program. */
-static void add_objects(Parser *p) {
+/* The kind of object there is, the store objects are taken from, what
+ * collections are made of and the procedures that work on them: written in
+ * the base language, which has all it takes, and added to the program. */
+static void add_ours(Parser *p) {
     static const char *const TYPES[] = {"integer", "logical", "integer", "real", "string", "object*"};
     StrBuf text = {0};
-    strbuf_puts(&text, "type object : record\n");
-    for (int i = 0; i < object_field_count; i++) strbuf_printf(&text, "    %s : %s\n", object_fields[i].name, TYPES[object_fields[i].kind]);
-    if (!object_field_count) strbuf_puts(&text, "    key : integer\n");
-    strbuf_puts(&text, "end\nvar objects_ : array [1..256] of object\nvar objects_used_ : integer\n"
-                       "function new_object_() : object*\nbegin\n    objects_used_ := objects_used_ + 1\n"
-                       "    new_object_ := &objects_[objects_used_]\nend new_object_\n");
+    strbuf_puts(&text, "");
+    if (objects_used) {
+        strbuf_puts(&text, "type object : record\n");
+        for (int i = 0; i < object_field_count; i++)
+            strbuf_printf(&text, "    %s : %s\n", object_fields[i].name,
+                          object_fields[i].indexed || object_fields[i].kind > IN_OBJECT ? "set_*" : TYPES[object_fields[i].kind]);
+        if (!object_field_count) strbuf_puts(&text, "    key : integer\n");
+        strbuf_puts(&text, "end\nvar objects_ : array [1..256] of object\nvar objects_used_ : integer\n"
+                           "function new_object_() : object*\nbegin\n    objects_used_ := objects_used_ + 1\n"
+                           "    new_object_ := &objects_[objects_used_]\nend new_object_\n");
+    }
+    if (collections_used) {
+        ours_text(&text, OURS_TYPES, strlen(OURS_TYPES));
+        for (int i = 0; i < HELPER_COUNT; i++)
+            if (helpers_needed & (1u << i)) ours_text(&text, HELPERS[i].text, strlen(HELPERS[i].text));
+    }
     Source source = {"objects", arena_strndup(p->arena, text.data, text.length), text.length, NULL};
     strbuf_free(&text);
     Config plain = CONFIG_DEFAULT;
@@ -1082,7 +1632,10 @@ static void add_objects(Parser *p) {
     Function **functions = &p->program->functions;
     while (*functions) functions = &(*functions)->next;
     *functions = more->functions;
-    for (Function *f = more->functions; f; f = f->next) f->loc = objects_loc;
+    for (Function *f = more->functions; f; f = f->next) {
+        f->loc = objects_loc;
+        f->is_quiet = true;
+    }
     for (Function *f = p->program->functions; f; f = f->next) objects_statements(f->body);
 }
 
@@ -1107,10 +1660,31 @@ static void finish_statements(Parser *p, Stmt *s) {
     }
 }
 
+/* What is indexed by anything is a collection: made where it begins to be, if nobody hands it in. */
+static void finish_maps(Parser *p, VarDecl *d, Function *maker) {
+    for (; d; d = d->next) {
+        if (!d->is_map) continue;
+        d->spec = kind_spec(p, IN_SET, d->loc);
+        if (!maker) continue;
+        Stmt *make = assign_stmt(p, maker->loc, ours_name(p, maker->loc, d->name), ours_call(p, maker->loc, "new_set_", NULL, NULL));
+        make->next = maker->body;
+        maker->body = make;
+    }
+}
+
 static void infer_types(Parser *p) {
     object_field_count = 0;
-    objects_used = false;
-    for (int round = 0; round < 12; round++) {
+    objects_used = collections_used = false;
+    helpers_needed = values_needed = 0;
+    least_key = NULL;
+    for (const char *name = p->config->cormen ? p->config->shared : NULL; name && *name; name += strcspn(name, " "), name += *name == ' ') {
+        VarDecl *d = ARENA_NEW(p->arena, VarDecl); /* what the procedures of Cormen's book share */
+        d->name = arena_strndup(p->arena, name, strcspn(name, " "));
+        d->inferred = true;
+        if (!find_decl(p->program->globals, d->name)) append_decl(&p->program->globals, d);
+    }
+    infer_last = false;
+    for (int round = 0; round < 24; round++) {
         infer_changed = false;
         for (Function *f = p->program->functions; f; f = f->next) {
             Infer in = {p, f};
@@ -1123,14 +1697,30 @@ static void infer_types(Parser *p) {
                 }
             }
         }
-        if (!infer_changed) break;
+        if (!infer_changed && (infer_last || !collections_used)) break;
+        if (!infer_changed) infer_last = true;
     }
-    if (objects_used) add_objects(p);
+    Function *main_function = NULL;
     for (Function *f = p->program->functions; f; f = f->next) {
         finish_params(p, f->params);
         finish_decls(p, f->locals);
         finish_statements(p, f->body);
         if (!f->is_procedure && !f->result) f->result = kind_spec(p, IN_UNKNOWN, f->loc);
+        if (strcmp(f->name, "main") == 0) main_function = f;
     }
     finish_decls(p, p->program->globals);
+    for (int i = 0; i < object_field_count; i++)
+        if (object_fields[i].kind == IN_UNKNOWN) object_fields[i].kind = IN_INT;
+    if (collections_used) {
+        for (Function *f = p->program->functions; f; f = f->next) {
+            Infer in = {p, f};
+            lower_statements(&in, &f->body);
+        }
+        for (Function *f = p->program->functions; f; f = f->next) {
+            finish_maps(p, f->params, NULL);
+            finish_maps(p, f->locals, f);
+        }
+        finish_maps(p, p->program->globals, main_function);
+    }
+    if (objects_used || collections_used) add_ours(p);
 }

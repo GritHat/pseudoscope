@@ -1,24 +1,24 @@
  ◆ PSEUDOSCOPE  ~/examples/cormen
 
 ╭─ Files ──────────────────────────╮╭─ Preview ──────────────────────────────────────────────────────────────╮
-│  ▪ ../                           ││ ƒ 7 subprograms   ▦ 1 record   81 lines                                │
-│  ◆ sorting.clrs                  ││ ✓ no errors                                                     Cormen │
-│▸ ◆ structures.clrs               ││ ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │
-│                                  ││    1 // Linked lists and binary search trees, as in "Introduction to…┃ │
-│                                  ││    2 // objects with attributes, and NIL. Nothing says what an objec…┃ │
-│                                  ││    3 // it is worked out from the attributes that are used.            │
-│                                  ││    4 LIST-SEARCH(L, k)                                                 │
-│                                  ││    5     x = L.head                                                    │
-│                                  ││    6     while x ≠ NIL and x.key ≠ k                                   │
-│                                  ││    7         x = x.next                                                │
-│                                  ││    8     return x                                                      │
-│                                  ││    9                                                                   │
-│                                  ││   10 LIST-PREPEND(L, x)                                                │
-│                                  ││   11     x.next = L.head                                               │
-│                                  ││   12     x.prev = NIL                                                  │
-│                                  ││   13     if L.head ≠ NIL                                               │
-│                                  ││   14         L.head.prev = x                                           │
-│                                  ││   15     L.head = x                                                    │
+│  ▪ ../                           ││ ƒ 9 subprograms   ▦ 1 record   119 lines                               │
+│  ◆ btree.clrs                    ││ ✓ no errors                                                     Cormen │
+│▸ ◆ graphs.clrs                   ││ ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │
+│  ◆ sorting.clrs                  ││    1 // Graphs, as in "Introduction to Algorithms": a graph G has it…┃ │
+│  ◆ structures.clrs               ││    2 // G.V and, for each vertex u, its neighbours in G.Adj[u]. Vert…  │
+│                                  ││    3 // sets are written as in mathematics: ∅, {a, b}, ∪, −, ∈. Noth…  │
+│                                  ││    4 BFS(G, s)                                                         │
+│                                  ││    5     for each vertex u ∈ G.V − {s}                                 │
+│                                  ││    6         u.color = WHITE                                           │
+│                                  ││    7         u.d = ∞                                                   │
+│                                  ││    8         u.π = NIL                                                 │
+│                                  ││    9     s.color = GRAY                                                │
+│                                  ││   10     s.d = 0                                                       │
+│                                  ││   11     s.π = NIL                                                     │
+│                                  ││   12     Q = ∅                                                         │
+│                                  ││   13     ENQUEUE(Q, s)                                                 │
+│                                  ││   14     while Q ≠ ∅                                                   │
+│                                  ││   15         u = DEQUEUE(Q)                                            │
 ╰──────────────────────────────────╯╰────────────────────────────────────────────────────────────────────────╯
 
   ↑↓  choose   Enter  open   ←  parent folder   ?  help   q  quit

@@ -262,6 +262,10 @@ msgid "the length of '%s' is not known here: it is neither made here nor taken b
 msgstr ""
 
 #: src/front/cormen.c
+msgid "an array has no attributes here ('%s'): keep that number in a name of its own, and hand it on beside the array"
+msgstr ""
+
+#: src/front/cormen.c
 msgid "an array begins at 0 or at 1 here, not at '%s'"
 msgstr ""
 
@@ -270,7 +274,7 @@ msgid "this 'let' is not understood: write 'let A[1:n] be a new array'%.0s"
 msgstr ""
 
 #: src/front/cormen.c
-msgid "'for each' goes through an array made here or taken by the procedure: sets are not read yet%.0s"
+msgid "this 'for each' is not understood: write 'for each x in S'%.0s"
 msgstr ""
 
 #: src/front/cormen.c
@@ -307,6 +311,38 @@ msgstr ""
 
 #: src/front/dialect.c src/front/lexer.c
 msgid "unexpected byte 0x%02x"
+msgstr ""
+
+#: src/front/foreign.inc
+msgid "a collection holds whole numbers and objects, and is indexed by them: nothing else"
+msgstr ""
+
+#: src/front/foreign.inc
+msgid "what is indexed by anything takes one index, or two"
+msgstr ""
+
+#: src/front/foreign.inc
+msgid "whether something is in a collection can be asked: this is not a collection"
+msgstr ""
+
+#: src/front/foreign.inc
+msgid "'for each' goes through a collection, or through an array made here or taken with its length"
+msgstr ""
+
+#: src/front/foreign.inc
+msgid "the least of a collection of objects is the one with the least 'key', or 'd': these have neither"
+msgstr ""
+
+#: src/front/foreign.inc
+msgid "this is not something done with a collection"
+msgstr ""
+
+#: src/front/foreign.inc
+msgid "collections are joined, met, taken away from one another and compared: nothing else"
+msgstr ""
+
+#: src/front/foreign.inc
+msgid "a collection is printed one thing at a time: go through it with 'for each'"
 msgstr ""
 
 #: src/front/foreign.inc src/front/parser.c
@@ -2052,6 +2088,10 @@ msgstr ""
 
 #: src/util/diag.c
 msgid "warning"
+msgstr ""
+
+#: src/vm/vm.c
+msgid "no room is left: too many objects, or too many elements in the collections"
 msgstr ""
 
 #: src/vm/vm.c

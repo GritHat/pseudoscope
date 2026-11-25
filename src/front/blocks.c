@@ -346,7 +346,8 @@ static const char *codebox_line(Doc *d, const char *line, int *level) {
         {"Until", "until "}, {"Error", "error "}, {"gets", " = "}, {"isequal", " == "}, {"leq", " <= "}, {"le", " <= "}, {"geq", " >= "},
         {"ge", " >= "}, {"neq", " != "}, {"ne", " != "}, {"lfloor", "\xe2\x8c\x8a"}, {"rfloor", "\xe2\x8c\x8b"}, {"lceil", "\xe2\x8c\x88"},
         {"rceil", "\xe2\x8c\x89"}, {"infty", "\xe2\x88\x9e"}, {"cdot", "*"}, {"times", "*"}, {"twodots", ":"}, {"ldots", ":"}, {"bmod", " mod "},
-        {"in", " in "}, {"Foreach", "for each "}, {"land", " and "}, {"lor", " or "}, {"neg", " not "}, {"li", ""}, {"zi", ""}, {"quad", " "},
+        {"in", " in "}, {"notin", " \xe2\x88\x89 "}, {"emptyset", "\xe2\x88\x85"}, {"varnothing", "\xe2\x88\x85"}, {"cup", " \xe2\x88\xaa "},
+        {"cap", " \xe2\x88\xa9 "}, {"setminus", " - "}, {"pi", "\xcf\x80"}, {"Foreach", "for each "}, {"land", " and "}, {"lor", " or "}, {"neg", " not "}, {"li", ""}, {"zi", ""}, {"quad", " "},
     };
     StrBuf text = {0};
     strbuf_puts(&text, "");

@@ -1,0 +1,34 @@
+ ◆ PSEUDOSCOPE  graphs.clrs                                    ▐ System ▌▸▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
+  ‖ paused   main ▸ BFS                                                                                        ≡ output: o
+╭─ BFS ─────────────────────────────────────────────────╮╭─ Data ──────────────────────────────────────────────────────────╮
+│    4 BFS(G, s)                                        ││                                                                 │
+│    5     for each vertex u ∈ G.V − {s}                ││ Q  {y, x}                                                       │
+│    6         u.color = WHITE                          ││                                                                 │
+│    7         u.d = ∞                                  ││ G  object*                                                      │
+│    8         u.π = NIL                                ││  ─▶  {s, t, x, y, z} 0 {s: {t, y}, t: {x, y}, x: {z},…  ─▶ ∅    │
+│    9     s.color = GRAY                               ││                                                                 │
+│   10     s.d = 0                                      ││ s  object*                                                      │
+│   11     s.π = NIL                                    ││  ─▶  "BLACK" 0 "s" 0  ─▶ ∅                                      │
+│   12     Q = ∅                                        ││                                                                 │
+│   13     ENQUEUE(Q, s)                                ││ u  object*                                                      │
+│   14     while Q ≠ ∅                                  ││  ─▶  "GRAY" 1 "t" 0  ─▶  "BLACK" 0 "s" 0  ─▶ ∅                  │
+│   15         u = DEQUEUE(Q)                           ││                                                                 │
+│▶  16         for each vertex v in G.Adj[u]   // sear… ││ v  object*                                                      │
+│   17             if v.color == WHITE         // is v… ││  ─▶  "GRAY" 2 "x" 0  ─▶  "GRAY" 1 "t" 0  ─▶ …                   │
+│   18                 v.color = GRAY                   ││                                                                 │
+│   19                 v.d = u.d + 1                    ││ ┄ globals                                                       │
+│   20                 v.π = u                          ││ time  0                                                         │
+│   21                 ENQUEUE(Q, v)           // v is… ││                                                                 │
+│   22         u.color = BLACK                 // u is… ││                                                                 │
+│   23                                                  ││                                                                 │
+│   24 PRINT-PATH(G, s, v)                              ││                                                                 │
+│                                                       ││                                                                 │
+│                                                       ││                                                                 │
+│                                                       ││                                                                 │
+╰───────────────────────────────────────────────────────╯╰─────────────────────────────────────────────────────────────────╯
+╭─ What happened ──────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ ✎ v.d becomes  2   it was 1000000000                                                                                     │
+│ ✎ v.pi becomes  t   it was NIL                                                                                           │
+│ ✎ Q becomes  {y, x}                                                                                                      │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+  →  step   ←  back   Space  play   Enter  details   Esc  overview   n  over   g  to the end   ?  help

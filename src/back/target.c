@@ -47,7 +47,8 @@ static const char *const WORDS[LANG_COUNT] = {
     [LANG_CPP] = " alignas alignof and and_eq asm bitand bitor bool catch class compl concept constexpr const_cast decltype "
                  "delete dynamic_cast explicit export false friend mutable namespace new noexcept not not_eq nullptr operator "
                  "or or_eq private protected public reinterpret_cast requires static_assert static_cast template this throw "
-                 "true try typeid typename using virtual wchar_t xor xor_eq std string vector ",
+                 "true try typeid typename using virtual wchar_t xor xor_eq std string vector "
+                 "time exit abort remove rename signal rand srand index free malloc calloc realloc ",
     [LANG_JAVA] = " abstract assert boolean byte catch class extends final finally implements import instanceof interface "
                   "native new null package private protected public strictfp super synchronized this throw throws transient "
                   "try var record true false String Object Math System Main Integer Double ",

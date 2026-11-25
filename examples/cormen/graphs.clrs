@@ -1,0 +1,118 @@
+// Graphs, as in "Introduction to Algorithms": a graph G has its vertices in
+// G.V and, for each vertex u, its neighbours in G.Adj[u]. Vertices are objects;
+// sets are written as in mathematics: ∅, {a, b}, ∪, −, ∈. Nothing is declared.
+BFS(G, s)
+    for each vertex u ∈ G.V − {s}
+        u.color = WHITE
+        u.d = ∞
+        u.π = NIL
+    s.color = GRAY
+    s.d = 0
+    s.π = NIL
+    Q = ∅
+    ENQUEUE(Q, s)
+    while Q ≠ ∅
+        u = DEQUEUE(Q)
+        for each vertex v in G.Adj[u]   // search the neighbours of u
+            if v.color == WHITE         // is v being discovered now?
+                v.color = GRAY
+                v.d = u.d + 1
+                v.π = u
+                ENQUEUE(Q, v)           // v is now on the frontier
+        u.color = BLACK                 // u is now behind the frontier
+
+PRINT-PATH(G, s, v)
+    if v == s
+        print s.name
+    elseif v.π == NIL
+        print "no path from", s.name, "to", v.name, "exists"
+    else PRINT-PATH(G, s, v.π)
+        print v.name
+
+DFS(G)
+    for each vertex u ∈ G.V
+        u.color = WHITE
+        u.π = NIL
+    time = 0                            // shared with DFS-VISIT
+    for each vertex u ∈ G.V
+        if u.color == WHITE
+            DFS-VISIT(G, u)
+
+DFS-VISIT(G, u)
+    time = time + 1                     // white vertex u has just been discovered
+    u.d = time
+    u.color = GRAY
+    for each vertex v ∈ G.Adj[u]        // explore each edge (u, v)
+        if v.color == WHITE
+            v.π = u
+            DFS-VISIT(G, v)
+    time = time + 1
+    u.f = time
+    u.color = BLACK                     // blacken u; it is finished
+
+INITIALIZE-SINGLE-SOURCE(G, s)
+    for each vertex v ∈ G.V
+        v.d = ∞
+        v.π = NIL
+    s.d = 0
+
+RELAX(u, v, w)
+    if v.d > u.d + w(u, v)
+        v.d = u.d + w(u, v)
+        v.π = u
+
+DIJKSTRA(G, w, s)
+    INITIALIZE-SINGLE-SOURCE(G, s)
+    S = ∅
+    Q = G.V
+    while Q ≠ ∅
+        u = EXTRACT-MIN(Q)              // the vertex of Q with the least d
+        S = S ∪ {u}
+        for each vertex v ∈ G.Adj[u]
+            RELAX(u, v, w)
+    return S
+
+// an edge from u to v, and what it weighs
+EDGE(G, w, u, v, weight)
+    G.E = G.E ∪ {(u, v)}
+    G.Adj[u] = G.Adj[u] ∪ {v}
+    w[u, v] = weight
+
+let G be a new graph
+let s, t, x, y, z be new vertices
+s.name = "s"
+t.name = "t"
+x.name = "x"
+y.name = "y"
+z.name = "z"
+G.V = {s, t, x, y, z}
+EDGE(G, w, s, t, 10)
+EDGE(G, w, s, y, 5)
+EDGE(G, w, t, x, 1)
+EDGE(G, w, t, y, 2)
+EDGE(G, w, x, z, 4)
+EDGE(G, w, y, t, 3)
+EDGE(G, w, y, x, 9)
+EDGE(G, w, y, z, 2)
+EDGE(G, w, z, s, 7)
+EDGE(G, w, z, x, 6)
+print |G.V|, "vertices,", |G.E|, "edges"
+
+BFS(G, s)
+print "breadth first, from s:"
+for each vertex v ∈ G.V
+    print v.name, v.d
+PRINT-PATH(G, s, z)
+
+DFS(G)
+print "depth first: discovered and finished"
+for each vertex v ∈ G.V
+    print v.name, v.d, v.f
+
+done = DIJKSTRA(G, w, s)
+print "shortest paths from s:"
+for each vertex v ∈ done
+    if v.π ≠ NIL
+        print v.name, v.d, "through", v.π.name
+if (s, t) ∈ G.E and (t, s) ∉ G.E
+    print "s reaches t, not the other way"

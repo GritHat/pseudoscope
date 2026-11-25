@@ -1,0 +1,107 @@
+// Edges as pairs, a procedure that gives back a set, stacks, arrays of sets.
+INITIALIZE-SINGLE-SOURCE(G, s)
+    for each vertex v ∈ G.V
+        v.d = ∞
+        v.π = NIL
+    s.d = 0
+
+RELAX(u, v, w)
+    if v.d > u.d + w(u, v)
+        v.d = u.d + w(u, v)
+        v.π = u
+
+BELLMAN-FORD(G, w, s)
+    INITIALIZE-SINGLE-SOURCE(G, s)
+    for i = 1 to |G.V| − 1
+        for each edge (u, v) ∈ G.E
+            RELAX(u, v, w)
+    for each edge (u, v) ∈ G.E
+        if v.d > u.d + w(u, v)
+            return FALSE
+    return TRUE
+
+DIJKSTRA(G, w, s)
+    INITIALIZE-SINGLE-SOURCE(G, s)
+    S = ∅
+    Q = G.V
+    while Q ≠ ∅
+        u = EXTRACT-MIN(Q)
+        S = S ∪ {u}
+        for each vertex v ∈ G.Adj[u]
+            RELAX(u, v, w)
+    return S
+
+ARC(G, w, u, v, weight)
+    G.E = G.E ∪ {(u, v)}
+    G.Adj[u] = G.Adj[u] ∪ {v}
+    w[u, v] = weight
+
+EVENS(n)
+    R = ∅
+    for i = 1 to n
+        if i mod 2 == 0
+            R = R ∪ {i}
+    return R
+
+let G be a new graph
+let s, t, x, y, z be new vertices
+s.name = "s"
+t.name = "t"
+x.name = "x"
+y.name = "y"
+z.name = "z"
+G.V = {s, t, x, y, z}
+ARC(G, w, s, t, 10)
+ARC(G, w, s, y, 5)
+ARC(G, w, t, x, 1)
+ARC(G, w, t, y, 2)
+ARC(G, w, x, z, 4)
+ARC(G, w, y, t, 3)
+ARC(G, w, y, x, 9)
+ARC(G, w, y, z, 2)
+ARC(G, w, z, s, 7)
+ARC(G, w, z, x, 6)
+print "edges", |G.E|
+if (s, t) ∈ G.E and (t, s) ∉ G.E
+    print "s -> t only"
+ok = BELLMAN-FORD(G, w, s)
+print ok
+for each vertex v ∈ G.V
+    print v.name, v.d
+done = DIJKSTRA(G, w, s)
+print |done|
+for each vertex v ∈ done
+    if v.π ≠ NIL
+        print v.name, v.d, v.π.name
+E = EVENS(9)
+for each k ∈ E
+    print k
+P = ∅
+PUSH(P, 3)
+PUSH(P, 8)
+PUSH(P, 5)
+a = POP(P)
+b = POP(P)
+print a, b
+ENQUEUE(P, 1)
+a = DEQUEUE(P)
+b = DEQUEUE(P)
+print a, b, |P|
+if STACK-EMPTY(P)
+    print "empty"
+let B[1:3] be a new array
+for i = 1 to 3
+    B[i] = ∅
+    for j = 1 to i
+        B[i] = B[i] ∪ {j * 10}
+for i = 1 to 3
+    print |B[i]|
+T = {5, 1, 7}
+a = EXTRACT-MIN(T)
+b = EXTRACT-MAX(T)
+print a, b, |T|
+U = T
+U = U ∪ {2}
+print |T|, |U|
+if T == {1} or T == {5}
+    print "same"

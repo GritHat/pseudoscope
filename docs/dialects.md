@@ -93,16 +93,41 @@ program.
 | Statements | `for … to`, `downto`, `by`; `for each x in A`; `while`; `repeat … until`; `if`, `elseif`, `else`; the `do` and `then` of the older editions |
 | Assignment | `=` or `←`, also `i = j = e`; `exchange A[i] with A[j]` |
 | Arrays | `A[i]`, `A[i, j]`; `let A[1:n] be a new array`, `let L[0:n] and R[0:m] be new arrays`, from 0 or from 1; `A.length`, as the third edition writes, or the length passed, as the fourth does |
-| Objects | `x.key`, `x.next`, `L.head`, `T.root`, `NIL`; `let x be a new node` makes one |
-| Expressions | `==`, `≠`, `≤`, `≥`, `and`, `or`, `not` (which stop as soon as they know), `mod`, `⌊ ⌋`, `⌈ ⌉`, `∞`, `TRUE`, `FALSE` |
+| Objects | `x.key`, `x.next`, `L.head`, `T.root`, `NIL`; `let x be a new node` makes one, `let a, b, c be new vertices` several |
+| Sets | `∅`, `{a, b}`, `∪`, `∩`, `−` (or `\`), `∈`, `∉` (or `in`, `not in`), `\|S\|`, `==`, `≠`; `S = S ∪ {x}`; pairs, as the edges of a graph: `{(u, v)}`, `(u, v) ∈ G.E` |
+| Going through | `for each x in S`, `for each vertex v ∈ G.Adj[u]`, `for each edge (u, v) ∈ G.E` |
+| Indexed by anything | `G.Adj[u]`, `x.key[i]`, `x.c[i]`, `w[u, v]` or `w(u, v)`, `d[v]`: by whole numbers or by objects, one index or two |
+| Queues and stacks | `ENQUEUE(Q, x)`, `DEQUEUE(Q)`, `PUSH(S, x)`, `POP(S)`, `INSERT(Q, x)`, `EXTRACT-MIN(Q)`, `EXTRACT-MAX(Q)`, `STACK-EMPTY(S)`, `QUEUE-EMPTY(Q)`, when the program has no procedure of that name |
+| Expressions | `==`, `≠`, `≤`, `≥`, `and`, `or`, `not` (which stop as soon as they know), `mod`, `⌊ ⌋`, `⌈ ⌉`, `∞`, `TRUE`, `FALSE`; a word in capitals that nothing is ever put in stands for itself: `WHITE`, `GRAY`, `BLACK` |
 | Others | `print`, `error "…"`, comments after `//` or `▷` |
 
 Nothing says what an object is made of: there is one kind of object, with every
 attribute that the program names, and what an attribute holds (a number, a text,
-another object) is worked out from what it is given. So lists, trees and whatever is
-made of nodes that point to one another run, are drawn with their arrows, and are
-translated: see `examples/cormen/structures.clrs`. At most 256 objects are made in a
-run.
+another object, a set) is worked out from what it is given. So lists, trees and whatever
+is made of nodes that point to one another run, are drawn with their arrows, and are
+translated: see `examples/cormen/structures.clrs`.
+
+Sets, lists, queues, and what is indexed by anything are collections: of whole numbers,
+of objects, or of pairs of them. A set is a value, as in mathematics: `Q = G.V` makes
+`Q` another set with the same things in it, and taking from `Q` leaves `G.V` as it was;
+`S = S ∪ {x}` and `S = S − {x}` change `S` where it is, and a procedure that is handed a
+collection works on that one. What is in a collection keeps the order in which it came
+in, which is the order `for each` goes through it. `EXTRACT-MIN` takes the least number,
+or the object with the least `key` (with the least `d`, if no object has a `key`): it
+looks through them all each time, so `DECREASE-KEY` has nothing to do. A name that one
+procedure reads before putting anything in it, and another fills in, is shared by them:
+the `time` of the depth-first search. So the graph algorithms run as the book writes
+them, with `G.V` and `G.Adj[u]`, and so do B-trees, with `x.key[i]` and `x.c[i]`: see
+`examples/cormen/graphs.clrs` and `examples/cormen/btree.clrs`. The data panel shows a
+collection as mathematics writes it, `{s, t}`, `{(s, t): 10}`, naming an object by its
+`name` or its `key`.
+
+Objects and collections are records of the base language, taken from a store, and what
+is done with them are procedures written in it and added to the program: that is how
+they run here and in all seven languages, and why a translation has those procedures in
+it and not the lists or the sets of its own language. The store has room for 256
+objects, 512 collections and 2048 elements in all (those taken out are used again); a
+run that asks for more stops saying so.
 
 In LaTeX, the `codebox` environment of the `clrscode` packages, with which the book is
 typeset, is read too: `\Procname`, `\li`, `\For`, `\Do`, `\End`, `\attrib` and the
@@ -111,6 +136,8 @@ others.
 It is shown, and quoted in errors, as it was written; it runs in a rewriting, so a
 message may name a word as another pseudocode would (`'endwhile'`), and a procedure is
 listed with `_` where its name has `-`. A procedure that asks for `A.length` is listed
-with one more thing it takes, `A_length`. Not read yet, and refused saying so: sets
-(`∪`, `∈`, `∅`) and `for each` over anything but an array, so the graph algorithms
-with `G.V` and `G.Adj[u]`; arrays inside objects (`x.c[i]`, of the B-trees).
+with one more thing it takes, `A_length`. Not read, and refused saying so: real numbers and texts in a collection or as an index;
+a collection of collections; printing a collection whole (go through it with `for each`);
+`⊆` and the other signs not listed above; attributes of an array (`A.heap-size`,
+`S.top`: hand the number on, as the fourth edition does); lines in plain English ("sort
+the edges of G.E by weight"); a name shared by procedures that is an array.

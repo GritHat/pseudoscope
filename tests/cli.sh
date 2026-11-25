@@ -51,9 +51,17 @@ cli "language asked for" 1 env PSEUDOSCOPE_LANG=it LC_ALL=es_ES.UTF-8 "$pseudosc
 cli "a language nobody translated" 1 env PSEUDOSCOPE_LANG= LC_ALL=fr_FR.UTF-8 "$pseudoscope" check bad.plike; has "english otherwise" err "error: 'x' is not declared"
 printf '\\begin{algorithmic}\n\\State $x \\gets 1$\n\\While{$x < 3$}\n\\State $x \\gets x + $\n\\EndWhile\n\\end{algorithmic}\n' > bad.tex
 cli "an algorithm in LaTeX" 1 "$pseudoscope" check bad.tex; has "its line as it was written" err "EndWhile"
-printf 'BFS(G, s)\n    for each vertex v in G.Adj[s]\n        print v\n' > graph.clrs
-cli "what is not read of Cormen" 1 "$pseudoscope" check graph.clrs; has "said, with the line as written" err "for each vertex v in G.Adj"
-cli "Cormen typeset with codebox" 0 "$pseudoscope" check "$here/dialects/codebox.tex"; has "both procedures" err "2 programs and diagrams checked"
+printf 'INSIDE(A, B)\n    if A ⊆ B\n        print 1\n' > graph.clrs
+cli "what is not read of Cormen" 1 "$pseudoscope" check graph.clrs; has "said, with the line as written" err "if A ⊆ B"
+cli "Cormen typeset with codebox" 0 "$pseudoscope" check "$here/dialects/codebox.tex"; has "the three procedures" err "3 programs and diagrams checked"
+printf 'S = {1, 2}\nprint S\n' > set.clrs
+cli "a collection printed whole" 1 "$pseudoscope" check set.clrs; has "said how to print it" err "one thing at a time"
+printf 'Q = ∅\nfor i = 1 to 5000\n    ENQUEUE(Q, i)\n' > full.clrs
+cli "more elements than there is room for" 1 "$pseudoscope" exec full.clrs; has "said where it was asked" err "line 3: no room is left"
+printf 'let S[1:5] be a new array\nS.top = 0\n' > top.clrs
+cli "an attribute of an array" 1 "$pseudoscope" check top.clrs; has "said what to do instead" err "an array has no attributes here ('top')"
+printf 'let A[1:2] be a new array\nif 2 ∈ A\n    print 1\n' > member.clrs
+cli "membership in an array" 1 "$pseudoscope" check member.clrs; has "said in words of the writer" err "this is not a collection"
 cli "portuguese" 1 "$pseudoscope" check --lang=pt_BR.UTF-8 bad.plike; has "portuguese text" err "erro: 'x' não está declarado"
 cli "unknown language" 2 "$pseudoscope" check --lang=tlh bad.plike; has "the languages there are" err "(I speak en es it pt)"
 cli "help in spanish" 0 "$pseudoscope" --lang=es --help; has "spanish help" out "Uso: pseudoscope"

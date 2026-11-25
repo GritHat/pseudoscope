@@ -1828,7 +1828,8 @@ static void printed(Gen *g, const Expr *e, bool joined, int min) {
     TypeKind kind = e->type->kind;
     Type whole = {.kind = TY_INT};
     if (kind == TY_BOOL && joined) {
-        const char *yes = TRUTH_WORDS[g->config->dialect][0], *no = TRUTH_WORDS[g->config->dialect][1];
+        int words = g->config->cormen ? 4 : g->config->dialect; /* Cormen's book says TRUE and FALSE */
+        const char *yes = TRUTH_WORDS[words][0], *no = TRUTH_WORDS[words][1];
         put(g, "(");
         if (PY) {
             putf(g, "\"%s\" if ", yes);

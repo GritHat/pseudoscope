@@ -21,10 +21,11 @@ typedef struct {
     Dialect dialect;
     bool dialect_given, indexing_given;
     bool cormen;         /* rewritten from Cormen's pseudocode: "r" and "R" are two names, and it says TRUE and FALSE */
+    const char *shared;  /* and the names its procedures share, one blank between them */
 } Config;
 
 #define CONFIG_DEFAULT                                                         \
-    ((Config){ASSIGN_COLON_EQUALS, PARAMS_MIXED, OPS_MIXED, 1, true, false, DIALECT_PLIKE, false, false, false})
+    ((Config){ASSIGN_COLON_EQUALS, PARAMS_MIXED, OPS_MIXED, 1, true, false, DIALECT_PLIKE, false, false, false, NULL})
 
 /* The same settings, with those that depend on the kind of file. */
 Config config_for(Config config, const char *path);
