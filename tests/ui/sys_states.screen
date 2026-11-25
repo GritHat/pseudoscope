@@ -1,6 +1,6 @@
- ◆ PSEUDOSCOPE  election.pscope                                           ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
-  ‖ fermo   one leader, and another one when it crashes ▸ Node.Heartbeat ▸ Node.wait_for_leader
-  Sequenza   Componenti   Stati   Tempi   Comunicazione   Verifiche                                                   tempo t = 17
+ ◆ PSEUDOSCOPE  election.pscope                                                ▐ System ▌▸▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
+  ‖ paused   one leader, and another one when it crashes ▸ Node.Heartbeat ▸ Node.wait_for_leader
+  Sequence   Components   States   Timing   Communication   Checks                                                    time t = 17
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │  nodes[1]  Leader    nodes[2]  Follower    nodes[3]  Candidate    nodes[4]  Follower    nodes[5]  Follower                               │
 │                                                                                                                                          │
@@ -28,9 +28,9 @@
 │                                                                    │                                                                     │
 │                                                                    │                                                                     │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Cosa è successo ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ⊘ Vote non interessa a nodes[1], che è in Leader                                                                                         │
-│ ▶  Heartbeat(1)  arriva a nodes[5]                                                                                                       │
-│ ▷ nodes[5] manda  Timeout  a nodes[5]                                                                                                    │
+╭─ What happened ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ ⊘ Vote does not matter to nodes[1], which is in Leader                                                                                   │
+│ ▶  Heartbeat(1)  reaches nodes[5]                                                                                                        │
+│ ▷ nodes[5] sends  Timeout  to nodes[5]                                                                                                   │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   Tab  altra vista   g  alla fine   ?  aiuto
+  →  step   ←  back   Space  play   Enter  details   Esc  overview   Tab  other view   g  to the end   ?  help

@@ -19,7 +19,7 @@ static bool read_file(const char *path, StrBuf *text) {
     bool is_stdin = strcmp(path, "-") == 0;
     FILE *file = is_stdin ? stdin : fopen(path, "rb");
     if (!file) {
-        fprintf(stderr, "pseudoscope: cannot open '%s': %s\n", path, strerror(errno));
+        fprintf(stderr, T("pseudoscope: cannot open '%s': %s\n"), path, strerror(errno));
         return false;
     }
     char chunk[8192];
@@ -27,7 +27,7 @@ static bool read_file(const char *path, StrBuf *text) {
     strbuf_puts(text, "");
     while ((n = fread(chunk, 1, sizeof chunk, file)) > 0) strbuf_append(text, chunk, n);
     bool ok = !ferror(file);
-    if (!ok) fprintf(stderr, "pseudoscope: cannot read '%s': %s\n", path, strerror(errno));
+    if (!ok) fprintf(stderr, T("pseudoscope: cannot read '%s': %s\n"), path, strerror(errno));
     if (!is_stdin) fclose(file);
     return ok;
 }
@@ -36,12 +36,12 @@ static bool write_file(const char *path, const StrBuf *text) {
     bool is_stdout = !path || strcmp(path, "-") == 0;
     FILE *file = is_stdout ? stdout : fopen(path, "wb");
     if (!file) {
-        fprintf(stderr, "pseudoscope: cannot write '%s': %s\n", path, strerror(errno));
+        fprintf(stderr, T("pseudoscope: cannot write '%s': %s\n"), path, strerror(errno));
         return false;
     }
     bool ok = fwrite(text->data, 1, text->length, file) == text->length;
     ok &= (is_stdout ? fflush(file) : fclose(file)) == 0;
-    if (!ok) fprintf(stderr, "pseudoscope: cannot write '%s'\n", is_stdout ? "standard output" : path);
+    if (!ok) fprintf(stderr, T("pseudoscope: cannot write '%s'\n"), is_stdout ? T("standard output") : path);
     return ok;
 }
 
@@ -58,14 +58,14 @@ static int execute(const char *const *args) {
     if (pid < 0) return -1;
     if (pid == 0) {
         execvp(args[0], (char *const *)args);
-        fprintf(stderr, "pseudoscope: cannot run '%s': %s\n", args[0], strerror(errno));
+        fprintf(stderr, T("pseudoscope: cannot run '%s': %s\n"), args[0], strerror(errno));
         _exit(127);
     }
     int status;
     while (waitpid(pid, &status, 0) < 0)
         if (errno != EINTR) return -1;
     if (WIFSIGNALED(status)) {
-        fprintf(stderr, "pseudoscope: '%s' was killed by signal %d\n", args[0], WTERMSIG(status));
+        fprintf(stderr, T("pseudoscope: '%s' was killed by signal %d\n"), args[0], WTERMSIG(status));
         return 128 + WTERMSIG(status);
     }
     return WEXITSTATUS(status);
@@ -90,9 +90,9 @@ static bool compile_source(const Options *options, Lang lang, const char *source
     const char *const c[] = {tool, "-std=c11", "-O1", "-o", executable, source, "-lm", NULL};
     const char *const cpp[] = {tool, "-std=c++17", "-O1", "-o", executable, source, NULL};
     const char *const rust[] = {tool, "--edition=2021", "-A", "warnings", "-o", executable, source, NULL};
-    if (options->verbose) fprintf(stderr, "pseudoscope: compiling with %s\n", tool);
+    if (options->verbose) fprintf(stderr, T("pseudoscope: compiling with %s\n"), tool);
     if (execute(lang == LANG_C ? c : lang == LANG_CPP ? cpp : rust) == 0) return true;
-    fprintf(stderr, "pseudoscope: the %s compiler failed\n", lang_name(lang));
+    fprintf(stderr, T("pseudoscope: the %s compiler failed\n"), lang_name(lang));
     return false;
 }
 
@@ -107,7 +107,7 @@ static char *default_executable(Arena *arena, const char *input) {
 }
 
 static int no_main(void) {
-    fputs("pseudoscope: there is nothing to run: declare a procedure 'main' without parameters\n", stderr);
+    fputs(T("pseudoscope: there is nothing to run: declare a procedure 'main' without parameters\n"), stderr);
     return EXIT_PROBLEMS;
 }
 
@@ -119,7 +119,7 @@ static int build_and_run(const Options *options, Lang lang, const StrBuf *code, 
     const char *base = getenv("TMPDIR");
     char *dir = arena_printf(arena, "%s/pseudoscope-XXXXXX", base && *base ? base : "/tmp");
     if (!mkdtemp(dir)) {
-        fprintf(stderr, "pseudoscope: cannot create a temporary directory: %s\n", strerror(errno));
+        fprintf(stderr, T("pseudoscope: cannot create a temporary directory: %s\n"), strerror(errno));
         return EXIT_IO;
     }
     char *source = lang == LANG_JAVA ? arena_printf(arena, "%s/%s.java", dir, class_name)
@@ -134,9 +134,9 @@ static int build_and_run(const Options *options, Lang lang, const StrBuf *code, 
         char *script = arena_printf(arena, "%s/program.js", dir);
         const char *const tsc[] = {"tsc", "--target", "es2022", "--module", "commonjs", "--strict", "--outDir", dir, source, NULL};
         const char *const node[] = {tool_for(options, LANG_JS, arena), script, argument, NULL};
-        if (options->verbose) fputs("pseudoscope: compiling with tsc\n", stderr);
+        if (options->verbose) fputs(T("pseudoscope: compiling with tsc\n"), stderr);
         if (execute(tsc) != 0) {
-            fputs("pseudoscope: the TypeScript compiler failed\n", stderr);
+            fputs(T("pseudoscope: the TypeScript compiler failed\n"), stderr);
         } else {
             status = execute(node);
             if (status < 0) status = EXIT_IO;
@@ -146,13 +146,13 @@ static int build_and_run(const Options *options, Lang lang, const StrBuf *code, 
         const char *tool = tool_for(options, lang, arena);
         const char *const plain[] = {tool, source, argument, NULL};
         const char *const stripped[] = {tool, "--no-warnings", "--experimental-strip-types", source, argument, NULL};
-        if (options->verbose) fprintf(stderr, "pseudoscope: running with %s\n", tool);
+        if (options->verbose) fprintf(stderr, T("pseudoscope: running with %s\n"), tool);
         status = execute(lang == LANG_TS && !options->cc ? stripped : plain);
         if (status < 0) status = EXIT_IO;
     } else if (compile_source(options, lang, source, executable, arena)) {
         if (options->command != CMD_BUILD) {
             const char *const args[] = {executable, argument, NULL};
-            if (options->verbose) fputs("pseudoscope: running\n", stderr);
+            if (options->verbose) fputs(T("pseudoscope: running\n"), stderr);
             status = execute(args);
             if (status < 0) status = EXIT_IO;
         } else {
@@ -160,7 +160,7 @@ static int build_and_run(const Options *options, Lang lang, const StrBuf *code, 
                                                  : default_executable(arena, options->input);
             const char *const args[] = {"cp", "--", executable, target, NULL};
             if (same_file(options->input, target))
-                fputs("pseudoscope: the executable would overwrite the input\n", stderr);
+                fputs(T("pseudoscope: the executable would overwrite the input\n"), stderr);
             else if (execute(args) == 0)
                 status = EXIT_OK;
         }
@@ -207,7 +207,7 @@ static bool write_canvas(const Vm *vm, const char *path) {
     int *pixels = malloc((size_t)width * (size_t)height * sizeof(int));
     FILE *file = fopen(path, "w");
     if (!pixels || !file) {
-        fprintf(stderr, "pseudoscope: cannot write '%s'\n", path);
+        fprintf(stderr, T("pseudoscope: cannot write '%s'\n"), path);
         free(pixels);
         if (file) fclose(file);
         return false;
@@ -252,15 +252,14 @@ static int interpret(const Program *program, const Options *options, const Sourc
     }
     fflush(stdout);
     if (vm_status(vm) == VM_READY) {
-        fputs("pseudoscope: too many steps, stopped\n", stderr);
+        fputs(T("pseudoscope: too many steps, stopped\n"), stderr);
         vm_destroy(vm);
         return EXIT_PROBLEMS;
     }
     if (vm_status(vm) == VM_FAILED) {
         const Frame *frame = vm_frame(vm, vm_frame_count(vm) - 1);
-        fprintf(stderr, "runtime error");
-        if (frame->stmt) fprintf(stderr, " at line %d", frame->stmt->loc.line);
-        fprintf(stderr, ": %s\n", vm_message(vm));
+        if (frame->stmt) fprintf(stderr, T("runtime error at line %d: %s\n"), frame->stmt->loc.line, tr(vm_message(vm)));
+        else fprintf(stderr, T("runtime error: %s\n"), tr(vm_message(vm)));
     }
     int status = vm_exit_status(vm);
     /* what the program wrote in its files reaches the disk now */
@@ -272,7 +271,7 @@ static int interpret(const Program *program, const Options *options, const Sourc
         if (!written) continue;
         FILE *file = fopen(path, "wb");
         if (!file || fwrite(data, 1, (size_t)size, file) != (size_t)size) {
-            fprintf(stderr, "pseudoscope: cannot write '%s'\n", path);
+            fprintf(stderr, T("pseudoscope: cannot write '%s'\n"), path);
             if (status == 0) status = EXIT_IO;
         }
         if (file) fclose(file);
@@ -282,10 +281,8 @@ static int interpret(const Program *program, const Options *options, const Sourc
     return status;
 }
 
-static const char *says(bool it, const char *italian_text, const char *english) { return it ? italian_text : english; }
-
 /* Runs every "test ... end test", and reports what they checked. */
-static int run_tests(const Program *program, const Options *options, bool it) {
+static int run_tests(const Program *program, const Options *options) {
     Vm *vm = vm_create(program, &options->config);
     int failed = 0, total = 0;
     long limit = options->max_steps ? options->max_steps : 20000000;
@@ -301,30 +298,24 @@ static int run_tests(const Program *program, const Options *options, bool it) {
         for (int i = 0; i < vm_check_count(vm); i++) {
             const Check *c = vm_check(vm, i);
             if (!c->ok || options->verbose)
-                printf("    %s %s %d: %s\n", c->ok ? "✓" : "✗", says(it, "riga", "line"), c->stmt->loc.line, c->text);
+                printf("    %s %s %d: %s\n", c->ok ? "✓" : "✗", T("line"), c->stmt->loc.line, c->text);
         }
-        if (vm_status(vm) == VM_FAILED) printf("    ✗ %s\n", vm_message(vm));
-        else if (vm_status(vm) == VM_NEEDS_INPUT) printf("    ✗ %s\n", says(it, "un test non può leggere dati", "a test cannot read input"));
-        else if (vm_status(vm) == VM_READY) printf("    ✗ %s\n", says(it, "troppi passi, fermato", "too many steps, stopped"));
+        if (vm_status(vm) == VM_FAILED) printf("    ✗ %s\n", tr(vm_message(vm)));
+        else if (vm_status(vm) == VM_NEEDS_INPUT) printf("    ✗ %s\n", T("a test cannot read input"));
+        else if (vm_status(vm) == VM_READY) printf("    ✗ %s\n", T("too many steps, stopped"));
     }
-    printf(says(it, "%d test, %d falliti\n", "%d tests, %d failed\n"), total, failed);
+    printf(T("%d tests, %d failed\n"), total, failed);
     vm_destroy(vm);
     return failed ? EXIT_PROBLEMS : EXIT_OK;
 }
 
 static void step(const Options *options, const char *text) {
-    if (options->verbose) fprintf(stderr, "pseudoscope: %s\n", text);
-}
-
-static bool italian(const Options *options, bool otherwise) {
-    const char *lang = options->lang ? options->lang : getenv("PSEUDOSCOPE_LANG");
-    return lang && *lang ? strcmp(lang, "it") == 0 : otherwise;
+    if (options->verbose) fprintf(stderr, "pseudoscope: %s\n", tr(text));
 }
 
 static int translate(const Options *options, const Source *source, Arena *arena, StrBuf *out, bool diagram) {
     bool tty = isatty(STDERR_FILENO) && !getenv("NO_COLOR");
     Diag diag = {.source = source, .out = stderr, .silent_warnings = options->quiet,
-                 .italian = italian(options, false),
                  .color = options->color == COLOR_ALWAYS ||
                           (options->color == COLOR_AUTO && tty)};
 
@@ -333,7 +324,7 @@ static int translate(const Options *options, const Source *source, Arena *arena,
         if (!uml || diag.errors) return EXIT_PROBLEMS;
         if (options->command == CMD_CHECK) return options->werror && diag.warnings ? EXIT_PROBLEMS : EXIT_OK;
         if (options->command != CMD_AST) {
-            fputs("pseudoscope: a diagram can be opened with ui, check and ast\n", stderr);
+            fputs(T("pseudoscope: a diagram can be opened with ui, check and ast\n"), stderr);
             return EXIT_PROBLEMS;
         }
         uml_dump(uml, out);
@@ -359,7 +350,7 @@ static int translate(const Options *options, const Source *source, Arena *arena,
     step(options, "checking names and types");
     if (!analyze(program, &options->config, arena, &diag)) return EXIT_PROBLEMS;
     if (options->werror && diag.warnings) {
-        fputs("pseudoscope: warnings are treated as errors\n", stderr);
+        fputs(T("pseudoscope: warnings are treated as errors\n"), stderr);
         return EXIT_PROBLEMS;
     }
     if (options->command == CMD_CHECK) return EXIT_OK;
@@ -367,14 +358,14 @@ static int translate(const Options *options, const Source *source, Arena *arena,
     Lang lang = options->target, found;
     if (!options->target_given && options->command == CMD_TRANSLATE && options->output && lang_from_path(options->output, &found))
         lang = found;
-    if (options->command == CMD_TEST && !options->target_given) return run_tests(program, options, diag.italian);
+    if (options->command == CMD_TEST && !options->target_given) return run_tests(program, options);
     if (options->command == CMD_EXEC) {
         step(options, "executing");
         return has_main(program) || has_components(program) ? interpret(program, options, source, arena) : no_main();
     }
     if (!translatable(program, &options->config, lang, &diag)) return EXIT_PROBLEMS;
     if (options->command == CMD_BUILD && !is_compiled(lang)) {
-        fprintf(stderr, "pseudoscope: build makes an executable, and %s programs are run as they are: use translate, or run\n",
+        fprintf(stderr, T("pseudoscope: build makes an executable, and %s programs are run as they are: use translate, or run\n"),
                 lang_name(lang));
         return EXIT_USAGE;
     }
@@ -384,14 +375,14 @@ static int translate(const Options *options, const Source *source, Arena *arena,
     translate_program(program, &options->config, arena, lang, class_name, out);
     if (options->command == CMD_TRANSLATE) {
         if (options->output && same_file(options->input, options->output)) {
-            fputs("pseudoscope: the output would overwrite the input\n", stderr);
+            fputs(T("pseudoscope: the output would overwrite the input\n"), stderr);
             return EXIT_USAGE;
         }
         return write_file(options->output, out) ? EXIT_OK : EXIT_IO;
     }
     if (options->command == CMD_TEST) {
         if (!has_tests(program)) {
-            fputs("pseudoscope: there are no tests in this program\n", stderr);
+            fputs(T("pseudoscope: there are no tests in this program\n"), stderr);
             return EXIT_PROBLEMS;
         }
         return build_and_run(options, lang, out, arena, class_name, "test");
@@ -402,7 +393,7 @@ static int translate(const Options *options, const Source *source, Arena *arena,
 
 static int start_ui(const Options *options) {
     UiOptions ui = {.config = options->config, .path = options->input,
-                    .italian = italian(options, true), .keys = options->keys,
+                    .keys = options->keys,
                     .width = options->width, .height = options->height,
                     .colors = options->color == COLOR_ALWAYS, .target = (int)options->target};
     return run_ui(&ui);
@@ -415,7 +406,7 @@ static int run_document(const Options *given, const char *file, int number, cons
     Blocks *blocks = blocks_read(&whole, &arena);
     int status = EXIT_OK;
     if (number > blocks->count) {
-        fprintf(stderr, "pseudoscope: '%s' holds %d programs and diagrams, not %d\n", file, blocks->count, number);
+        fprintf(stderr, T("pseudoscope: '%s' holds %d programs and diagrams, not %d\n"), file, blocks->count, number);
         arena_free(&arena);
         return EXIT_USAGE;
     }
@@ -442,7 +433,7 @@ static int run_document(const Options *given, const char *file, int number, cons
             first = last = i;
         }
         if (programs != 1) {
-            fprintf(stderr, "pseudoscope: '%s' holds %d programs: say which with %s#N (ast lists them)\n", file, programs, file);
+            fprintf(stderr, T("pseudoscope: '%s' holds %d programs: say which with %s#N (ast lists them)\n"), file, programs, file);
             arena_free(&arena);
             return EXIT_USAGE;
         }
@@ -461,7 +452,7 @@ static int run_document(const Options *given, const char *file, int number, cons
         strbuf_free(&out);
     }
     if (number == 0 && given->command == CMD_CHECK && !given->quiet)
-        fprintf(stderr, "pseudoscope: %s: %d programs and diagrams checked\n", file, blocks->count);
+        fprintf(stderr, T("pseudoscope: %s: %d programs and diagrams checked\n"), file, blocks->count);
     arena_free(&arena);
     return status;
 }

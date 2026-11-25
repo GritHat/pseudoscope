@@ -1,18 +1,18 @@
  ◆ PSEUDOSCOPE  types.plike
 
-╭─ Da correggere prima di continuare ──────────────────────────────────────────────────────────────╮
-│  ✗ riga 2  il record 'loop' contiene se stesso; usa un puntatore                                 │
-│  ✗ riga 11  manca la dimensione di 't'                                                           │
-│▸ ✗ riga 12  la dimensione di un array deve essere positiva                                       │
-│  ✗ riga 13  il limite di un array deve essere un integer, non real                               │
-│  ✗ riga 15  non posso mettere r in integer                                                       │
-│  ✗ riga 16  non posso mettere integer in r                                                       │
-│  ✗ riga 17  non posso mettere integer in array of integer                                        │
-│  ✗ riga 18  dimensioni dell'array: 1, indici scritti: 2                                          │
-│  ✗ riga 19  non posso mettere integer in array of integer                                        │
-│  ✗ riga 20  integer non è un array                                                               │
-│  ✗ riga 21  l'indice di un array deve essere un integer, non real                                │
-│  ✗ riga 22  non c'è un campo 'b' in r                                                            │
+╭─ To fix before going on ─────────────────────────────────────────────────────────────────────────╮
+│  ✗ line 2  record 'loop' contains itself; use a pointer                                          │
+│  ✗ line 11  the size of 't' is missing                                                           │
+│▸ ✗ line 12  the size of an array must be positive                                                │
+│  ✗ line 13  an array bound must be an integer, not real                                          │
+│  ✗ line 15  r cannot be assigned to integer                                                      │
+│  ✗ line 16  integer cannot be assigned to r                                                      │
+│  ✗ line 17  integer cannot be assigned to array of integer                                       │
+│  ✗ line 18  the array has 1 dimension but 2 indices were given                                   │
+│  ✗ line 19  integer cannot be assigned to array of integer                                       │
+│  ✗ line 20  integer is not an array                                                              │
+│  ✗ line 21  an array index must be an integer, not real                                          │
+│  ✗ line 22  there is no field 'b' in r                                                           │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────╮
 │     6 begin f := a[1] end f                                                                      │
@@ -27,4 +27,4 @@
 │    15     i := x                                                                                 │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-  ↑↓  scegli   E  modifica   Esc  file   ?  aiuto   q  esci
+  ↑↓  choose   E  edit   Esc  files   ?  help   q  quit

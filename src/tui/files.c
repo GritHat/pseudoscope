@@ -101,7 +101,7 @@ static bool open_document(App *app, char *real) {
     add_entry(f, &capacity, (Entry){strdup(".."), true, parent});
     char name[300];
     snprintf(name, sizeof name, "%s#outline", real);
-    add_entry(f, &capacity, (Entry){strdup(L("≡ indice", "≡ outline")), false, strdup(name)});
+    add_entry(f, &capacity, (Entry){strdup(T("≡ outline")), false, strdup(name)});
     for (int i = 0; i < blocks->count; i++) {
         const DocBlock *b = &blocks->items[i];
         char label[200], target[1100];
@@ -136,13 +136,13 @@ void files_open(App *app, const char *directory) {
     Files *f = &app->files;
     char *real = realpath(directory, NULL);
     if (!real) {
-        snprintf(app->notice, sizeof app->notice, L("Non riesco ad aprire %s", "Cannot open %s"), directory);
+        snprintf(app->notice, sizeof app->notice, T("Cannot open %s"), directory);
         return;
     }
     if (is_document_path(real) && open_document(app, real)) return;
     DIR *dir = opendir(real);
     if (!dir) {
-        snprintf(app->notice, sizeof app->notice, L("Non riesco ad aprire %s", "Cannot open %s"), real);
+        snprintf(app->notice, sizeof app->notice, T("Cannot open %s"), real);
         free(real);
         return;
     }
@@ -202,14 +202,24 @@ static void draw_preview(const Document *doc, int x, int y, int w, int h) {
         records += doc->items[i].kind == ITEM_RECORD;
     }
     if (doc->uml) print_at(x, y, w, S_DIM, "%s", doc->uml->title ? doc->uml->title : "");
-    else print_at(x, y, w, S_TEXT, M_CALL "ƒ" M_RESET " %d %s   " M_TYPE "▦" M_RESET " %d record   " M_DIM "%d %s",
-             functions, L("sottoprogrammi", "subprograms"), records, doc->line_count, L("righe", "lines"));
+    else {
+        char subprograms[40], kept[40], lines[40];
+        snprintf(subprograms, sizeof subprograms, TN("%d subprogram", "%d subprograms", functions), functions);
+        snprintf(kept, sizeof kept, TN("%d record", "%d records", records), records);
+        snprintf(lines, sizeof lines, TN("%d line", "%d lines", doc->line_count), doc->line_count);
+        print_at(x, y, w, S_TEXT, M_CALL "ƒ" M_RESET " %s   " M_TYPE "▦" M_RESET " %s   " M_DIM "%s", subprograms, kept, lines);
+    }
     int errors = 0;
     for (int i = 0; i < doc->message_count; i++) errors += !doc->messages[i].warning;
-    if (errors) print_at(x, y + 1, w, S_TEXT, M_ERROR "✗ %d %s", errors, L("errori", "errors"));
-    else if (doc->message_count)
-        print_at(x, y + 1, w, S_TEXT, M_FOCUS "⚠ %d %s", doc->message_count, L("avvisi", "warnings"));
-    else print_at(x, y + 1, w, S_TEXT, M_WRITE "✓ %s", L("nessun errore", "no errors"));
+    char found[40];
+    if (errors) {
+        snprintf(found, sizeof found, TN("%d error", "%d errors", errors), errors);
+        print_at(x, y + 1, w, S_TEXT, M_ERROR "✗ %s", found);
+    } else if (doc->message_count) {
+        snprintf(found, sizeof found, TN("%d warning", "%d warnings", doc->message_count), doc->message_count);
+        print_at(x, y + 1, w, S_TEXT, M_FOCUS "⚠ %s", found);
+    }
+    else print_at(x, y + 1, w, S_TEXT, M_WRITE "✓ %s", T("no errors"));
     hline(x, y + 2, w, S_FAINT, "┄");
     CodeView view = {.doc = doc, .first = doc->top_line, .last = doc->line_count, .top = doc->top_line};
     draw_code(x - 1, y + 3, w, h - 3, &view);
@@ -225,7 +235,7 @@ void files_draw(App *app) {
     snprintf(place, sizeof place, "%s%s", inside ? "~" : "", inside ? where + n : where);
     draw_header(place, NULL, 0, 0, 0);
     int list = w / 3 < 26 ? 26 : w / 3, rows = h - 5;
-    draw_box(0, 2, list, h - 4, C_READ, L("File", "Files"));
+    draw_box(0, 2, list, h - 4, C_READ, T("Files"));
     f->top = scroll_to(f->top, f->selected, 0, f->count - 1, rows - 1);
     for (int i = 0; i < rows - 1 && f->top + i < f->count; i++) {
         const Entry *e = &f->entries[f->top + i];
@@ -238,16 +248,13 @@ void files_draw(App *app) {
     for (int i = 0; i < f->count; i++) any |= !f->entries[i].directory;
     if (!any)
         print_wrapped(3, 4 + f->count, list - 5, 3, S_DIM, "%s",
-                      L("Nessun programma o diagramma in questa cartella.", "No programs or diagrams in this folder."));
-    draw_box(list, 2, w - list, h - 4, C_BORDER, f->preview ? L("Anteprima", "Preview") : NULL);
+                      T("No programs or diagrams in this folder."));
+    draw_box(list, 2, w - list, h - 4, C_BORDER, f->preview ? T("Preview") : NULL);
     if (f->preview) draw_preview(f->preview, list + 2, 3, w - list - 4, h - 6);
-    const Hint hints[] = {{"↑↓", L("scegli", "choose")}, {"Invio", L("apri", "open")},
-                          {"←", L("cartella superiore", "parent folder")}, {"?", L("aiuto", "help")},
-                          {"q", L("esci", "quit")}};
-    Hint shown[5];
-    memcpy(shown, hints, sizeof shown);
-    if (!ui_italian) shown[1].key = "Enter";
-    draw_footer(shown, 5);
+    const Hint hints[] = {{"↑↓", T("choose")}, {T("Enter"), T("open")},
+                          {"←", T("parent folder")}, {"?", T("help")},
+                          {"q", T("quit")}};
+    draw_footer(hints, 5);
 }
 
 void files_key(App *app, int key) {

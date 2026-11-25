@@ -1,6 +1,6 @@
- ◆ PSEUDOSCOPE  fib.pscope             ▐ System ▌▸▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
-  ‖ paused   main ▸ fib ▸ fib
-╭─ fib ──────────────────────────────────────╮╭─ Data ─────────────────────────────────────────────╮
+ ◆ PSEUDOSCOPE  fib.pscope         ▐ Sistema ▌▸▐ Programa ▌▸▐ Función ▌▸▐ Instrucción ▌▸▐ Memoria ▌
+  ‖ en pausa   main ▸ fib ▸ fib
+╭─ fib ──────────────────────────────────────╮╭─ Datos ────────────────────────────────────────────╮
 │    3 function fib(in n: integer): integer  ││                                                    │
 │    4 begin                                 ││ n  3    ⇒ fib  0                                   │
 │▶   5     if n < 2 then                     ││                                                    │
@@ -22,9 +22,9 @@
 │                                            ││                                                    │
 │                                            ││                                                    │
 ╰────────────────────────────────────────────╯╰────────────────────────────────────────────────────╯
-╭─ What happened ──────────────────────────────────────────────────────────────────────────────────╮
-│ ▶ entering fib(n=4)                                                                              │
-│ ? n < 2  →  4 < 2   false   this branch is skipped                                               │
-│ ▶ entering fib(n=3)                                                                              │
+╭─ Qué ha pasado ──────────────────────────────────────────────────────────────────────────────────╮
+│ ▶ se entra en fib(n=4)                                                                           │
+│ ? n < 2  →  4 < 2   falso   esta rama se salta                                                   │
+│ ▶ se entra en fib(n=3)                                                                           │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-  →  step   ←  back   Space  play   Enter  details   Esc  overview   n  over   ?  help
+  →  paso   ←  atrás   Espacio  avanza   Intro  detalles   Esc  resumen   n  saltar   ?  ayuda

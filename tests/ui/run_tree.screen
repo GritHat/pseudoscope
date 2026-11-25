@@ -1,6 +1,6 @@
- ◆ PSEUDOSCOPE  tree.pscope       ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
-  ‖ fermo   main
-╭─ main ─────────────────────────────────────╮╭─ Dati ─────────────────────────────────────────────╮
+ ◆ PSEUDOSCOPE  tree.pscope            ▐ System ▌▸▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
+  ‖ paused   main
+╭─ main ─────────────────────────────────────╮╭─ Data ─────────────────────────────────────────────╮
 │   21 procedure main()                      ││                                                    │
 │   22 var n: array[6] of Node               ││ i  6    k  3                                       │
 │   23 var root: Node*                       ││                                                    │
@@ -26,9 +26,9 @@
 │                                            ││                                                    │
 │                                            ││                                                    │
 ╰────────────────────────────────────────────╯╰────────────────────────────────────────────────────╯
-╭─ Cosa è successo ────────────────────────────────────────────────────────────────────────────────╮
-│ ◀ insert ha finito                                                                               │
-│ ◀ insert ha finito                                                                               │
-│ ◀ insert ha finito                                                                               │
+╭─ What happened ──────────────────────────────────────────────────────────────────────────────────╮
+│ ◀ insert is done                                                                                 │
+│ ◀ insert is done                                                                                 │
+│ ◀ insert is done                                                                                 │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   n  salta   ?  aiuto
+  →  step   ←  back   Space  play   Enter  details   Esc  overview   n  over   ?  help

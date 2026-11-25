@@ -1,6 +1,6 @@
- ◆ PSEUDOSCOPE  values.plike ▸ main                                                       ▐ Mappa ▌▸▐ Codice ▌▸▐ Java ▌
-                                                   Traduzione in Java
-╭─ Pseudocodice ───────────────────────────────────────────╮╭─ Java ───────────────────────────────────────────────────╮
+ ◆ PSEUDOSCOPE  values.plike ▸ main                                                           ▐ Map ▌▸▐ Code ▌▸▐ Java ▌
+                                                  Translation to Java
+╭─ Pseudocode ─────────────────────────────────────────────╮╭─ Java ───────────────────────────────────────────────────╮
 │ ▶  52 procedure main()                                  ┃││  static void run() {                                     │
 │    53 var p, q: Point                                   ┃││      Point p = new Point();                              │
 │    54 var l, m: Line                                    ┃││      Point q = new Point();                              │
@@ -27,4 +27,4 @@
 │    75     i := divide(17, 5, r)                          ││      System.out.printf("%d %d %d %d%n", l.a.x, m.a.x, l. │
 ╰──────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────────────────╯
 
-  ↑↓  scorri   Invio  più dettaglio   Esc  meno dettaglio   r  esegui   E  modifica   q  esci   ?  aiuto
+  ↑↓  move   Enter  more detail   Esc  less detail   r  run   E  edit   q  quit   ?  help

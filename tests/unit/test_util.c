@@ -65,21 +65,40 @@ static void conversions(const char *format, char *out) {
     *out = '\0';
 }
 
-static void test_italian(void) {
-    for (int i = 0; i < ITALIAN_MESSAGE_COUNT; i++) {
-        char english[32], italian[32];
-        conversions(ITALIAN_MESSAGES[i][0], english);
-        conversions(ITALIAN_MESSAGES[i][1], italian);
-        CHECK_STR(italian, english);
+static void test_languages(void) {
+    /* every translation takes the arguments of the text it translates */
+    for (int c = 0; c < CATALOG_COUNT; c++) {
+        for (int i = 0; i < CATALOGS[c].count; i++) {
+            const CatalogEntry *e = &CATALOGS[c].entries[i];
+            char english[32], other[32];
+            conversions(e->id, english);
+            conversions(e->text[0], other);
+            CHECK_STR(other, english);
+            if (!e->plural) continue;
+            conversions(e->plural, english);
+            conversions(e->text[1], other);
+            CHECK_STR(other, english);
+        }
     }
-    Diag diag = {.italian = true};
-    CHECK_STR(diag_text(&diag, "unknown type '%s'"), "il tipo '%s' non esiste");
-    diag.italian = false;
-    CHECK_STR(diag_text(&diag, "unknown type '%s'"), "unknown type '%s'");
+    CHECK(locale_count() >= 3);
+    CHECK_STR(locale_code(0), "en");
+    CHECK(locale_choose("it_IT.UTF-8"));
+    CHECK_STR(locale_code(locale_now()), "it");
+    CHECK_STR(tr("unknown type '%s'"), "il tipo '%s' non esiste");
+    CHECK_STR(tr("a text that nobody has translated"), "a text that nobody has translated");
+    CHECK(locale_choose("Español"));
+    CHECK_STR(locale_code(locale_now()), "es");
+    CHECK(strcmp(tr("unknown type '%s'"), "unknown type '%s'") != 0);
+    CHECK(!locale_choose("tlh"));
+    CHECK_STR(locale_code(locale_now()), "es"); /* an unknown name changes nothing */
+    CHECK(locale_choose("C"));
+    CHECK_STR(tr("unknown type '%s'"), "unknown type '%s'");
+    CHECK_STR(tr_count("%d test", "%d tests", 1), "%d test");
+    CHECK_STR(tr_count("%d test", "%d tests", 3), "%d tests");
 }
 
 void test_util(void) {
-    test_italian();
+    test_languages();
     test_arena();
     test_strbuf();
     test_diag();

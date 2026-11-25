@@ -1,6 +1,6 @@
- ◆ PSEUDOSCOPE  fib.pscope        ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
-  ‖ fermo   main ▸ fib ▸ fib
-  Sequenza
+ ◆ PSEUDOSCOPE  fib.pscope             ▐ System ▌▸▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
+  ‖ paused   main ▸ fib ▸ fib
+  Sequence
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────╮
 │                           ╭──────╮                                     ╭─────╮                   │
 │                           │ main │                                     │ fib │                   │
@@ -22,9 +22,9 @@
 │                               │                                           ┃                      │
 │                               │                                           ┃                      │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Cosa è successo ────────────────────────────────────────────────────────────────────────────────╮
-│ ◀ fib restituisce  1                                                                             │
-│ ◀ fib restituisce  2                                                                             │
-│ ▶ si entra in fib(n=2)                                                                           │
+╭─ What happened ──────────────────────────────────────────────────────────────────────────────────╮
+│ ◀ fib returns  1                                                                                 │
+│ ◀ fib returns  2                                                                                 │
+│ ▶ entering fib(n=2)                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   ?  aiuto
+  →  step   ←  back   Space  play   Enter  details   Esc  overview   Tab  other view   ?  help

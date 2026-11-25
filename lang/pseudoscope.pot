@@ -1,0 +1,2115 @@
+msgid ""
+msgstr ""
+"Language: \n"
+"X-Language-Name: \n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: src/back/target.c
+msgid "%s has no pointers to plain values: '%s' cannot be translated (C, C++ and Rust have them)"
+msgstr ""
+
+#: src/back/target.c
+msgid "'%s' is not in the file: it cannot be called in %s"
+msgstr ""
+
+#: src/back/target.c
+msgid "'%s' comes from a library that only works when the program is run here (exec, ui): it is not translated"
+msgstr ""
+
+#: src/back/target.c
+msgid "in %s what '%s' changes comes back with its result: call it in a statement of its own"
+msgstr ""
+
+#: src/back/target.c
+msgid "%s has no pointers that move from an element to the next"
+msgstr ""
+
+#: src/back/target.c
+msgid "this expects a call between objects, which only the program run here keeps track of (exec, test, ui)"
+msgstr ""
+
+#: src/back/target.c
+msgid "C has no classes that extend others: '%s' can be translated to C++, Java, TypeScript or Python"
+msgstr ""
+
+#: src/back/target.c
+msgid "Rust has no classes that extend classes: '%s' could only extend an interface (a trait), and '%s' is not"
+msgstr ""
+
+#: src/back/target.c
+msgid "in %s a class extends one class only: '%s' has both '%s' and '%s' (C++ and Python allow it; or make one an interface)"
+msgstr ""
+
+#: src/back/target.c
+msgid "C has no abstract classes or interfaces: '%s' can be translated to C++, Java, TypeScript or Python"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "pseudoscope: cannot open '%s': %s\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "pseudoscope: cannot read '%s': %s\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "pseudoscope: cannot write '%s': %s\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "pseudoscope: cannot write '%s'\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "standard output"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "pseudoscope: cannot run '%s': %s\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "pseudoscope: '%s' was killed by signal %d\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "pseudoscope: compiling with %s\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "pseudoscope: the %s compiler failed\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "pseudoscope: there is nothing to run: declare a procedure 'main' without parameters\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "pseudoscope: cannot create a temporary directory: %s\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "pseudoscope: compiling with tsc\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "pseudoscope: the TypeScript compiler failed\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "pseudoscope: running with %s\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "pseudoscope: running\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "pseudoscope: the executable would overwrite the input\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "pseudoscope: too many steps, stopped\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "runtime error at line %d: %s\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "runtime error: %s\n"
+msgstr ""
+
+#: src/cli/driver.c src/tui/explore.c src/tui/system.c
+msgid "line"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "a test cannot read input"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "too many steps, stopped"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "%d tests, %d failed\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "pseudoscope: a diagram can be opened with ui, check and ast\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "pseudoscope: warnings are treated as errors\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "pseudoscope: build makes an executable, and %s programs are run as they are: use translate, or run\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "pseudoscope: the output would overwrite the input\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "pseudoscope: there are no tests in this program\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "pseudoscope: '%s' holds %d programs and diagrams, not %d\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "pseudoscope: '%s' holds %d programs: say which with %s#N (ast lists them)\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "pseudoscope: %s: %d programs and diagrams checked\n"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "reading tokens"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "parsing"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "checking names and types"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "executing"
+msgstr ""
+
+#: src/cli/driver.c
+msgid "translating"
+msgstr ""
+
+#: src/cli/options.c
+msgid "Usage: pseudoscope [COMMAND] [OPTIONS] FILE [OUTPUT]\n\nPseudocode, and designs, brought to life. FILE may be - for the standard input.\n"
+msgstr ""
+
+#: src/cli/options.c
+msgid "\nCommands:\n  ui          explore programs and watch them run (FILE may be a folder;\n              the default without arguments)\n  translate   write the program in C or in another language (the default command)\n  check       only report errors and warnings\n  build       translate and compile to an executable (C, C++, Rust)\n  run         translate, and execute with the tools of that language\n  exec        execute here, without other tools, checking every access\n  test        run the tests of the program (with --to: translated)\n  tokens      list the tokens\n  ast         print the syntax tree\n"
+msgstr ""
+
+#: src/cli/options.c
+msgid "\nLanguage of the program:\n      --dialect=NAME        plike, pseint, visualg, portugol or cambridge\n                            (default: from the extension .pscope .plike .psc .alg .por\n                            .pse, or from how the file begins)\n  -a, --assignment=STYLE    colon-equals (default) or equals\n  -i, --indexing=BASE       first index of arrays without a range:\n                            one (default) or zero\n  -p, --params=STYLE        where parameter types go: decl, body or mixed (default)\n      --operators=STYLE     standard (and), dotted (.and.) or mixed (default)\n  -m, --mixed-arrays=BOOL   accept a(i) for a[i]: true (default) or false\n"
+msgstr ""
+
+#: src/cli/options.c
+msgid "\nOutput:\n  -t, --to=LANGUAGE         c (default), cpp, java, rust, ts, js or python;\n                            translate also tells from the extension of the output\n  -o, --output=FILE         translate: where to write (default: standard output)\n                            build: executable (default: FILE without extension)\n  -b, --bounds-check        stop with an error on array indices out of bounds\n      --cc=COMMAND          the compiler, or what runs the program, for build and run\n                            (default: $CC or cc, c++, rustc, java, node, python3)\n      --steps=N             exec: stop after N steps\n      --canvas=FILE         exec: save what the program drew, as a PPM picture\n      --dot                 ast: Graphviz format\n"
+msgstr ""
+
+#: src/cli/options.c
+msgid "\nMessages and interface:\n      --lang=LANGUAGE       the language to speak (default: $PSEUDOSCOPE_LANG, or the\n                            language of the system, or English):"
+msgstr ""
+
+#: src/cli/options.c
+msgid "\n      --color=WHEN          auto (default), always or never\n  -q, --quiet               no warnings\n  -W, --werror              treat warnings as errors\n  -v, --verbose             show the steps\n  -h, --help                show this help\n  -V, --version             show the version\n"
+msgstr ""
+
+#: src/cli/options.c
+msgid "\nExit status: 0 success, 1 errors in the program, 2 wrong usage, 3 files or\ncompiler. run exits with the status of the program.\n"
+msgstr ""
+
+#: src/cli/options.c
+msgid "pseudoscope: invalid value '%s' for --%s (use"
+msgstr ""
+
+#: src/cli/options.c
+msgid " or"
+msgstr ""
+
+#: src/cli/options.c
+msgid "pseudoscope: invalid value '%s' for --to (use c, cpp, java, rust, ts, js or python)\n"
+msgstr ""
+
+#: src/cli/options.c
+msgid "pseudoscope: '%s' is not a language I speak (I speak"
+msgstr ""
+
+#: src/cli/options.c
+msgid "pseudoscope: invalid value '%s' for --size\n"
+msgstr ""
+
+#: src/cli/options.c
+msgid "pseudoscope: invalid value '%s' for --steps\n"
+msgstr ""
+
+#: src/cli/options.c
+msgid "Try 'pseudoscope --help'.\n"
+msgstr ""
+
+#: src/cli/options.c
+msgid "pseudoscope: no input file\nTry 'pseudoscope --help'.\n"
+msgstr ""
+
+#: src/cli/options.c
+msgid "pseudoscope: unexpected argument '%s'\n"
+msgstr ""
+
+#: src/front/dialect.c src/front/lexer.c
+msgid "comment is never closed"
+msgstr ""
+
+#: src/front/dialect.c
+msgid "the library '%s' has no '%s' here"
+msgstr ""
+
+#: src/front/dialect.c src/front/lexer.c
+msgid "unterminated %s"
+msgstr ""
+
+#: src/front/dialect.c src/front/lexer.c
+msgid "unexpected character '%c'"
+msgstr ""
+
+#: src/front/dialect.c src/front/lexer.c
+msgid "unexpected byte 0x%02x"
+msgstr ""
+
+#: src/front/foreign.inc src/front/parser.c
+msgid "a variable name"
+msgstr ""
+
+#: src/front/foreign.inc src/front/parser.c
+msgid "':' and a type"
+msgstr ""
+
+#: src/front/foreign.inc src/front/parser.c
+msgid "a type"
+msgstr ""
+
+#: src/front/foreign.inc
+msgid "the end of the cases"
+msgstr ""
+
+#: src/front/foreign.inc
+msgid "a function name"
+msgstr ""
+
+#: src/front/foreign.inc src/front/parser.c
+msgid "a parameter name"
+msgstr ""
+
+#: src/front/foreign.inc src/front/parser.c
+msgid "')' after the parameters"
+msgstr ""
+
+#: src/front/foreign.inc src/front/parser.c
+msgid "a procedure name"
+msgstr ""
+
+#: src/front/foreign.inc src/front/parser.c
+msgid "a type name"
+msgstr ""
+
+#: src/front/foreign.inc src/front/parser.c
+msgid "'end' after the record fields"
+msgstr ""
+
+#: src/front/foreign.inc src/front/parser.c
+msgid "an assignment"
+msgstr ""
+
+#: src/front/foreign.inc src/front/parser.c
+msgid "a statement"
+msgstr ""
+
+#: src/front/foreign.inc
+msgid "the end of the program"
+msgstr ""
+
+#: src/front/foreign.inc src/front/parser.c
+msgid "a declaration (function, procedure, var or type)"
+msgstr ""
+
+#: src/front/lexer.c
+msgid "end of file"
+msgstr ""
+
+#: src/front/lexer.c
+msgid "identifier"
+msgstr ""
+
+#: src/front/lexer.c
+msgid "integer number"
+msgstr ""
+
+#: src/front/lexer.c
+msgid "real number"
+msgstr ""
+
+#: src/front/lexer.c
+msgid "string"
+msgstr ""
+
+#: src/front/lexer.c
+msgid "character"
+msgstr ""
+
+#: src/front/lexer.c
+msgid "array dimension"
+msgstr ""
+
+#: src/front/lexer.c
+msgid "invalid number '%.*s'"
+msgstr ""
+
+#: src/front/lexer.c
+msgid "'%.*s' starts with 0, so it is octal, but has the digit %c"
+msgstr ""
+
+#: src/front/lexer.c
+msgid "unknown escape sequence"
+msgstr ""
+
+#: src/front/lexer.c
+msgid "a character literal holds exactly one character"
+msgstr ""
+
+#: src/front/parser.c
+msgid "'%s' or 'end %s'"
+msgstr ""
+
+#: src/front/parser.c
+msgid "'end %s'"
+msgstr ""
+
+#: src/front/parser.c
+msgid "expected %s, found '%s'"
+msgstr ""
+
+#: src/front/parser.c
+msgid "expected %s, found %s"
+msgstr ""
+
+#: src/front/parser.c
+msgid "code is nested too deeply"
+msgstr ""
+
+#: src/front/parser.c
+msgid "expression is too long"
+msgstr ""
+
+#: src/front/parser.c
+msgid "missing array index"
+msgstr ""
+
+#: src/front/parser.c
+msgid "an array has between 1 and 16 dimensions"
+msgstr ""
+
+#: src/front/parser.c
+msgid "a %dd array was given %d dimensions"
+msgstr ""
+
+#: src/front/parser.c
+msgid "read needs a variable"
+msgstr ""
+
+#: src/front/parser.c
+msgid "'%s' compares; to assign use ':='%s"
+msgstr ""
+
+#: src/front/parser.c
+msgid "an expression"
+msgstr ""
+
+#: src/front/parser.c
+msgid "a field name"
+msgstr ""
+
+#: src/front/parser.c
+msgid "a size: only the first dimension can be left out"
+msgstr ""
+
+#: src/front/parser.c
+msgid "the name of a state"
+msgstr ""
+
+#: src/front/parser.c
+msgid "the name of a class"
+msgstr ""
+
+#: src/front/parser.c
+msgid "a variable, a procedure or a function of the class"
+msgstr ""
+
+#: src/front/parser.c
+msgid "'delay' or 'loss'"
+msgstr ""
+
+#: src/front/parser.c
+msgid "a loop variable"
+msgstr ""
+
+#: src/front/parser.c
+msgid "a text between quotes"
+msgstr ""
+
+#: src/front/parser.c
+msgid "the name of a message"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "'%s' is not declared, using '%s'"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "'%s' is already declared at line %d"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "type '%s' is not declared, using '%s'"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "type '%s' is already declared at line %d"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "the size of %s must be constant"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "record '%s' contains itself; use a pointer"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "field '%s' is already declared"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "an array bound must be an integer, not %s"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "unknown type '%s'"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "'%s' has %d dimension%s here but its type has %d"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "the size of '%s' is missing"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "the size of an array must be positive"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "a procedure has no value"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "%s cannot be %s"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "'%s' takes a text, not %s"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "'%s' takes numbers, not %s"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "'%s' is an %s parameter: it needs a variable"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "parameter '%s' of '%s' is %s, not %s"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "'%s' takes %d argument%s, not %d"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "'%s' is not defined in this file"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "an array index must be an integer, not %s"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "a pointer takes one index, not %d"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "%s is not an array"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "the array has %d dimension%s but %d indices were given"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "no class that '%s' extends has '%s'"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "'%s' has no '%s' that '%s' could use"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "'%s' is abstract: there is nothing to call"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "%s is not a record"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "there is no field '%s' in %s"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "%s is not a pointer"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "only a variable has an address"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "%s cannot be applied to %s"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "%s cannot be applied to %s and %s"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "'%s' is not declared"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "this is not a function"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "arrays are accessed with [] (see --mixed-arrays)"
+msgstr ""
+
+#: src/sema/sema.c src/vm/vm.c
+msgid "the number does not fit an integer"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "'%s' is a component: it must be a global variable"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "'%s' is a function: it cannot be assigned"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "this cannot be assigned"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "%s cannot be assigned to %s"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "a procedure cannot return a value"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "'%s' returns %s, not %s"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "a loop variable must be a number"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "a loop bound must be a number, not %s"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "the step cannot be 0"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "read needs a variable of a basic type"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "cannot print %s"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "'%s' is not a component"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "messages are sent to components, not to %s"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "a time must be an integer, not %s"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "'%s' does not handle the message '%s'"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "no component handles the message '%s'"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "%s is not a component or an object"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "this value is not used"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "taking '%s' as the parameter '%s'"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "parameter '%s' already has a type, ignoring this one"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "the type of '%s' belongs in the parameter list (see --params)"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "the type of '%s' belongs in the body (see --params)"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "parameter '%s' has no type"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "the bounds of '%s' depend on itself"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "only the first dimension of '%s' can be left out"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "function '%s' has no result type"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "a function cannot return an array; use an out parameter"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "class '%s' ends up extending itself"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "'%s' is extended twice"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "there is no class '%s'"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "components do not extend, and are not extended: only classes"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "an interface can only extend interfaces, and '%s' is a class"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "an interface has no variables: only what its classes must be able to do"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "there can be no '%s': nobody has written '%s' (use a class that extends it, or a pointer)"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "there can be no '%s': it is an interface (use a class that extends it, or a pointer)"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "there can be no '%s': it is abstract (use a class that extends it, or a pointer)"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "'%s' replaces '%s': it must take and give the same"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "'%s' gets '%s' from both '%s' and '%s': it must have its own"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "'%s' has no state '%s'"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "a message carries simple values: '%s' cannot be one"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "the message '%s' has other parameters at line %d"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "the message 'start' has no parameters"
+msgstr ""
+
+#: src/sema/sema.c
+msgid "a link joins components, not %s"
+msgstr ""
+
+#: src/tui/app.c
+msgid "Help"
+msgstr ""
+
+#: src/tui/app.c
+msgid "Keys"
+msgstr ""
+
+#: src/tui/app.c
+msgid "one step forward, one back"
+msgstr ""
+
+#: src/tui/app.c src/tui/run.c src/tui/umlview.c
+msgid "Space"
+msgstr ""
+
+#: src/tui/app.c
+msgid "plays / pauses"
+msgstr ""
+
+#: src/tui/app.c
+msgid "faster, slower"
+msgstr ""
+
+#: src/tui/app.c
+msgid "steps over the call"
+msgstr ""
+
+#: src/tui/app.c
+msgid "out of the subprogram"
+msgstr ""
+
+#: src/tui/app.c
+msgid "to the end (or to ●)"
+msgstr ""
+
+#: src/tui/app.c
+msgid "starts again"
+msgstr ""
+
+#: src/tui/app.c
+msgid "breakpoint ● on the line"
+msgstr ""
+
+#: src/tui/app.c src/tui/explore.c src/tui/files.c src/tui/run.c src/tui/system.c src/tui/trial.c
+msgid "Enter"
+msgstr ""
+
+#: src/tui/app.c src/tui/explore.c
+msgid "more detail"
+msgstr ""
+
+#: src/tui/app.c src/tui/explore.c
+msgid "less detail"
+msgstr ""
+
+#: src/tui/app.c
+msgid "straight to a level"
+msgstr ""
+
+#: src/tui/app.c
+msgid "other view or variable"
+msgstr ""
+
+#: src/tui/app.c
+msgid "other component (States)"
+msgstr ""
+
+#: src/tui/app.c
+msgid "code or activity diagram"
+msgstr ""
+
+#: src/tui/app.c
+msgid "arrays as cells or bars"
+msgstr ""
+
+#: src/tui/app.c
+msgid "what was printed"
+msgstr ""
+
+#: src/tui/app.c
+msgid "what was drawn"
+msgstr ""
+
+#: src/tui/app.c
+msgid "the whole story"
+msgstr ""
+
+#: src/tui/app.c
+msgid "back to exploring"
+msgstr ""
+
+#: src/tui/app.c src/tui/explore.c src/tui/files.c
+msgid "quit"
+msgstr ""
+
+#: src/tui/app.c src/tui/explore.c src/tui/umlview.c
+msgid "move"
+msgstr ""
+
+#: src/tui/app.c
+msgid "run, or try"
+msgstr ""
+
+#: src/tui/app.c
+msgid "all the tests"
+msgstr ""
+
+#: src/tui/app.c
+msgid "open in the editor"
+msgstr ""
+
+#: src/tui/app.c
+msgid "Levels: the deeper, the more"
+msgstr ""
+
+#: src/tui/app.c src/tui/explore.c
+msgid "Map"
+msgstr ""
+
+#: src/tui/app.c
+msgid "what the program contains"
+msgstr ""
+
+#: src/tui/app.c src/tui/explore.c src/tui/run.c
+msgid "Code"
+msgstr ""
+
+#: src/tui/app.c
+msgid "how it is written"
+msgstr ""
+
+#: src/tui/app.c
+msgid "how it becomes C, in memory"
+msgstr ""
+
+#: src/tui/app.c
+msgid "in another language"
+msgstr ""
+
+#: src/tui/app.c
+msgid "Colours"
+msgstr ""
+
+#: src/tui/app.c
+msgid "being read"
+msgstr ""
+
+#: src/tui/app.c
+msgid "just written, result"
+msgstr ""
+
+#: src/tui/app.c
+msgid "where we are"
+msgstr ""
+
+#: src/tui/app.c
+msgid "procedures and functions"
+msgstr ""
+
+#: src/tui/app.c
+msgid "types and records"
+msgstr ""
+
+#: src/tui/app.c
+msgid "pointers"
+msgstr ""
+
+#: src/tui/app.c
+msgid "error, false"
+msgstr ""
+
+#: src/tui/app.c
+msgid "no value yet"
+msgstr ""
+
+#: src/tui/app.c
+msgid "Level: what you see, and the step"
+msgstr ""
+
+#: src/tui/app.c
+msgid "System: a message"
+msgstr ""
+
+#: src/tui/app.c
+msgid "Program: a call"
+msgstr ""
+
+#: src/tui/app.c
+msgid "Function: a statement"
+msgstr ""
+
+#: src/tui/app.c
+msgid "Statement: a piece of it"
+msgstr ""
+
+#: src/tui/app.c
+msgid "Memory: a read or a write"
+msgstr ""
+
+#: src/tui/app.c
+msgid "any key"
+msgstr ""
+
+#: src/tui/app.c src/tui/run.c
+msgid "close"
+msgstr ""
+
+#: src/tui/app.c
+msgid "Window too small"
+msgstr ""
+
+#: src/tui/app.c
+msgid "at least %dx%d characters are needed (now %dx%d)"
+msgstr ""
+
+#: src/tui/app.c
+msgid "Translation to"
+msgstr ""
+
+#: src/tui/app.c
+msgid "pseudoscope: cannot open '%s'\n"
+msgstr ""
+
+#: src/tui/app.c
+msgid "pseudoscope: the interface needs a terminal\n"
+msgstr ""
+
+#: src/tui/behaviour.c src/tui/system.c
+msgid "Nobody has talked to anybody yet."
+msgstr ""
+
+#: src/tui/behaviour.c
+msgid "No objects, for now."
+msgstr ""
+
+#: src/tui/behaviour.c
+msgid "no"
+msgstr ""
+
+#: src/tui/behaviour.c
+msgid "yes"
+msgstr ""
+
+#: src/tui/behaviour.c
+msgid "↺ back to the question"
+msgstr ""
+
+#: src/tui/behaviour.c
+msgid "↺ again"
+msgstr ""
+
+#: src/tui/behaviour.c
+msgid "◉ returns %s"
+msgstr ""
+
+#: src/tui/behaviour.c
+msgid "≡ print %s"
+msgstr ""
+
+#: src/tui/behaviour.c
+msgid "» read %s"
+msgstr ""
+
+#: src/tui/behaviour.c
+msgid "▷ send %s"
+msgstr ""
+
+#: src/tui/chartview.c
+msgid "day"
+msgstr ""
+
+#: src/tui/chartview.c
+msgid "done"
+msgstr ""
+
+#: src/tui/chartview.c
+msgid "in progress:"
+msgstr ""
+
+#: src/tui/chartview.c
+msgid "nothing"
+msgstr ""
+
+#: src/tui/chartview.c
+msgid "waits for"
+msgstr ""
+
+#: src/tui/chartview.c
+msgid "   critical"
+msgstr ""
+
+#: src/tui/chartview.c
+msgid "How to get here"
+msgstr ""
+
+#: src/tui/chartview.c
+msgid "below in all"
+msgstr ""
+
+#: src/tui/chartview.c src/tui/run.c
+msgid "up to"
+msgstr ""
+
+#: src/tui/chartview.c
+msgid "of"
+msgstr ""
+
+#: src/tui/chartview.c
+msgid "that is"
+msgstr ""
+
+#: src/tui/chartview.c
+msgid "%d branch"
+msgid_plural "%d branches"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/tui/data.c
+msgid "  result"
+msgstr ""
+
+#: src/tui/data.c
+msgid "points nowhere yet"
+msgstr ""
+
+#: src/tui/data.c
+msgid "✗ gone"
+msgstr ""
+
+#: src/tui/data.c
+msgid "goes back"
+msgstr ""
+
+#: src/tui/data.c
+msgid "globals"
+msgstr ""
+
+#: src/tui/data.c
+msgid "This statement uses no variables."
+msgstr ""
+
+#: src/tui/data.c
+msgid "There are no variables here."
+msgstr ""
+
+#: src/tui/data.c
+msgid "▼ more (Tab)"
+msgstr ""
+
+#: src/tui/data.c
+msgid "address"
+msgstr ""
+
+#: src/tui/data.c
+msgid "name"
+msgstr ""
+
+#: src/tui/data.c
+msgid "value"
+msgstr ""
+
+#: src/tui/data.c
+msgid "byte"
+msgstr ""
+
+#: src/tui/data.c src/tui/trial.c
+msgid "try"
+msgstr ""
+
+#: src/tui/data.c
+msgid "           … %d more"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "Cannot read %s"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "result"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "none"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "reacts to a message"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "function: computes a result"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "procedure: performs actions"
+msgstr ""
+
+#: src/tui/explore.c src/tui/umlview.c
+msgid "uses"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "used by"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "recursive: calls itself"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "run the program"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "try it with values of your choice"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "component: lives on its own and exchanges messages"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "interface: what its classes must be able to do"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "abstract class: those that extend it complete it"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "class: data and operations together"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "extends"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "Its states"
+msgstr ""
+
+#: src/tui/explore.c src/tui/system.c
+msgid "watch it run"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "run all the tests"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "record: several values together, each with a name"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "Global variables"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "visible from the whole program"
+msgstr ""
+
+#: src/tui/explore.c src/tui/system.c
+msgid "Components"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "Classes"
+msgstr ""
+
+#: src/tui/explore.c src/tui/system.c
+msgid "Tests"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "Subprograms"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "Structures (records)"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "Shared data"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "global variables"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "starts here"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "The program is empty."
+msgstr ""
+
+#: src/tui/explore.c
+msgid "padding"
+msgstr ""
+
+#: src/tui/explore.c src/tui/run.c
+msgid "another language"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "Pseudocode"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "In memory"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "To fix before going on"
+msgstr ""
+
+#: src/tui/explore.c src/tui/files.c src/tui/system.c
+msgid "choose"
+msgstr ""
+
+#: src/tui/explore.c src/tui/umlview.c
+msgid "edit"
+msgstr ""
+
+#: src/tui/explore.c src/tui/umlview.c
+msgid "files"
+msgstr ""
+
+#: src/tui/explore.c src/tui/files.c src/tui/run.c src/tui/system.c src/tui/umlview.c
+msgid "help"
+msgstr ""
+
+#: src/tui/explore.c src/tui/trial.c
+msgid "run"
+msgstr ""
+
+#: src/tui/explore.c src/tui/system.c
+msgid "tests"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "There is no main: choose a subprogram to try"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "This program has no tests"
+msgstr ""
+
+#: src/tui/explore.c
+msgctxt "masculine"
+msgid "used by"
+msgstr ""
+
+#: src/tui/explore.c
+msgid "%d byte"
+msgid_plural "%d bytes"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/tui/explore.c
+msgid "%d byte in all"
+msgid_plural "%d bytes in all"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/tui/files.c
+msgid "≡ outline"
+msgstr ""
+
+#: src/tui/files.c
+msgid "Cannot open %s"
+msgstr ""
+
+#: src/tui/files.c
+msgid "no errors"
+msgstr ""
+
+#: src/tui/files.c
+msgid "Files"
+msgstr ""
+
+#: src/tui/files.c
+msgid "No programs or diagrams in this folder."
+msgstr ""
+
+#: src/tui/files.c
+msgid "Preview"
+msgstr ""
+
+#: src/tui/files.c
+msgid "open"
+msgstr ""
+
+#: src/tui/files.c
+msgid "parent folder"
+msgstr ""
+
+#: src/tui/files.c
+msgid "%d subprogram"
+msgid_plural "%d subprograms"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/tui/files.c
+msgid "%d record"
+msgid_plural "%d records"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/tui/files.c
+msgid "%d line"
+msgid_plural "%d lines"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/tui/files.c
+msgid "%d error"
+msgid_plural "%d errors"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/tui/files.c
+msgid "%d warning"
+msgid_plural "%d warnings"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/tui/run.c
+msgid "becomes"
+msgstr ""
+
+#: src/tui/run.c
+msgid "it was"
+msgstr ""
+
+#: src/tui/run.c
+msgid "next round:"
+msgstr ""
+
+#: src/tui/run.c
+msgid "the loop starts with"
+msgstr ""
+
+#: src/tui/run.c
+msgid "this branch runs"
+msgstr ""
+
+#: src/tui/run.c
+msgid "this branch is skipped"
+msgstr ""
+
+#: src/tui/run.c
+msgid "the loop ends"
+msgstr ""
+
+#: src/tui/run.c
+msgid "once more"
+msgstr ""
+
+#: src/tui/run.c
+msgid "into the loop"
+msgstr ""
+
+#: src/tui/run.c
+msgid " true "
+msgstr ""
+
+#: src/tui/run.c
+msgid " false "
+msgstr ""
+
+#: src/tui/run.c
+msgid "entering"
+msgstr ""
+
+#: src/tui/run.c
+msgid "returns"
+msgstr ""
+
+#: src/tui/run.c
+msgid "is done"
+msgstr ""
+
+#: src/tui/run.c
+msgid "prints"
+msgstr ""
+
+#: src/tui/run.c
+msgid "reads"
+msgstr ""
+
+#: src/tui/run.c
+msgid "valid:"
+msgstr ""
+
+#: src/tui/run.c
+msgid "sends"
+msgstr ""
+
+#: src/tui/run.c
+msgid "to"
+msgstr ""
+
+#: src/tui/run.c
+msgid "reaches"
+msgstr ""
+
+#: src/tui/run.c
+msgid "got lost between"
+msgstr ""
+
+#: src/tui/run.c
+msgid "and"
+msgstr ""
+
+#: src/tui/run.c
+msgid "does not matter to"
+msgstr ""
+
+#: src/tui/run.c
+msgid ", which is in "
+msgstr ""
+
+#: src/tui/run.c
+msgid "is only designed: the code will go here"
+msgstr ""
+
+#: src/tui/run.c
+msgid "remains"
+msgstr ""
+
+#: src/tui/run.c
+msgid "the program is over"
+msgstr ""
+
+#: src/tui/run.c
+msgid "No subprogram is running."
+msgstr ""
+
+#: src/tui/run.c
+msgid "… %d more below"
+msgstr ""
+
+#: src/tui/run.c
+msgid "▲ waits for it to end"
+msgstr ""
+
+#: src/tui/run.c
+msgid "Nobody is working now: the next message is awaited."
+msgstr ""
+
+#: src/tui/run.c
+msgid "Statement"
+msgstr ""
+
+#: src/tui/run.c
+msgid "How it is computed"
+msgstr ""
+
+#: src/tui/run.c
+msgid "→ to compute one piece at a time"
+msgstr ""
+
+#: src/tui/run.c
+msgid "Values involved"
+msgstr ""
+
+#: src/tui/run.c
+msgid "Translated to"
+msgstr ""
+
+#: src/tui/run.c
+msgid "Memory"
+msgstr ""
+
+#: src/tui/run.c
+msgid "The program waits for a value"
+msgstr ""
+
+#: src/tui/run.c
+msgid "Type"
+msgstr ""
+
+#: src/tui/run.c
+msgid "What happened"
+msgstr ""
+
+#: src/tui/run.c
+msgid "Ready: → takes a step, Space plays."
+msgstr ""
+
+#: src/tui/run.c src/util/diag.c
+msgid "error"
+msgstr ""
+
+#: src/tui/run.c
+msgid "waiting"
+msgstr ""
+
+#: src/tui/run.c
+msgid "working"
+msgstr ""
+
+#: src/tui/run.c
+msgid "playing"
+msgstr ""
+
+#: src/tui/run.c
+msgid "paused"
+msgstr ""
+
+#: src/tui/run.c
+msgid "speed"
+msgstr ""
+
+#: src/tui/run.c
+msgid "output: o"
+msgstr ""
+
+#: src/tui/run.c
+msgid "drawing: d"
+msgstr ""
+
+#: src/tui/run.c
+msgid "Nothing."
+msgstr ""
+
+#: src/tui/run.c
+msgid "What the program drew"
+msgstr ""
+
+#: src/tui/run.c
+msgid "What the program printed"
+msgstr ""
+
+#: src/tui/run.c
+msgid "Everything that happened"
+msgstr ""
+
+#: src/tui/run.c
+msgid "System"
+msgstr ""
+
+#: src/tui/run.c
+msgid "Program"
+msgstr ""
+
+#: src/tui/run.c
+msgid "Function"
+msgstr ""
+
+#: src/tui/run.c
+msgid "step"
+msgstr ""
+
+#: src/tui/run.c src/tui/system.c src/tui/trial.c src/tui/umlview.c
+msgid "back"
+msgstr ""
+
+#: src/tui/run.c
+msgid "to the end"
+msgstr ""
+
+#: src/tui/run.c
+msgid "scroll"
+msgstr ""
+
+#: src/tui/run.c
+msgid "Calls"
+msgstr ""
+
+#: src/tui/run.c
+msgid "Stack: who waits for whom"
+msgstr ""
+
+#: src/tui/run.c
+msgid "What it printed"
+msgstr ""
+
+#: src/tui/run.c
+msgid "In the end"
+msgstr ""
+
+#: src/tui/run.c
+msgid "Data"
+msgstr ""
+
+#: src/tui/run.c
+msgid "confirm"
+msgstr ""
+
+#: src/tui/run.c
+msgid "end of input"
+msgstr ""
+
+#: src/tui/run.c
+msgid "pause"
+msgstr ""
+
+#: src/tui/run.c
+msgid "details"
+msgstr ""
+
+#: src/tui/run.c
+msgid "overview"
+msgstr ""
+
+#: src/tui/run.c
+msgid "other view"
+msgstr ""
+
+#: src/tui/run.c
+msgid "over"
+msgstr ""
+
+#: src/tui/run.c
+msgctxt "state"
+msgid "becomes"
+msgstr ""
+
+#: src/tui/run.c
+msgctxt "run"
+msgid "done"
+msgstr ""
+
+#: src/tui/run.c
+msgctxt "short"
+msgid "play"
+msgstr ""
+
+#: src/tui/run.c
+msgid "%d stroke"
+msgid_plural "%d strokes"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/tui/screen.c
+msgid "pseudoscope: out of memory\n"
+msgstr ""
+
+#: src/tui/system.c
+msgid "States"
+msgstr ""
+
+#: src/tui/system.c
+msgid "Timing"
+msgstr ""
+
+#: src/tui/system.c
+msgid "Communication"
+msgstr ""
+
+#: src/tui/system.c
+msgid "Objects"
+msgstr ""
+
+#: src/tui/system.c
+msgid "Checks"
+msgstr ""
+
+#: src/tui/system.c
+msgid "Sequence"
+msgstr ""
+
+#: src/tui/system.c
+msgid "time"
+msgstr ""
+
+#: src/tui/system.c
+msgid "No message on its way."
+msgstr ""
+
+#: src/tui/system.c
+msgid "waiting:"
+msgstr ""
+
+#: src/tui/system.c
+msgid "On their way"
+msgstr ""
+
+#: src/tui/system.c
+msgid "it does not end"
+msgstr ""
+
+#: src/tui/system.c
+msgid "passed"
+msgstr ""
+
+#: src/tui/system.c
+msgid "What it checks"
+msgstr ""
+
+#: src/tui/system.c
+msgctxt "run"
+msgid "running"
+msgstr ""
+
+#: src/tui/system.c
+msgctxt "run"
+msgid "passed"
+msgstr ""
+
+#: src/tui/system.c
+msgctxt "run"
+msgid "failed"
+msgstr ""
+
+#: src/tui/trial.c
+msgid "random"
+msgstr ""
+
+#: src/tui/trial.c
+msgid "increasing"
+msgstr ""
+
+#: src/tui/trial.c
+msgid "decreasing"
+msgstr ""
+
+#: src/tui/trial.c
+msgid "all equal"
+msgstr ""
+
+#: src/tui/trial.c
+msgid "your own"
+msgstr ""
+
+#: src/tui/trial.c
+msgid "With which values?"
+msgstr ""
+
+#: src/tui/trial.c
+msgid "Choose the values to pass, then press Enter to see what happens."
+msgstr ""
+
+#: src/tui/trial.c
+msgid "values"
+msgstr ""
+
+#: src/tui/trial.c
+msgid "filled in by the subprogram"
+msgstr ""
+
+#: src/tui/trial.c
+msgid "field"
+msgstr ""
+
+#: src/tui/trial.c
+msgid "other values"
+msgstr ""
+
+#: src/tui/trial.c
+msgid "Cannot understand the values of '%s'"
+msgstr ""
+
+#: src/tui/trial.c
+msgid "The value of '%s' is missing"
+msgstr ""
+
+#: src/tui/trial.c
+msgid "With these values the sizes of the arrays are not valid"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "The way so far"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "zero or more"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "one or more"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "zero or one"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "one"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "sequence diagram"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "state diagram"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "class diagram"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "diagram"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "plan (Gantt)"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "entities and relationships"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "tree"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "pie"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "mind map"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "work breakdown (WBS)"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "timeline"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "journey"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "outline"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "is a kind of"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "implements"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "is made of"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "contains"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "knows"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "of this"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "this"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "play"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "message"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "all"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "other branch"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "restart"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "entity"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "class"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "on in time"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "task"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "into"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "out"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "slice"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "which arrow"
+msgstr ""
+
+#: src/tui/umlview.c
+msgid "follow"
+msgstr ""
+
+#: src/uml/charts.inc src/uml/uml.c
+msgid "there is no diagram in this file"
+msgstr ""
+
+#: src/uml/uml.c
+msgid "this line of the diagram is not understood: %.60s"
+msgstr ""
+
+#: src/uml/uml.c
+msgid "this kind of diagram is not known: %.40s"
+msgstr ""
+
+#: src/util/diag.c
+msgid "too many errors, stopping here\n"
+msgstr ""
+
+#: src/util/diag.c
+msgid "warning"
+msgstr ""
+
+#: src/vm/vm.c
+msgid "the text has no end: a character 0 is missing"
+msgstr ""
+
+#: src/vm/vm.c
+msgid "null pointer"
+msgstr ""
+
+#: src/vm/vm.c
+msgid "the variable pointed to no longer exists"
+msgstr ""
+
+#: src/vm/vm.c
+msgid "access outside of the variable"
+msgstr ""
+
+#: src/vm/vm.c
+msgid "internal error: empty stack"
+msgstr ""
+
+#: src/vm/vm.c
+msgid "division by zero"
+msgstr ""
+
+#: src/vm/vm.c
+msgid "shift by a negative number, or by more bits than there are"
+msgstr ""
+
+#: src/vm/vm.c
+msgid "integer overflow"
+msgstr ""
+
+#: src/vm/vm.c
+msgid "too many files are open"
+msgstr ""
+
+#: src/vm/vm.c
+msgid "the file cannot be opened"
+msgstr ""
+
+#: src/vm/vm.c
+msgid "the file is not open for writing"
+msgstr ""
+
+#: src/vm/vm.c
+msgid "the file is not open"
+msgstr ""
+
+#: src/vm/vm.c
+msgid "too many dimensions"
+msgstr ""
+
+#: src/vm/vm.c
+msgid "the size of the array is not valid"
+msgstr ""
+
+#: src/vm/vm.c
+msgid "too many nested calls: is the recursion ever going to end?"
+msgstr ""
+
+#: src/vm/vm.c
+msgid "the record passed does not exist"
+msgstr ""
+
+#: src/vm/vm.c
+msgid "array index out of bounds"
+msgstr ""
+
+#: src/vm/vm.c
+msgid "invalid input"
+msgstr ""
+
+#: src/vm/vm.c
+msgid "too many values in a message"
+msgstr ""
+
+#: src/vm/vm.c
+msgid "the message has nobody to go to"
+msgstr ""
+
+#: src/vm/vm.c
+msgid "used before it was given a value"
+msgstr ""
+
+#: src/vm/vm.c
+msgid "this method is abstract: there is nothing to execute"
+msgstr ""
+
+#: src/vm/vm.c
+msgid "this function is not defined in the file: it cannot be executed"
+msgstr ""
+
+#: src/vm/vm.c
+msgid "this cannot be executed here"
+msgstr ""

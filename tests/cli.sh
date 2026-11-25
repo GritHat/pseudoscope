@@ -45,6 +45,12 @@ cli "missing compiler" 3 "$plike" run --cc=/no/such/cc hi.plike
 cli "tokens" 0 "$plike" tokens hi.plike;      has "tokens text" out "string	hi"
 cli "ast" 0 "$plike" ast hi.plike;            has "ast text" out "procedure main"
 cli "italian" 1 "$plike" check --lang=it bad.plike; has "italian text" err "errore: 'x' non è stato dichiarato"
+cli "spanish" 1 "$plike" check --lang=es bad.plike; has "spanish text" err "error: 'x' no está declarado"
+cli "language of the system" 1 env PSEUDOSCOPE_LANG= LC_ALL=es_ES.UTF-8 "$plike" check bad.plike; has "spanish from the system" err "no está declarado"
+cli "language asked for" 1 env PSEUDOSCOPE_LANG=it LC_ALL=es_ES.UTF-8 "$plike" check bad.plike; has "italian from the variable" err "non è stato dichiarato"
+cli "a language nobody translated" 1 env PSEUDOSCOPE_LANG= LC_ALL=fr_FR.UTF-8 "$plike" check bad.plike; has "english otherwise" err "error: 'x' is not declared"
+cli "unknown language" 2 "$plike" check --lang=tlh bad.plike; has "the languages there are" err "(I speak en es it)"
+cli "help in spanish" 0 "$plike" --lang=es --help; has "spanish help" out "Uso: pseudoscope"
 cli "exec" 0 "$plike" exec hi.plike;          has "exec text" out "hi"
 cli "exec steps" 1 "$plike" exec --steps=2 hi.plike; has "steps text" err "too many steps"
 cli "bad steps" 2 "$plike" exec --steps=x hi.plike

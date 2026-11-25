@@ -1,13 +1,13 @@
- ◆ PSEUDOSCOPE  basic.pscope ▸ BubbleSort ▸ prova
+ ◆ PSEUDOSCOPE  basic.pscope ▸ BubbleSort ▸ try
 
-╭─ Con quali valori? ──────────────────────────────────────────────────────────────────────────────╮
+╭─ With which values? ─────────────────────────────────────────────────────────────────────────────╮
 │                                                                                                  │
-│  Scegli i valori da passare, poi premi Invio per vedere cosa succede.                            │
+│  Choose the values to pass, then press Enter to see what happens.                                │
 │                                                                                                  │
 │  ▸ n                integer                                                                      │
 │     z                                                                                            │
 │                                                                                                  │
-│    A                array [1..n] of real                              valori: casuali            │
+│    A                array [1..n] of real                              values: random             │
 │                                                                                                  │
 │                                                                                                  │
 │                                                                                                  │
@@ -24,7 +24,7 @@
 │                                                                                                  │
 │                                                                                                  │
 │                                                                                                  │
-│  ✗ Non capisco i valori di 'n'                                                                   │
+│  ✗ Cannot understand the values of 'n'                                                           │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-  ↑↓  campo   Invio  esegui   Tab  altri valori   Esc  indietro
+  ↑↓  field   Enter  run   Tab  other values   Esc  back

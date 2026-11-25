@@ -1,9 +1,9 @@
- ◆ PSEUDOSCOPE  single.plike                                                       ▐ Mappa ▌▸▐ Codice ▌▸▐ C ▌
+ ◆ PSEUDOSCOPE  single.plike                                                           ▐ Map ▌▸▐ Code ▌▸▐ C ▌
 
-╭─ Mappa ──────────────────────────╮╭────────────────────────────────────────────────────────────────────────╮
-│ Classi                           ││                                                                        │
-│  ▣ Shape                         ││  Rectangle  classe: dati e operazioni insieme                          │
-│    ■ area                        ││  estende Shape                                                         │
+╭─ Map ────────────────────────────╮╭────────────────────────────────────────────────────────────────────────╮
+│ Classes                          ││                                                                        │
+│  ▣ Shape                         ││  Rectangle  class: data and operations together                        │
+│    ■ area                        ││  extends Shape                                                         │
 │    ■ twice                       ││  ╭────────────────────────────────╮                                    │
 │    ■ describe                    ││  │           Rectangle            │                                    │
 │  ▣ Named                         ││  │────────────────────────────────│                                    │
@@ -17,14 +17,14 @@
 │  ▣ Circle                        ││                                                                        │
 │    ■ area                        ││                                                                        │
 │                                  ││                                                                        │
-│ Sottoprogrammi                   ││                                                                        │
+│ Subprograms                      ││                                                                        │
 │  ■ show                          ││                                                                        │
 │  ƒ total                         ││                                                                        │
 │  ƒ tag                           ││                                                                        │
-│  ■ main  si parte da qui         ││                                                                        │
+│  ■ main  starts here             ││                                                                        │
 │                                  ││                                                                        │
 │                                  ││                                                                        │
 │                                  ││                                                                        │
 ╰──────────────────────────────────╯╰────────────────────────────────────────────────────────────────────────╯
 
-  ↑↓  scorri   Invio  più dettaglio   Esc  meno dettaglio   r  esegui   E  modifica   q  esci   ?  aiuto
+  ↑↓  move   Enter  more detail   Esc  less detail   r  run   E  edit   q  quit   ?  help

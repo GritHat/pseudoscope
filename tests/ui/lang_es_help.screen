@@ -1,0 +1,30 @@
+ ◆ PSEUDOSCOPE  Ayuda
+
+╭─ Teclas ───────────────────────────────────────╮╭─ Colores ──────────────────────────────────────╮
+│ ↑ ↓      mover                                 ││                                                │
+│ Intro    más detalle                           ││   5       se está leyendo                      │
+│ Esc      subir                                 ││   5       recién escrito, resultado            │
+│ r        ejecutar, o probar                    ││   5       dónde estamos                        │
+│ t        todas las pruebas                     ││  sort     procedimientos y funciones           │
+│ E        abrir en el editor                    ││  Node     tipos y registros                    │
+│ q        salir                                 ││  ─▶       punteros                             │
+│                                                ││   ✗       error, falso                         │
+│ Niveles: más abajo, más se ve                  ││   ·       aún sin valor                        │
+│ Mapa     lo que contiene el programa           ││                                                │
+│ Código   cómo está escrito                     ││                                                │
+│ C        cómo pasa a C, en memoria             ││                                                │
+│ T        en otro lenguaje                      ││                                                │
+│                                                ││                                                │
+│                                                ││                                                │
+│                                                ││                                                │
+│                                                ││                                                │
+│                                                ││                                                │
+│                                                ││                                                │
+│                                                ││                                                │
+│                                                ││                                                │
+│                                                ││                                                │
+│                                                ││                                                │
+│                                                ││                                                │
+╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────╯
+
+  cualquier tecla  cerrar

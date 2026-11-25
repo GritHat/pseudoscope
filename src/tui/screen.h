@@ -95,6 +95,10 @@ void frame_end(void);
 void frame_dump(bool styled);                 /* headless: to the standard output */
 
 void put_text(int x, int y, Style st, const char *utf8);
+/* For the tests of the languages: a text did not fit (see screen.c). */
+void fit_note(const char *what, int x, int y, int room, int needed, const char *text);
+void fit_quiet(bool quiet); /* around a text that is cut on purpose, and said whole elsewhere */
+
 int print_at(int x, int y, int max, Style base, const char *format, ...)
     __attribute__((format(printf, 5, 6)));
 int print_centered(int x, int y, int w, Style base, const char *format, ...)

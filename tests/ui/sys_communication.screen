@@ -1,6 +1,6 @@
- ◆ PSEUDOSCOPE  login.pscope                ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
-  ‖ fermo   the right password logs in
-  Sequenza   Componenti   Stati   Tempi   Comunicazione   Verifiche                     tempo t = 9
+ ◆ PSEUDOSCOPE  login.pscope                     ▐ System ▌▸▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
+  ‖ paused   the right password logs in
+  Sequence   Components   States   Timing   Communication   Checks                      time t = 9
 ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │                    1:Click                                                                                 │
 │             test  ────────────────────────────────────────────────────────────────────▶ client             │
@@ -24,9 +24,9 @@
 │                                                                                                            │
 │                                                                                                            │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Cosa è successo ──────────────────────────────────────────────────────────────────────────────────────────╮
+╭─ What happened ────────────────────────────────────────────────────────────────────────────────────────────╮
 │  ✓  server -> client: Welcome                                                                              │
 │ ● and the client is in                                                                                     │
 │  ✓  client.state = LoggedIn                                                                                │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   Tab  altra vista   ?  aiuto
+  →  step   ←  back   Space  play   Enter  details   Esc  overview   Tab  other view   ?  help

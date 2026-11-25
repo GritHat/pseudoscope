@@ -1,30 +1,30 @@
- ◆ PSEUDOSCOPE  Aiuto
+ ◆ PSEUDOSCOPE  Help
 
-╭─ Tasti ────────────────────────────────────────╮╭─ Colori ───────────────────────────────────────╮
-│ → ←        un passo avanti, indietro           ││                                                │
-│ Spazio     va da solo / si ferma               ││   5       letto adesso                         │
-│ ↑ ↓        più veloce, più lento               ││   5       appena scritto, risultato            │
-│ n          salta la chiamata                   ││   5       il punto in cui siamo                │
-│ u          esce dal sottoprogramma             ││  sort     procedure e funzioni                 │
-│ g          fino alla fine (o a ●)              ││  Node     tipi e record                        │
-│ 0          ricomincia                          ││  ─▶       puntatori                            │
-│ b          punto di arresto ●                  ││   ✗       errore, falso                        │
-│ Invio      più dettaglio                       ││   ·       non ha ancora un valore              │
-│ Esc        meno dettaglio                      ││                                                │
-│ 1 … 5      direttamente a un livello           ││                                                │
-│ Tab        altra vista o variabile             ││  Livello: cosa vedi, e il passo                │
-│ m          altro componente (Stati)            ││  1          Sistema: messaggi                  │
-│ f          codice o diagramma di attività      ││  2          Programma: chiamate                │
-│ v          array come celle o barre            ││  3          Funzione: istruzioni               │
-│ o          cosa è stato stampato               ││  4          Istruzione: calcoli                │
-│ d          cosa è stato disegnato              ││  5          Memoria: letture, scritture        │
-│ c          tutta la storia                     ││                                                │
-│ x          torna a esplorare                   ││                                                │
-│ q          esci                                ││                                                │
+╭─ Keys ─────────────────────────────────────────╮╭─ Colours ──────────────────────────────────────╮
+│ → ←      one step forward, one back            ││                                                │
+│ Space    plays / pauses                        ││   5       being read                           │
+│ ↑ ↓      faster, slower                        ││   5       just written, result                 │
+│ n        steps over the call                   ││   5       where we are                         │
+│ u        out of the subprogram                 ││  sort     procedures and functions             │
+│ g        to the end (or to ●)                  ││  Node     types and records                    │
+│ 0        starts again                          ││  ─▶       pointers                             │
+│ b        breakpoint ● on the line              ││   ✗       error, false                         │
+│ Enter    more detail                           ││   ·       no value yet                         │
+│ Esc      less detail                           ││                                                │
+│ 1 … 5    straight to a level                   ││                                                │
+│ Tab      other view or variable                ││  Level: what you see, and the step             │
+│ m        other component (States)              ││  1        System: a message                    │
+│ f        code or activity diagram              ││  2        Program: a call                      │
+│ v        arrays as cells or bars               ││  3        Function: a statement                │
+│ o        what was printed                      ││  4        Statement: a piece of it             │
+│ d        what was drawn                        ││  5        Memory: a read or a write            │
+│ c        the whole story                       ││                                                │
+│ x        back to exploring                     ││                                                │
+│ q        quit                                  ││                                                │
 │                                                ││                                                │
 │                                                ││                                                │
 │                                                ││                                                │
 │                                                ││                                                │
 ╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────╯
 
-  un tasto  chiudi
+  any key  close

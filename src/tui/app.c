@@ -9,7 +9,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-bool ui_italian = true;
 
 long long now_ms(void) {
     struct timespec t;
@@ -20,94 +19,94 @@ long long now_ms(void) {
 /* ---- help ---- */
 
 typedef struct {
-    const char *key, *it, *en;
+    const char *key, *text; /* in English: said in the language chosen when shown */
 } Help;
 
 static int help_column(const Help *rows, int count, int x, int y, int w) {
     for (int i = 0; i < count; i++) {
         if (!rows[i].key) {
-            print_at(x, y + i, w, S_BOLD, "%s", L(rows[i].it, rows[i].en));
+            print_at(x, y + i, w, S_BOLD, "%s", tr(rows[i].text));
             continue;
         }
-        print_at(x, y + i, 10, S(C_FOCUS, C_DEFAULT, A_BOLD), "%s", rows[i].key);
-        print_at(x + 11, y + i, w - 11, S_TEXT, "%s", L(rows[i].it, rows[i].en));
+        print_at(x, y + i, 8, S(C_FOCUS, C_DEFAULT, A_BOLD), "%s", tr(rows[i].key));
+        print_at(x + 9, y + i, w - 9, S_TEXT, "%s", tr(rows[i].text));
     }
     return y + count;
 }
 
 static void draw_help(const App *app) {
     int w = screen_width(), h = screen_height(), half = w / 2;
-    draw_header(L("Aiuto", "Help"), NULL, 0, 0, 0);
-    draw_box(0, 2, half, h - 4, C_BORDER, L("Tasti", "Keys"));
+    draw_header(T("Help"), NULL, 0, 0, 0);
+    draw_box(0, 2, half, h - 4, C_BORDER, T("Keys"));
     static const Help RUN[] = {
-        {"→ ←", "un passo avanti, indietro", "one step forward, one back"},
-        {"Spazio", "va da solo / si ferma", "plays / pauses"},
-        {"↑ ↓", "più veloce, più lento", "faster, slower"},
-        {"n", "salta la chiamata", "steps over the call"},
-        {"u", "esce dal sottoprogramma", "out of the subprogram"},
-        {"g", "fino alla fine (o a ●)", "to the end (or to ●)"},
-        {"0", "ricomincia", "starts again"},
-        {"b", "punto di arresto ●", "breakpoint ● on the line"},
-        {"Invio", "più dettaglio", "more detail"},
-        {"Esc", "meno dettaglio", "less detail"},
-        {"1 … 5", "direttamente a un livello", "straight to a level"},
-        {"Tab", "altra vista o variabile", "other view or variable"},
-        {"m", "altro componente (Stati)", "other component (States)"},
-        {"f", "codice o diagramma di attività", "code or activity diagram"},
-        {"v", "array come celle o barre", "arrays as cells or bars"},
-        {"o", "cosa è stato stampato", "what was printed"},
-        {"d", "cosa è stato disegnato", "what was drawn"},
-        {"c", "tutta la storia", "the whole story"},
-        {"x", "torna a esplorare", "back to exploring"},
-        {"q", "esci", "quit"},
+        {"→ ←", N_("one step forward, one back")},
+        {N_("Space"), N_("plays / pauses")},
+        {"↑ ↓", N_("faster, slower")},
+        {"n", N_("steps over the call")},
+        {"u", N_("out of the subprogram")},
+        {"g", N_("to the end (or to ●)")},
+        {"0", N_("starts again")},
+        {"b", N_("breakpoint ● on the line")},
+        {N_("Enter"), N_("more detail")},
+        {"Esc", N_("less detail")},
+        {"1 … 5", N_("straight to a level")},
+        {"Tab", N_("other view or variable")},
+        {"m", N_("other component (States)")},
+        {"f", N_("code or activity diagram")},
+        {"v", N_("arrays as cells or bars")},
+        {"o", N_("what was printed")},
+        {"d", N_("what was drawn")},
+        {"c", N_("the whole story")},
+        {"x", N_("back to exploring")},
+        {"q", N_("quit")},
     };
     static const Help EXPLORE[] = {
-        {"↑ ↓", "scorri", "move"},
-        {"Invio", "più dettaglio", "more detail"},
-        {"Esc", "meno dettaglio", "less detail"},
-        {"r", "esegui, o prova", "run, or try"},
-        {"t", "tutte le prove (test)", "all the tests"},
-        {"E", "apri nell'editor", "open in the editor"},
-        {"q", "esci", "quit"},
-        {NULL, "", ""},
-        {NULL, "Livelli: più scendi, più vedi", "Levels: the deeper, the more"},
-        {"Mappa", "cosa c'è nel programma", "what the program contains"},
-        {"Codice", "com'è scritto", "how it is written"},
-        {"C", "come diventa C, e in memoria", "how it becomes C, and memory"},
-        {"T", "in un altro linguaggio", "in another language"},
+        {"↑ ↓", N_("move")},
+        {N_("Enter"), N_("more detail")},
+        {"Esc", N_("less detail")},
+        {"r", N_("run, or try")},
+        {"t", N_("all the tests")},
+        {"E", N_("open in the editor")},
+        {"q", N_("quit")},
+        {NULL, ""},
+        {NULL, N_("Levels: the deeper, the more")},
+        {N_("Map"), N_("what the program contains")},
+        {N_("Code"), N_("how it is written")},
+        {"C", N_("how it becomes C, in memory")},
+        {"T", N_("in another language")},
     };
     if (app->view == VIEW_RUN) help_column(RUN, sizeof RUN / sizeof RUN[0], 2, 3, half - 4);
     else help_column(EXPLORE, sizeof EXPLORE / sizeof EXPLORE[0], 2, 3, half - 4);
 
-    draw_box(half, 2, w - half, h - 4, C_BORDER, L("Colori", "Colours"));
+    draw_box(half, 2, w - half, h - 4, C_BORDER, T("Colours"));
     static const struct {
-        const char *chip, *it, *en;
+        const char *chip, *text;
     } COLORS[] = {
-        {M_CHIP_READ " 5 ", "letto adesso", "being read"},
-        {M_CHIP_WRITE " 5 ", "appena scritto, risultato", "just written, result"},
-        {M_CHIP_FOCUS " 5 ", "il punto in cui siamo", "where we are"},
-        {M_CALL M_BOLD "sort", "procedure e funzioni", "procedures and functions"},
-        {M_TYPE M_BOLD "Node", "tipi e record", "types and records"},
-        {M_POINTER M_BOLD "─▶ ", "puntatori", "pointers"},
-        {M_CHIP_ERROR " ✗ ", "errore, falso", "error, false"},
-        {M_FAINT " · ", "non ha ancora un valore", "no value yet"},
+        {M_CHIP_READ " 5 ", N_("being read")},
+        {M_CHIP_WRITE " 5 ", N_("just written, result")},
+        {M_CHIP_FOCUS " 5 ", N_("where we are")},
+        {M_CALL M_BOLD "sort", N_("procedures and functions")},
+        {M_TYPE M_BOLD "Node", N_("types and records")},
+        {M_POINTER M_BOLD "─▶ ", N_("pointers")},
+        {M_CHIP_ERROR " ✗ ", N_("error, false")},
+        {M_FAINT " · ", N_("no value yet")},
     };
     for (size_t i = 0; i < sizeof COLORS / sizeof COLORS[0]; i++) {
         print_at(half + 3, 4 + (int)i, 8, S_TEXT, "%s", COLORS[i].chip);
-        print_at(half + 12, 4 + (int)i, w - half - 14, S_TEXT, "%s", L(COLORS[i].it, COLORS[i].en));
+        print_at(half + 12, 4 + (int)i, w - half - 14, S_TEXT, "%s", tr(COLORS[i].text));
     }
     if (app->view == VIEW_RUN && h > 22) {
         static const Help LEVELS[] = {
-            {NULL, "Livello: cosa vedi, e il passo", "Level: what you see, and the step"},
-            {"1", "Sistema: messaggi", "System: a message"},
-            {"2", "Programma: chiamate", "Program: a call"},
-            {"3", "Funzione: istruzioni", "Function: a statement"},
-            {"4", "Istruzione: calcoli", "Statement: a piece of it"},
-            {"5", "Memoria: letture, scritture", "Memory: a read or a write"},
+            {NULL, N_("Level: what you see, and the step")},
+            {"1", N_("System: a message")},
+            {"2", N_("Program: a call")},
+            {"3", N_("Function: a statement")},
+            {"4", N_("Statement: a piece of it")},
+            {"5", N_("Memory: a read or a write")},
         };
         help_column(LEVELS, 6, half + 3, 14, w - half - 5);
     }
-    const Hint hints[] = {{L("un tasto", "any key"), L("chiudi", "close")}};
+    const Hint hints[] = {{T("any key"), T("close")}};
     draw_footer(hints, 1);
 }
 
@@ -117,8 +116,8 @@ static void draw(App *app) {
     frame_begin();
     int w = screen_width(), h = screen_height();
     if (w < MIN_WIDTH || h < MIN_HEIGHT) {
-        print_centered(0, h / 2 - 1, w, S(C_FOCUS, C_DEFAULT, A_BOLD), "%s", L("Finestra troppo piccola", "Window too small"));
-        print_centered(0, h / 2 + 1, w, S_DIM, L("servono almeno %dx%d caratteri (ora %dx%d)", "at least %dx%d characters are needed (now %dx%d)"),
+        print_centered(0, h / 2 - 1, w, S(C_FOCUS, C_DEFAULT, A_BOLD), "%s", T("Window too small"));
+        print_centered(0, h / 2 + 1, w, S_DIM, T("at least %dx%d characters are needed (now %dx%d)"),
                        MIN_WIDTH, MIN_HEIGHT, w, h);
     } else if (app->overlay == OVERLAY_HELP) {
         draw_help(app);
@@ -169,7 +168,7 @@ static void handle(App *app, int key) {
     } else if (key == 'T' && (app->view == VIEW_EXPLORE || (app->view == VIEW_RUN && vm_status(app->run.vm) != VM_NEEDS_INPUT))) {
         app->target = (Lang)((app->target + 1) % LANG_COUNT); /* another language */
         app->run.c_function = NULL;
-        snprintf(app->notice, sizeof app->notice, "%s %s", L("Traduzione in", "Translation to"), lang_name(app->target));
+        snprintf(app->notice, sizeof app->notice, "%s %s", T("Translation to"), lang_name(app->target));
     } else {
         switch (app->view) {
             case VIEW_FILES: files_key(app, key); break;
@@ -211,19 +210,18 @@ static void open_path(App *app, const char *path) {
 
 int run_ui(const UiOptions *options) {
     App app = {.config = options->config, .headless = options->keys != NULL, .target = (Lang)options->target};
-    ui_italian = options->italian;
     struct stat st;
     char file[1024];
     block_number(options->path, file, sizeof file); /* "notes.md#2": the second program in the notes */
     if (stat(file, &st) != 0) {
-        fprintf(stderr, "pseudoscope: cannot open '%s'\n", options->path);
+        fprintf(stderr, T("pseudoscope: cannot open '%s'\n"), options->path);
         return 3;
     }
     srand(app.headless ? 1u : (unsigned)time(NULL));
     if (app.headless) {
         screen_open_headless(options->width, options->height);
     } else if (!screen_open()) {
-        fputs("pseudoscope: the interface needs a terminal\n", stderr);
+        fputs(T("pseudoscope: the interface needs a terminal\n"), stderr);
         return 2;
     }
     open_path(&app, options->path);

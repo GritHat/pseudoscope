@@ -1,6 +1,6 @@
- ◆ PSEUDOSCOPE  tree.pscope       ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
-  » aspetta   main
-╭─ main ─────────────────────────────────────╮╭─ Dati ─────────────────────────────────────────────╮
+ ◆ PSEUDOSCOPE  tree.pscope            ▐ System ▌▸▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
+  » waiting   main
+╭─ main ─────────────────────────────────────╮╭─ Data ─────────────────────────────────────────────╮
 │   21 procedure main()                      ││                                                    │
 │   22 var n: array[6] of Node               ││ i  ·    k  ·                                       │
 │   23 var root: Node*                       ││                                                    │
@@ -22,9 +22,9 @@
 │                                            ││                                                    │
 │                                            ││                                                    │
 ╰────────────────────────────────────────────╯╰────────────────────────────────────────────────────╯
-╭─ Il programma aspetta un valore ─────────────────────────────────────────────────────────────────╮
+╭─ The program waits for a value ──────────────────────────────────────────────────────────────────╮
 │                                                                                                  │
-│  Scrivi k   4                                                                                    │
+│  Type k   4                                                                                      │
 │                                                                                                  │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-  Invio  conferma   Ctrl-D  fine dei dati   Esc  indietro
+  Enter  confirm   Ctrl-D  end of input   Esc  back

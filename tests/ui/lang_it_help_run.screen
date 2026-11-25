@@ -1,0 +1,30 @@
+ ◆ PSEUDOSCOPE  Aiuto
+
+╭─ Tasti ────────────────────────────────────────╮╭─ Colori ───────────────────────────────────────╮
+│ → ←      un passo avanti, indietro             ││                                                │
+│ Spazio   va da solo / si ferma                 ││   5       letto adesso                         │
+│ ↑ ↓      più veloce, più lento                 ││   5       appena scritto, risultato            │
+│ n        salta la chiamata                     ││   5       il punto in cui siamo                │
+│ u        esce dal sottoprogramma               ││  sort     procedure e funzioni                 │
+│ g        fino alla fine (o a ●)                ││  Node     tipi e record                        │
+│ 0        ricomincia                            ││  ─▶       puntatori                            │
+│ b        punto di arresto ●                    ││   ✗       errore, falso                        │
+│ Invio    più dettaglio                         ││   ·       non ha ancora un valore              │
+│ Esc      risali                                ││                                                │
+│ 1 … 5    direttamente a un livello             ││                                                │
+│ Tab      altra vista o variabile               ││  Livello: cosa vedi, e il passo                │
+│ m        altro componente (Stati)              ││  1        Sistema: messaggi                    │
+│ f        codice, o il suo diagramma            ││  2        Programma: chiamate                  │
+│ v        array come celle o barre              ││  3        Funzione: istruzioni                 │
+│ o        cosa è stato stampato                 ││  4        Istruzione: calcoli                  │
+│ d        cosa è stato disegnato                ││  5        Memoria: letto e scritto             │
+│ c        tutta la storia                       ││                                                │
+│ x        torna a esplorare                     ││                                                │
+│ q        esci                                  ││                                                │
+│                                                ││                                                │
+│                                                ││                                                │
+│                                                ││                                                │
+│                                                ││                                                │
+╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────╯
+
+  un tasto  chiudi

@@ -1,17 +1,17 @@
- ◆ PSEUDOSCOPE  basico.psc                                               ▐ Mappa ▌▸▐ Codice ▌▸▐ C ▌
+ ◆ PSEUDOSCOPE  basico.psc                                                   ▐ Map ▌▸▐ Code ▌▸▐ C ▌
 
-╭─ Mappa ───────────────────────╮╭─────────────────────────────────────────────────────────────────╮
-│ Sottoprogrammi                ││                                                                 │
-│  ƒ Factorial                  ││  main  procedura: esegue delle azioni                           │
+╭─ Map ─────────────────────────╮╭─────────────────────────────────────────────────────────────────╮
+│ Subprograms                   ││                                                                 │
+│  ƒ Factorial                  ││  main  procedure: performs actions                              │
 │  ■ Intercambiar               ││                                                                 │
 │  ■ Ordenar                    ││                       ╭────────────────╮                        │
-│▸ ■ main  si parte da qui      ││                       │      main      │                        │
+│▸ ■ main  starts here          ││                       │      main      │                        │
 │                               ││                       ╰────────────────╯                        │
 │                               ││                                                                 │
-│                               ││  usa          Ordenar   Factorial                               │
-│                               ││  usata da    nessuno                                            │
+│                               ││  uses         Ordenar   Factorial                               │
+│                               ││  used by     none                                               │
 │                               ││                                                                 │
-│                               ││   r  esegui il programma                                        │
+│                               ││   r  run the program                                            │
 │                               ││                                                                 │
 │                               ││                                                                 │
 │                               ││                                                                 │
@@ -27,4 +27,4 @@
 │                               ││                                                                 │
 ╰───────────────────────────────╯╰─────────────────────────────────────────────────────────────────╯
 
-  ↑↓  scorri   Invio  più dettaglio   Esc  meno dettaglio   r  esegui   E  modifica   ?  aiuto
+  ↑↓  move   Enter  more detail   Esc  less detail   r  run   E  edit   q  quit   ?  help

@@ -1,6 +1,6 @@
- ◆ PSEUDOSCOPE  basic.pscope      ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
-  ‖ fermo   BubbleSort
-╭─ BubbleSort ───────────────────────────────╮╭─ Dati ─────────────────────────────────────────────╮
+ ◆ PSEUDOSCOPE  basic.pscope           ▐ System ▌▸▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
+  ‖ paused   BubbleSort
+╭─ BubbleSort ───────────────────────────────╮╭─ Data ─────────────────────────────────────────────╮
 │   23     var A : array [1..n] of real      ││                                                    │
 │   24     var temp : real                   ││ n  6    i  1    j  2    temp  37.0                 │
 │   25     var ordinato: logical            ┃││                                                    │
@@ -22,9 +22,9 @@
 │   41     end                              ┃││                                                    │
 │   42 end BubbleSort                       ┃││                                                    │
 ╰────────────────────────────────────────────╯╰────────────────────────────────────────────────────╯
-╭─ Cosa è successo ────────────────────────────────────────────────────────────────────────────────╮
-│ ✎ temp diventa  37.0                                                                             │
-│ ✎ A[2] diventa  28.0   prima era 37.0                                                            │
-│ ✎ A[3] diventa  37.0   prima era 28.0                                                            │
+╭─ What happened ──────────────────────────────────────────────────────────────────────────────────╮
+│ ✎ temp becomes  37.0                                                                             │
+│ ✎ A[2] becomes  28.0   it was 37.0                                                               │
+│ ✎ A[3] becomes  37.0   it was 28.0                                                               │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   n  salta   ?  aiuto
+  →  step   ←  back   Space  play   Enter  details   Esc  overview   n  over   ?  help

@@ -13,7 +13,9 @@ LIB       = $(wildcard src/util/*.c src/front/*.c src/sema/*.c src/back/*.c src/
 CLI       = $(wildcard src/cli/*.c src/tui/*.c)
 UNIT      = $(wildcard tests/unit/*.c)
 
-LIB_OBJ   = $(LIB:%.c=$(BUILD)/%.o)
+PO        = $(sort $(wildcard lang/*.po))
+
+LIB_OBJ   = $(LIB:%.c=$(BUILD)/%.o) $(BUILD)/catalogs.o
 CLI_OBJ   = $(CLI:%.c=$(BUILD)/%.o)
 UNIT_OBJ  = $(UNIT:%.c=$(BUILD)/%.o)
 
@@ -37,6 +39,18 @@ $(BUILD)/%.o: %.c
 	@mkdir -p $(@D)
 	$(CC) $(STD) $(WARN) -Iinclude $(CFLAGS) -MMD -MP -c $< -o $@
 
+# Each language is a catalog in lang/: po2c makes one table of them all, compiled in.
+$(BUILD)/po2c: tools/po2c.c
+	@mkdir -p $(@D)
+	$(CC) $(STD) $(WARN) -O1 $< -o $@
+
+$(BUILD)/catalogs.c: $(PO) $(BUILD)/po2c
+	$(BUILD)/po2c $(PO) > $@.new
+	@mv $@.new $@
+
+$(BUILD)/catalogs.o: $(BUILD)/catalogs.c
+	$(CC) $(STD) $(WARN) -Iinclude $(CFLAGS) -c $< -o $@
+
 test: unit e2e syntax
 
 unit: $(BUILD)/unit
@@ -47,6 +61,7 @@ e2e: $(PLIKE)
 
 syntax: $(PLIKE)
 	python3 tests/messages.py
+	python3 tests/fit.py $(PLIKE)
 	python3 tests/syntax.py $(PLIKE)
 
 # Every program translated to every language whose tools are here, and run.

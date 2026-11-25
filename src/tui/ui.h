@@ -2,6 +2,7 @@
 #define PLIKE_UI_H
 
 #include "plike/codegen.h"
+#include "plike/i18n.h"
 #include "plike/uml.h"
 #include "plike/blocks.h"
 #include "plike/target.h"
@@ -10,8 +11,6 @@
 
 #include <time.h>
 
-extern bool ui_italian;
-#define L(it, en) (ui_italian ? (it) : (en))
 
 #define MIN_WIDTH 80
 #define MIN_HEIGHT 24

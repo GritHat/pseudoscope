@@ -1,7 +1,7 @@
- ◆ PSEUDOSCOPE  login.pscope ▸ prove
+ ◆ PSEUDOSCOPE  login.pscope ▸ tests
 
-╭─ Prove ───────────────────────────────────╮╭─ Cosa verifica ─────────────────────────────────────╮
-│ 2 / 2 superate                            ││                                                     │
+╭─ Tests ───────────────────────────────────╮╭─ What it checks ────────────────────────────────────╮
+│ 2 / 2 passed                              ││                                                     │
 │                                           ││  ✓ test -> client: Click                            │
 │▸ ✓ the right password logs in             ││  ✓ client -> server: Login                          │
 │  ✓ a wrong password is refused, then one… ││  ✓ server -> database: Find                         │
@@ -27,4 +27,4 @@
 │                                           ││                                                     │
 ╰───────────────────────────────────────────╯╰─────────────────────────────────────────────────────╯
 
-  ↑↓  scegli   Invio  guardala mentre gira   Esc  indietro   ?  aiuto
+  ↑↓  choose   Enter  watch it run   Esc  back   ?  help

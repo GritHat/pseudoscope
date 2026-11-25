@@ -68,34 +68,7 @@ static void restart(Run *r) {
 
 /* ---- words ---- */
 
-static const char *vm_text(const char *english) {
-    static const char *const TABLE[][2] = {
-        {"null pointer", "il puntatore è vuoto (null): non c'è niente a cui accedere"},
-        {"the variable pointed to no longer exists", "la variabile puntata non esiste più"},
-        {"access outside of the variable", "accesso fuori dalla variabile"},
-        {"division by zero", "divisione per zero"},
-        {"array index out of bounds", "indice fuori dai limiti dell'array"},
-        {"invalid input", "il valore letto non è del tipo giusto"},
-        {"integer overflow", "il numero è troppo grande per un integer"},
-        {"the number does not fit an integer", "il numero non entra in un integer"},
-        {"used before it was given a value", "usata prima di ricevere un valore"},
-        {"too many nested calls: is the recursion ever going to end?", "troppe chiamate annidate: la ricorsione finisce mai?"},
-        {"this function is not defined in the file: it cannot be executed", "questa funzione non è definita nel file: non posso eseguirla"},
-        {"the size of the array is not valid", "la dimensione dell'array non è valida"},
-        {"shift by a negative number, or by more bits than there are", "spostamento di bit negativo o troppo grande"},
-        {"the message has nobody to go to", "il messaggio non ha un destinatario"},
-        {"this method is abstract: there is nothing to execute", "questo metodo è astratto: non c'è niente da eseguire"},
-        {"too many files are open", "ci sono troppi file aperti"},
-        {"the file cannot be opened", "il file non si può aprire"},
-        {"the file is not open for writing", "il file non è aperto in scrittura"},
-        {"the file is not open", "il file non è aperto"},
-        {"the text has no end: a character 0 is missing", "il testo non finisce: manca il carattere 0"},
-    };
-    if (!ui_italian || !english) return english ? english : "";
-    for (size_t i = 0; i < sizeof TABLE / sizeof TABLE[0]; i++)
-        if (strcmp(TABLE[i][0], english) == 0) return TABLE[i][1];
-    return english;
-}
+static const char *vm_text(const char *english) { return english ? tr(english) : ""; }
 
 static void expr_text(const Expr *e, char *out, size_t size) {
     StrBuf text = {0};
@@ -112,14 +85,14 @@ static void sentence(const LogEntry *e, char *out, size_t size) {
         case LOG_ASSIGN:
             if (e->old[0] && strcmp(e->old, "?") != 0)
                 snprintf(out, size, M_WRITE "✎ " M_BOLD "%s" M_RESET " %s " M_CHIP_WRITE " %s " M_RESET M_DIM "  %s %s", e->target,
-                         L("diventa", "becomes"), e->value, L("prima era", "it was"), e->old);
+                         T("becomes"), e->value, T("it was"), e->old);
             else
                 snprintf(out, size, M_WRITE "✎ " M_BOLD "%s" M_RESET " %s " M_CHIP_WRITE " %s ", e->target,
-                         L("diventa", "becomes"), e->value);
+                         T("becomes"), e->value);
             break;
         case LOG_LOOP:
             snprintf(out, size, M_POINTER "↻ " M_RESET "%s " M_POINTER M_BOLD "%s" M_RESET " = " M_CHIP_WRITE " %s ",
-                     e->truth ? L("prossimo giro:", "next round:") : L("il ciclo parte da", "the loop starts with"),
+                     e->truth ? T("next round:") : T("the loop starts with"),
                      e->target, e->value);
             break;
         case LOG_CONDITION: {
@@ -128,7 +101,7 @@ static void sentence(const LogEntry *e, char *out, size_t size) {
                 expr_text(e->stmt->limit, limit, sizeof limit);
                 bool same = strcmp(limit, e->value) == 0;
                 snprintf(test, sizeof test, "%.30s = %.20s, %s %.30s%s%.20s", e->stmt->target->text, e->target,
-                         L("fino a", "up to"), limit, same ? "" : " = ", same ? "" : e->value);
+                         T("up to"), limit, same ? "" : " = ", same ? "" : e->value);
             } else {
                 char source[80];
                 expr_text(e->expr, source, sizeof source);
@@ -138,30 +111,30 @@ static void sentence(const LogEntry *e, char *out, size_t size) {
             const char *then;
             bool t = e->truth;
             switch (e->stmt->kind) {
-                case ST_IF: then = t ? L("si esegue questo ramo", "this branch runs") : L("questo ramo si salta", "this branch is skipped"); break;
-                case ST_REPEAT: then = t ? L("il ciclo finisce", "the loop ends") : L("si ripete", "once more"); break;
-                default: then = t ? L("si entra nel ciclo", "into the loop") : L("il ciclo finisce", "the loop ends");
+                case ST_IF: then = t ? T("this branch runs") : T("this branch is skipped"); break;
+                case ST_REPEAT: then = t ? T("the loop ends") : T("once more"); break;
+                default: then = t ? T("into the loop") : T("the loop ends");
             }
             snprintf(out, size, M_FOCUS "? " M_RESET "%s  %s%s" M_RESET M_DIM "  %s", test, t ? M_CHIP_WRITE : M_CHIP_ERROR,
-                     t ? L(" vero ", " true ") : L(" falso ", " false "), then);
+                     t ? T(" true ") : T(" false "), then);
             break;
         }
         case LOG_CALL:
-            snprintf(out, size, M_CALL "▶ " M_RESET "%s " M_CALL M_BOLD "%s" M_RESET M_DIM "(%s)", L("si entra in", "entering"),
+            snprintf(out, size, M_CALL "▶ " M_RESET "%s " M_CALL M_BOLD "%s" M_RESET M_DIM "(%s)", T("entering"),
                      e->function->full_name, e->value);
             break;
         case LOG_RETURN:
             if (e->truth)
                 snprintf(out, size, M_CALL "◀ " M_BOLD "%s" M_RESET " %s " M_CHIP_WRITE " %s ", e->function->full_name,
-                         L("restituisce", "returns"), e->value);
+                         T("returns"), e->value);
             else
-                snprintf(out, size, M_CALL "◀ " M_BOLD "%s" M_RESET " %s", e->function->full_name, L("ha finito", "is done"));
+                snprintf(out, size, M_CALL "◀ " M_BOLD "%s" M_RESET " %s", e->function->full_name, T("is done"));
             break;
         case LOG_PRINT:
-            snprintf(out, size, M_TYPE "≡ " M_RESET "%s  " M_CHIP_OFF M_TEXT " %s ", L("stampa", "prints"), e->value);
+            snprintf(out, size, M_TYPE "≡ " M_RESET "%s  " M_CHIP_OFF M_TEXT " %s ", T("prints"), e->value);
             break;
         case LOG_READ:
-            snprintf(out, size, M_READ "» " M_RESET "%s " M_BOLD "%s" M_RESET " = " M_CHIP_WRITE " %s ", L("legge", "reads"),
+            snprintf(out, size, M_READ "» " M_RESET "%s " M_BOLD "%s" M_RESET " = " M_CHIP_WRITE " %s ", T("reads"),
                      e->target, e->value);
             break;
         case LOG_WARNING:
@@ -171,25 +144,25 @@ static void sentence(const LogEntry *e, char *out, size_t size) {
         case LOG_ERROR:
             if (e->target[0])
                 snprintf(out, size, M_ERROR M_BOLD "✗ %s" M_RESET M_TEXT "   %s[" M_ERROR "%s" M_TEXT "]" M_DIM "  %s %s",
-                         vm_text(e->text), e->target, e->value, L("validi:", "valid:"), e->old);
+                         vm_text(e->text), e->target, e->value, T("valid:"), e->old);
             else
                 snprintf(out, size, M_ERROR M_BOLD "✗ %s", vm_text(e->text));
             break;
         case LOG_SEND:
             snprintf(out, size, M_READ "▷ " M_RESET M_BOLD "%s" M_RESET " %s " M_CHIP_READ " %s " M_RESET " %s " M_BOLD "%s", e->old,
-                     L("manda", "sends"), e->text, L("a", "to"), e->target);
+                     T("sends"), e->text, T("to"), e->target);
             break;
         case LOG_DELIVER:
             snprintf(out, size, M_READ "▶ " M_CHIP_READ " %s%s%s%s " M_RESET " %s " M_BOLD "%s", e->text, e->value[0] ? "(" : "", e->value,
-                     e->value[0] ? ")" : "", L("arriva a", "reaches"), e->target);
+                     e->value[0] ? ")" : "", T("reaches"), e->target);
             break;
         case LOG_LOST:
             snprintf(out, size, M_ERROR M_BOLD "✗ %s" M_RESET " %s " M_BOLD "%s" M_RESET " %s " M_BOLD "%s", e->text,
-                     L("si è perso tra", "got lost between"), e->old, L("e", "and"), e->target);
+                     T("got lost between"), e->old, T("and"), e->target);
             break;
         case LOG_IGNORED:
-            snprintf(out, size, M_DIM "⊘ " M_BOLD "%s" M_RESET M_DIM " %s %s%s%s", e->text, L("non interessa a", "does not matter to"), e->target,
-                     e->value[0] ? L(", che è in ", ", which is in ") : "", e->value);
+            snprintf(out, size, M_DIM "⊘ " M_BOLD "%s" M_RESET M_DIM " %s %s%s%s", e->text, T("does not matter to"), e->target,
+                     e->value[0] ? T(", which is in ") : "", e->value);
             break;
         case LOG_CHECK:
             snprintf(out, size, "%s " M_RESET " %s", e->truth ? M_CHIP_WRITE " ✓" : M_CHIP_ERROR " ✗", e->value);
@@ -199,17 +172,17 @@ static void sentence(const LogEntry *e, char *out, size_t size) {
             break;
         case LOG_TODO:
             snprintf(out, size, M_FOCUS "… " M_RESET M_BOLD "%s" M_RESET M_DIM " %s", e->function ? e->function->full_name : "",
-                     L("è solo progettato: qui ci andrà il codice", "is only designed: the code will go here"));
+                     T("is only designed: the code will go here"));
             break;
         case LOG_STATE:
             if (strcmp(e->old, e->value) == 0)
-                snprintf(out, size, M_FOCUS "◆ " M_RESET M_BOLD "%s" M_RESET " %s " M_CHIP_FOCUS " %s ", e->target, L("resta", "remains"), e->value);
+                snprintf(out, size, M_FOCUS "◆ " M_RESET M_BOLD "%s" M_RESET " %s " M_CHIP_FOCUS " %s ", e->target, T("remains"), e->value);
             else
                 snprintf(out, size, M_FOCUS "◆ " M_RESET M_BOLD "%s" M_RESET " %s " M_CHIP_FOCUS " %s " M_RESET M_DIM "  %s %s", e->target,
-                         L("passa a", "becomes"), e->value, L("prima era", "it was"), e->old);
+                         TC("state", "becomes"), e->value, T("it was"), e->old);
             break;
         case LOG_END:
-            snprintf(out, size, M_WRITE M_BOLD "✓ %s", L("programma terminato", "the program is over"));
+            snprintf(out, size, M_WRITE M_BOLD "✓ %s", T("the program is over"));
             break;
     }
 }
@@ -333,14 +306,14 @@ static void draw_stack(App *app, int x, int y, int w, int h) {
     const Vm *vm = app->run.vm;
     int frames = vm_frame_count(vm) - 1, row = y;
     if (frames == 0) {
-        print_wrapped(x, y, w, 3, S_FAINT, "%s", L("Nessun sottoprogramma è in corso.", "No subprogram is running."));
+        print_wrapped(x, y, w, 3, S_FAINT, "%s", T("No subprogram is running."));
         return;
     }
     for (int i = frames; i >= 1 && row + 3 <= y + h; i--) {
         const Frame *f = vm_frame(vm, i);
         bool top = i == frames;
         if (row + 4 > y + h && i > 1) {
-            print_centered(x, row, w, S_DIM, L("… altri %d sotto", "… %d more below"), i);
+            print_centered(x, row, w, S_DIM, T("… %d more below"), i);
             return;
         }
         draw_box(x, row, w, 3, top ? C_CALL : C_BORDER, NULL);
@@ -349,7 +322,7 @@ static void draw_stack(App *app, int x, int y, int w, int h) {
                  f->function->full_name, args);
         row += 3;
         if (i > 1 && row < y + h) {
-            print_centered(x, row, w, S_FAINT, "%s", L("▲ aspetta che finisca", "▲ waits for it to end"));
+            print_centered(x, row, w, S_FAINT, "%s", T("▲ waits for it to end"));
             row++;
         }
     }
@@ -363,7 +336,7 @@ static void draw_current_code(App *app, int x, int y, int w, int h) {
     const Item *item = function ? document_function(app->doc, function) : NULL;
     if (!function && has_components(app->doc->program)) {
         print_wrapped(x + 2, y + 1, w - 4, 4, S_DIM, "%s",
-                      L("Adesso nessuno sta lavorando: si aspetta il prossimo messaggio.", "Nobody is working now: the next message is awaited."));
+                      T("Nobody is working now: the next message is awaited."));
         return;
     }
     if (!item) item = app->doc->main_item >= 0 ? &app->doc->items[app->doc->main_item] : NULL;
@@ -400,7 +373,7 @@ static void reduced_statement(const Vm *vm, const Frame *f, const Eval *evals, i
         case ST_FOR:
             if (f->phase == PHASE_CONDITION) {
                 reduce(out, vm, s->target, evals, count);
-                strbuf_printf(out, M_DIM "  %s  " M_RESET, L("fino a", "up to"));
+                strbuf_printf(out, M_DIM "  %s  " M_RESET, T("up to"));
                 reduce(out, vm, s->limit, evals, count);
             } else if (f->phase == PHASE_STEP) {
                 strbuf_printf(out, "%s" M_DIM "  :=  " M_RESET, s->target->text);
@@ -430,13 +403,13 @@ static void draw_statement(App *app, int w, int h) {
     const Vm *vm = app->run.vm;
     const Frame *f = vm_frame(vm, vm_frame_count(vm) - 1);
     int half = w * 55 / 100, bottom = h - 6;
-    draw_box(0, 2, w, 3, C_FOCUS, L("Istruzione", "Statement"));
+    draw_box(0, 2, w, 3, C_FOCUS, T("Statement"));
     if (f->stmt) {
         int line = f->stmt->loc.line;
         CodeView view = {.doc = app->doc, .first = line, .last = line, .top = line};
         draw_code(2, 3, w - 4, 1, &view);
     }
-    draw_box(0, 5, half, bottom - 5, C_BORDER, L("Come si calcola", "How it is computed"));
+    draw_box(0, 5, half, bottom - 5, C_BORDER, T("How it is computed"));
     if (f->stmt && f->function) {
         int count, rows = bottom - 8;
         const Eval *evals = vm_evals(vm, &count);
@@ -449,10 +422,10 @@ static void draw_statement(App *app, int w, int h) {
             if (k > first && y - 1 > 6) put_text(4, y - 1, S_FAINT, "│");
         }
         if (count == 0 && vm_status(vm) == VM_READY)
-            print_at(4, 9, half - 6, S_FAINT, "%s", L("→ per calcolare un pezzo alla volta", "→ to compute one piece at a time"));
+            print_at(4, 9, half - 6, S_FAINT, "%s", T("→ to compute one piece at a time"));
         strbuf_free(&text);
     }
-    draw_box(half, 5, w - half, bottom - 5, C_BORDER, L("Valori coinvolti", "Values involved"));
+    draw_box(half, 5, w - half, bottom - 5, C_BORDER, T("Values involved"));
     run_data_draw(app, half + 2, 7, w - half - 4, bottom - 9);
 }
 
@@ -462,12 +435,12 @@ static void draw_machine(App *app, int w, int h) {
     const Frame *f = vm_frame(vm, vm_frame_count(vm) - 1);
     int bottom = h - 6, left = w - 66 < 40 ? w - w * 58 / 100 : w - 66;
     char title[60];
-    snprintf(title, sizeof title, "%s %s", L("Tradotto in", "Translated to"), lang_name(app->target));
+    snprintf(title, sizeof title, "%s %s", T("Translated to"), lang_name(app->target));
     draw_box(0, 2, left, bottom - 2, C_BORDER, title);
     const char *problem = translation_problem(app);
     if (problem) {
         print_wrapped(2, 4, left - 4, bottom - 6, S(C_FOCUS, C_DEFAULT, 0), "%s", problem);
-        print_at(2, bottom - 2, left - 4, S_DIM, M_KEY " T " M_RESET " %s", L("un altro linguaggio", "another language"));
+        print_at(2, bottom - 2, left - 4, S_DIM, M_KEY " T " M_RESET " %s", T("another language"));
     } else if (f->function) {
         if (r->c_function != f->function) {
             arena_free(&r->c_arena);
@@ -488,7 +461,7 @@ static void draw_machine(App *app, int w, int h) {
         if (top < 0) top = 0;
         draw_c_code(1, 3, left - 2, rows, r->c_code.data, top, hot, last);
     }
-    draw_box(left, 2, w - left, bottom - 2, C_BORDER, L("Memoria", "Memory"));
+    draw_box(left, 2, w - left, bottom - 2, C_BORDER, T("Memory"));
     run_memory_draw(app, left + 2, 3, w - left - 4, bottom - 4);
 }
 
@@ -507,17 +480,17 @@ static void draw_events(App *app, int y, int w) {
     VmStatus status = vm_status(vm);
     short color = status == VM_FAILED ? C_ERROR : status == VM_FINISHED ? C_WRITE : status == VM_NEEDS_INPUT ? C_FOCUS : C_BORDER;
     if (status == VM_NEEDS_INPUT) {
-        draw_box(0, y, w, 5, color, L("Il programma aspetta un valore", "The program waits for a value"));
+        draw_box(0, y, w, 5, color, T("The program waits for a value"));
         const Frame *f = vm_frame(vm, vm_frame_count(vm) - 1);
         char target[100] = "";
         if (f->stmt && f->stmt->args.count) expr_text(f->stmt->args.items[0], target, sizeof target);
-        int x = 3 + print_at(3, y + 2, w / 2, S_TEXT, "%s " M_READ M_BOLD "%s" M_RESET "  ", L("Scrivi", "Type"), target);
+        int x = 3 + print_at(3, y + 2, w / 2, S_TEXT, "%s " M_READ M_BOLD "%s" M_RESET "  ", T("Type"), target);
         fill(x, y + 2, 30, 1, S(C_BRIGHT, C_SELECT, 0));
         print_at(x + 1, y + 2, 28, S(C_BRIGHT, C_SELECT, A_BOLD), "%s", app->run.input);
         put_text(x + 1 + text_width(app->run.input), y + 2, S(16, C_FOCUS, 0), " ");
         return;
     }
-    draw_box(0, y, w, 5, color, L("Cosa è successo", "What happened"));
+    draw_box(0, y, w, 5, color, T("What happened"));
     long last = vm_log_count(vm) - 1, at = last, oldest = last > 2000 ? last - 2000 : 0;
     for (int i = 0; i < 3; i++) {
         const LogEntry *e = NULL;
@@ -540,24 +513,25 @@ static void draw_events(App *app, int y, int w) {
         }
     }
     if (last < 0)
-        print_at(2, y + 2, w - 4, S_DIM, "%s", L("Tutto pronto: → fa un passo, Spazio va da solo.", "Ready: → takes a step, Space plays."));
+        print_at(2, y + 2, w - 4, S_DIM, "%s", T("Ready: → takes a step, Space plays."));
 }
 
 static void draw_status(App *app, int w) {
     const Run *r = &app->run;
     const Vm *vm = r->vm;
-    const char *state;
+    const char *chip, *state;
     switch (vm_status(vm)) {
-        case VM_FINISHED: state = L(M_CHIP_WRITE " ✓ finito ", M_CHIP_WRITE " ✓ done "); break;
-        case VM_FAILED: state = L(M_CHIP_ERROR " ✗ errore ", M_CHIP_ERROR " ✗ error "); break;
-        case VM_NEEDS_INPUT: state = L(M_CHIP_FOCUS " » aspetta ", M_CHIP_FOCUS " » waiting "); break;
-        default: state = r->goal != GOAL_NONE ? L(M_CHIP_CALL " … lavora ", M_CHIP_CALL " … working ")
-                       : r->playing ? L(M_CHIP_READ " ▶ va da solo ", M_CHIP_READ " ▶ playing ")
-                                    : L(M_CHIP_OFF " ‖ fermo ", M_CHIP_OFF " ‖ paused ");
+        case VM_FINISHED: chip = M_CHIP_WRITE " ✓", state = TC("run", "done"); break;
+        case VM_FAILED: chip = M_CHIP_ERROR " ✗", state = T("error"); break;
+        case VM_NEEDS_INPUT: chip = M_CHIP_FOCUS " »", state = T("waiting"); break;
+        default:
+            if (r->goal != GOAL_NONE) chip = M_CHIP_CALL " …", state = T("working");
+            else if (r->playing) chip = M_CHIP_READ " ▶", state = T("playing");
+            else chip = M_CHIP_OFF " ‖", state = T("paused");
     }
-    int x = 1 + print_at(1, 1, w, S_DIM, "%s", state) + 2;
+    int x = 1 + print_at(1, 1, w, S_DIM, "%s %s ", chip, state) + 2;
     if (r->playing) {
-        x += print_at(x, 1, 20, S_DIM, "%s ", L("velocità", "speed"));
+        x += print_at(x, 1, 20, S_DIM, "%s ", T("speed"));
         for (int i = 0; i < SPEEDS; i++) put_text(x++, 1, S(i <= r->speed ? C_READ : C_FAINT, C_DEFAULT, 0), "▮");
         x += 2;
     }
@@ -572,8 +546,8 @@ static void draw_status(App *app, int w) {
     print_at(x, 1, w - x - 12, S_DIM, "%s", trail);
     size_t length;
     vm_output(vm, &length);
-    if (length) print_at(w - 13, 1, 13, S_DIM, M_TYPE "≡ " M_RESET "%s", L("stampe: o", "output: o"));
-    if (vm_draw_count(vm)) print_at(w - 28, 1, 14, S_DIM, M_TYPE "▣ " M_RESET "%s", L("disegno: d", "drawing: d"));
+    if (length) print_at(w - 13, 1, 13, S_DIM, M_TYPE "≡ " M_RESET "%s", T("output: o"));
+    if (vm_draw_count(vm)) print_at(w - 28, 1, 14, S_DIM, M_TYPE "▣ " M_RESET "%s", T("drawing: d"));
 }
 
 /* The end of the output, or `back` lines before. */
@@ -592,7 +566,7 @@ static void draw_output_text(App *app, int x, int y, int w, int rows, int back) 
         line++;
         i += n + 1;
     }
-    if (length == 0) print_at(x, y, w, S_FAINT, "%s", L("Niente.", "Nothing."));
+    if (length == 0) print_at(x, y, w, S_FAINT, "%s", T("Nothing."));
 }
 
 /* The nearest of the 256 colours of a terminal. */
@@ -612,8 +586,9 @@ static void draw_canvas(App *app, int w, int h) {
     else rows = (int)((long)cols * ch / cw / 2);
     if (cols < 2 || rows < 1) return;
     char title[80];
-    snprintf(title, sizeof title, "%s  %d x %d  %d %s", L("Cosa ha disegnato il programma", "What the program drew"), cw, ch,
-             vm_draw_count(vm), L("tratti", "strokes"));
+    char strokes[32];
+    snprintf(strokes, sizeof strokes, TN("%d stroke", "%d strokes", vm_draw_count(vm)), vm_draw_count(vm));
+    snprintf(title, sizeof title, "%s  %d x %d  %s", T("What the program drew"), cw, ch, strokes);
     draw_box(0, 2, w, h - 4, C_TYPE, title);
     int *pixels = malloc((size_t)cols * (size_t)rows * 2 * sizeof(int));
     if (!pixels) abort();
@@ -639,12 +614,12 @@ static void draw_canvas(App *app, int w, int h) {
 }
 
 static void draw_output(App *app, int w, int h) {
-    draw_box(0, 2, w, h - 4, C_TYPE, L("Cosa ha stampato il programma", "What the program printed"));
+    draw_box(0, 2, w, h - 4, C_TYPE, T("What the program printed"));
     draw_output_text(app, 3, 3, w - 6, h - 6, app->run.overlay_top);
 }
 
 static void draw_log(App *app, int w, int h) {
-    draw_box(0, 2, w, h - 4, C_BORDER, L("Tutto quello che è successo", "Everything that happened"));
+    draw_box(0, 2, w, h - 4, C_BORDER, T("Everything that happened"));
     int rows = h - 6;
     long last = vm_log_count(app->run.vm) - 1 - app->run.overlay_top;
     for (int i = 0; i < rows; i++) {
@@ -665,21 +640,21 @@ void run_draw(App *app) {
     char path[300];
     const char *name = strrchr(app->doc->path, '/');
     snprintf(path, sizeof path, M_TEXT "%s", name ? name + 1 : app->doc->path);
-    const char *levels[] = {L("Sistema", "System"), L("Programma", "Program"), L("Funzione", "Function"), L("Istruzione", "Statement"),
-                            L("Memoria", "Memory")};
+    const char *levels[] = {T("System"), T("Program"), T("Function"), T("Statement"),
+                            T("Memory")};
     draw_header(path, levels, 5, (int)r->level - 1, C_FOCUS);
     draw_status(app, w);
     if (app->overlay == OVERLAY_CANVAS) { /* it goes on running under it */
         draw_canvas(app, w, h);
-        const Hint hints[] = {{"→", L("passo", "step")}, {"←", L("indietro", "back")}, {L("Spazio", "Space"), L("vai", "play")},
-                              {"g", L("alla fine", "to the end")}, {"d", L("chiudi", "close")}};
+        const Hint hints[] = {{"→", T("step")}, {"←", T("back")}, {T("Space"), TC("short", "play")},
+                              {"g", T("to the end")}, {"d", T("close")}};
         draw_footer(hints, 5);
         return;
     }
     if (app->overlay == OVERLAY_OUTPUT || app->overlay == OVERLAY_LOG) {
         if (app->overlay == OVERLAY_OUTPUT) draw_output(app, w, h);
         else draw_log(app, w, h);
-        const Hint hints[] = {{"↑↓", L("scorri", "scroll")}, {"Esc", L("chiudi", "close")}};
+        const Hint hints[] = {{"↑↓", T("scroll")}, {"Esc", T("close")}};
         draw_footer(hints, 2);
         return;
     }
@@ -688,9 +663,9 @@ void run_draw(App *app) {
         case LEVEL_SYSTEM: run_system_draw(app, 0, 2, w, bottom - 2); break;
         case LEVEL_CALL: {
             int left = w * 60 / 100;
-            draw_box(0, 2, left, bottom - 2, C_CALL, L("Chiamate", "Calls"));
+            draw_box(0, 2, left, bottom - 2, C_CALL, T("Calls"));
             draw_calls(app, 2, 3, left - 4, bottom - 4);
-            draw_box(left, 2, w - left, bottom - 2, C_BORDER, L("Pila: chi aspetta chi", "Stack: who waits for whom"));
+            draw_box(left, 2, w - left, bottom - 2, C_BORDER, T("Stack: who waits for whom"));
             draw_stack(app, left + 2, 3, w - left - 4, bottom - 4);
             break;
         }
@@ -699,31 +674,31 @@ void run_draw(App *app) {
         default: {
             int left = w * 46 / 100;
             const Frame *f = vm_frame(r->vm, vm_frame_count(r->vm) - 1);
-            draw_box(0, 2, left, bottom - 2, C_BORDER, f->function ? f->function->full_name : L("Codice", "Code"));
+            draw_box(0, 2, left, bottom - 2, C_BORDER, f->function ? f->function->full_name : T("Code"));
             if (r->activity && f->function) draw_activity(app, f->function, 2, 3, left - 4, bottom - 4);
             else draw_current_code(app, 1, 3, left - 3, bottom - 4);
             bool over = r->trial && vm_frame_count(r->vm) == 1;
             if (vm_status(r->vm) == VM_FINISHED && !over) {
-                draw_box(left, 2, w - left, bottom - 2, C_TYPE, L("Cosa ha stampato", "What it printed"));
+                draw_box(left, 2, w - left, bottom - 2, C_TYPE, T("What it printed"));
                 draw_output_text(app, left + 2, 4, w - left - 4, bottom - 6, 0);
                 break;
             }
-            draw_box(left, 2, w - left, bottom - 2, C_BORDER, over ? L("Alla fine", "In the end") : L("Dati", "Data"));
+            draw_box(left, 2, w - left, bottom - 2, C_BORDER, over ? T("In the end") : T("Data"));
             run_data_draw(app, left + 2, 4, w - left - 4, bottom - 6);
         }
     }
     draw_events(app, bottom, w);
     if (vm_status(r->vm) == VM_NEEDS_INPUT) {
-        const Hint hints[] = {{L("Invio", "Enter"), L("conferma", "confirm")}, {"Ctrl-D", L("fine dei dati", "end of input")},
-                              {"Esc", L("indietro", "back")}};
+        const Hint hints[] = {{T("Enter"), T("confirm")}, {"Ctrl-D", T("end of input")},
+                              {"Esc", T("back")}};
         draw_footer(hints, 3);
         return;
     }
-    const Hint hints[] = {{"→", L("passo", "step")}, {"←", L("indietro", "back")},
-                          {L("Spazio", "Space"), r->playing ? L("ferma", "pause") : L("vai", "play")},
-                          {L("Invio", "Enter"), L("dettagli", "details")}, {"Esc", L("riassunto", "overview")},
-                          {r->level == LEVEL_SYSTEM ? "Tab" : "n", r->level == LEVEL_SYSTEM ? L("altra vista", "other view") : L("salta", "over")},
-                          {"g", L("alla fine", "to the end")}, {"?", L("aiuto", "help")}};
+    const Hint hints[] = {{"→", T("step")}, {"←", T("back")},
+                          {T("Space"), r->playing ? T("pause") : TC("short", "play")},
+                          {T("Enter"), T("details")}, {"Esc", T("overview")},
+                          {r->level == LEVEL_SYSTEM ? "Tab" : "n", r->level == LEVEL_SYSTEM ? T("other view") : T("over")},
+                          {"g", T("to the end")}, {"?", T("help")}};
     draw_footer(hints, 8);
 }
 

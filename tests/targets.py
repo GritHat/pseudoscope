@@ -15,6 +15,8 @@ import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
 
+os.environ["PSEUDOSCOPE_LANG"] = "en"  # what is compared is in English, wherever the tests run
+
 here = os.path.dirname(os.path.abspath(__file__))
 args = sys.argv[1:]
 verbose = "-v" in args

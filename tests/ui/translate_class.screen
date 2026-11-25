@@ -1,6 +1,6 @@
- ◆ PSEUDOSCOPE  shapes.pscope ▸ Square                                ▐ Mappa ▌▸▐ Codice ▌▸▐ Java ▌
-                                         Traduzione in Java
-╭─ Pseudocodice ─────────────────────────────────╮╭─ Java ─────────────────────────────────────────╮
+ ◆ PSEUDOSCOPE  shapes.pscope ▸ Square                                    ▐ Map ▌▸▐ Code ▌▸▐ Java ▌
+                                        Translation to Java
+╭─ Pseudocode ───────────────────────────────────╮╭─ Java ─────────────────────────────────────────╮
 │ ▶  28 class Square extends Rectangle implemen… ││  static class Square extends Rectangle impleme │
 │    29     procedure side(in s: real)           ││      void side(double s) {                     │
 │    30     begin                                ││          w = s;                                │
@@ -23,4 +23,4 @@
 │                                                ││                                                │
 ╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────╯
 
-  ↑↓  scorri   Invio  più dettaglio   Esc  meno dettaglio   r  esegui   E  modifica   ?  aiuto
+  ↑↓  move   Enter  more detail   Esc  less detail   r  run   E  edit   q  quit   ?  help

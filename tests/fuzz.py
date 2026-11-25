@@ -76,7 +76,7 @@ def run_ui(rng, text, ext):
         program.flush()
         try:
             result = subprocess.run([PLIKE, "ui", program.name, "--keys=" + rng.choice("rt") + keys, "--size=" + size,
-                                     rng.choice(["--lang=it", "--lang=en"])], capture_output=True, timeout=120)
+                                     rng.choice(["--lang=it", "--lang=en", "--lang=es"])], capture_output=True, timeout=120)
         except subprocess.TimeoutExpired:
             return text, "timeout with keys " + keys
     if result.returncode == 0:

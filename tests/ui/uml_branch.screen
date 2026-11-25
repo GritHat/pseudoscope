@@ -1,4 +1,4 @@
- ◆ PSEUDOSCOPE  login_sequence.puml ▸ diagramma di sequenza ▸ Login
+ ◆ PSEUDOSCOPE  login_sequence.puml ▸ sequence diagram ▸ Login
 
 ╭─ Login ────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │                                                                                                            │
@@ -29,4 +29,4 @@
 │                     │                       │                       │                       │              │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-  →  messaggio   ←  indietro   Spazio  va da solo   g  tutto   Tab  altra alternativa   Esc  file   ?  aiuto
+  →  message   ←  back   Space  play   g  all   Tab  other branch   0  restart   Esc  files   ?  help

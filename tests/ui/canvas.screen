@@ -1,6 +1,6 @@
- ◆ PSEUDOSCOPE  desenho.por       ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
-  ✓ finito                                                              ▣ disegno: d   ≡ stampe: o
-╭─ Cosa ha disegnato il programma  80 x 40  11 tratti ─────────────────────────────────────────────╮
+ ◆ PSEUDOSCOPE  desenho.por            ▐ System ▌▸▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
+  ✓ done                                                                ▣ drawing: d   ≡ output: o
+╭─ What the program drew  80 x 40  11 strokes ─────────────────────────────────────────────────────╮
 │                                                                                                  │
 │                                                                                                  │
 │     ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀      │
@@ -27,4 +27,4 @@
 │                                                                                                  │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-  →  passo   ←  indietro   Spazio  vai   g  alla fine   d  chiudi
+  →  step   ←  back   Space  play   g  to the end   d  close

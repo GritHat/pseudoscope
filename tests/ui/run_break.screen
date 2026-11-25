@@ -1,6 +1,6 @@
- ◆ PSEUDOSCOPE  fib.pscope        ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
-  ✓ finito                                                                             ≡ stampe: o
-╭─ Codice ───────────────────────────────────╮╭─ Cosa ha stampato ─────────────────────────────────╮
+ ◆ PSEUDOSCOPE  fib.pscope             ▐ System ▌▸▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
+  ✓ done                                                                               ≡ output: o
+╭─ Code ─────────────────────────────────────╮╭─ What it printed ──────────────────────────────────╮
 │   11 procedure main()                      ││                                                    │
 │   12 begin                                 ││ 3                                                  │
 │   13     print(fib(4))                     ││                                                    │
@@ -22,9 +22,9 @@
 │                                            ││                                                    │
 │                                            ││                                                    │
 ╰────────────────────────────────────────────╯╰────────────────────────────────────────────────────╯
-╭─ Cosa è successo ────────────────────────────────────────────────────────────────────────────────╮
-│ ≡ stampa   3                                                                                     │
-│ ◀ main ha finito                                                                                 │
-│ ✓ programma terminato                                                                            │
+╭─ What happened ──────────────────────────────────────────────────────────────────────────────────╮
+│ ≡ prints   3                                                                                     │
+│ ◀ main is done                                                                                   │
+│ ✓ the program is over                                                                            │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   n  salta   ?  aiuto
+  →  step   ←  back   Space  play   Enter  details   Esc  overview   n  over   ?  help

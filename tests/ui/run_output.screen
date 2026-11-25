@@ -1,6 +1,6 @@
- ◆ basic.ps…  ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
-  ✓ finito                                                         ≡ stampe: o
-╭─ Codice ─────────────────────────╮╭─ Cosa ha stampato ───────────────────────╮
+ ◆ basic.pscope    ▐ System ▌▸▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
+  ✓ done                                                           ≡ output: o
+╭─ Code ───────────────────────────╮╭─ What it printed ────────────────────────╮
 │  162 procedure main()            ││                                          │
 │  163     var v : array [1..6] o… ││ 1.000000                                 │
 │  164     var i : integer         ││ 2.000000                                 │
@@ -16,9 +16,9 @@
 │  174     end                     ││                                          │
 │  175 end main                    ││                                          │
 ╰──────────────────────────────────╯╰──────────────────────────────────────────╯
-╭─ Cosa è successo ────────────────────────────────────────────────────────────╮
-│ ≡ stampa   256.000000                                                        │
-│ ◀ main ha finito                                                             │
-│ ✓ programma terminato                                                        │
+╭─ What happened ──────────────────────────────────────────────────────────────╮
+│ ≡ prints   256.000000                                                        │
+│ ◀ main is done                                                               │
+│ ✓ the program is over                                                        │
 ╰──────────────────────────────────────────────────────────────────────────────╯
-  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   n  salta   ?  aiuto
+  →  step   ←  back   Space  play   Enter  details   Esc  overview   ?  help

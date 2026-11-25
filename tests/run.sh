@@ -9,6 +9,10 @@
 #   ui/        NAME.ui: program, size, keys, options, environment; compared
 #              with NAME.screen
 # UPDATE=1 rewrites the expected files.
+# Everything is expected in English, whatever the language of who runs the
+# tests; those of the other languages ask for theirs with --lang.
+PSEUDOSCOPE_LANG=en
+export PSEUDOSCOPE_LANG
 here=$(cd "$(dirname "$0")" && pwd)
 plike=$(cd "$(dirname "${PLIKE:-bin/pseudoscope}")" && pwd)/$(basename "${PLIKE:-bin/pseudoscope}")
 tmp=$(mktemp -d) || exit 1

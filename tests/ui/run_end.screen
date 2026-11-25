@@ -1,6 +1,6 @@
- ◆ PSEUDOSCOPE  basic.pscope      ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
-  ✓ finito
-╭─ Codice ───────────────────────────────────╮╭─ Alla fine ────────────────────────────────────────╮
+ ◆ PSEUDOSCOPE  basic.pscope           ▐ System ▌▸▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
+  ✓ done
+╭─ Code ─────────────────────────────────────╮╭─ In the end ───────────────────────────────────────╮
 │   21 procedure BubbleSort (in: n; in/out:…┃││                                                    │
 │   22     var i, j, n : integer            ┃││ n  6                                               │
 │   23     var A : array [1..n] of real     ┃││                                                    │
@@ -22,9 +22,9 @@
 │   39             i:=i+1                    ││                                                    │
 │   40         endwhile                      ││                                                    │
 ╰────────────────────────────────────────────╯╰────────────────────────────────────────────────────╯
-╭─ Cosa è successo ────────────────────────────────────────────────────────────────────────────────╮
-│ ? i < n and not ordinato   falso   il ciclo finisce                                              │
-│ ◀ BubbleSort ha finito                                                                           │
-│ ✓ programma terminato                                                                            │
+╭─ What happened ──────────────────────────────────────────────────────────────────────────────────╮
+│ ? i < n and not ordinato   false   the loop ends                                                 │
+│ ◀ BubbleSort is done                                                                             │
+│ ✓ the program is over                                                                            │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
-  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   n  salta   ?  aiuto
+  →  step   ←  back   Space  play   Enter  details   Esc  overview   n  over   ?  help

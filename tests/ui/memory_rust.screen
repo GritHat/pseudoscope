@@ -1,7 +1,7 @@
- ◆ PSEUDOSCOPE  fib.pscope                  ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
-  ‖ fermo   main ▸ fib                        Traduzione in Rust
-╭─ Tradotto in Rust ───────────────────────╮╭─ Memoria ──────────────────────────────────────────────────────╮
-│  fn fib(mut n: i32) -> i32 {             ││ indirizzo  nome          valore       byte                     │
+ ◆ PSEUDOSCOPE  fib.pscope                       ▐ System ▌▸▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
+  ‖ paused   main ▸ fib                      Translation to Rust
+╭─ Translated to Rust ─────────────────────╮╭─ Memory ───────────────────────────────────────────────────────╮
+│  fn fib(mut n: i32) -> i32 {             ││ address    name          value        byte                     │
 │      let mut fib_result: i32 = 0;        ││  ▶ fib                                                         │
 │▶     if n < 2 {                          ││ 7fffeff8   fib           0            00 00 00 00              │
 │          return n;                       ││ 7fffeffc   n             4            04 00 00 00              │
@@ -22,9 +22,9 @@
 │                                          ││                                                                │
 │                                          ││                                                                │
 ╰──────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────╯
-╭─ Cosa è successo ──────────────────────────────────────────────────────────────────────────────────────────╮
+╭─ What happened ────────────────────────────────────────────────────────────────────────────────────────────╮
 │                                                                                                            │
-│ ▶ si entra in main()                                                                                       │
-│ ▶ si entra in fib(n=4)                                                                                     │
+│ ▶ entering main()                                                                                          │
+│ ▶ entering fib(n=4)                                                                                        │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   n  salta   ?  aiuto
+  →  step   ←  back   Space  play   Enter  details   Esc  overview   n  over   g  to the end   ?  help

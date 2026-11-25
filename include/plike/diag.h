@@ -1,6 +1,7 @@
 #ifndef PLIKE_DIAG_H
 #define PLIKE_DIAG_H
 
+#include "plike/i18n.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -21,7 +22,6 @@ typedef struct {
     FILE *out;
     bool color;
     bool silent_warnings;
-    bool italian;
     int errors;
     int warnings;
     bool too_many;
@@ -32,11 +32,6 @@ typedef struct {
 } Diag;
 
 #define DIAG_MAX_ERRORS 20
-
-/* The message in the language of diag. */
-const char *diag_text(const Diag *diag, const char *english);
-extern const char *const ITALIAN_MESSAGES[][2];
-extern const int ITALIAN_MESSAGE_COUNT;
 
 void diag_error(Diag *diag, Loc loc, const char *format, ...)
     __attribute__((format(printf, 3, 4)));

@@ -1,19 +1,19 @@
- ◆ PSEUDOSCOPE  basic.pscope                                             ▐ Mappa ▌▸▐ Codice ▌▸▐ C ▌
+ ◆ PSEUDOSCOPE  basic.pscope                                                 ▐ Map ▌▸▐ Code ▌▸▐ C ▌
 
-╭─ Mappa ───────────────────────╮╭─────────────────────────────────────────────────────────────────╮
-│ Sottoprogrammi                ││                                                                 │
-│  ƒ somma_pari_e_dispari_in_r… ││  BubbleSort  procedura: esegue delle azioni                     │
+╭─ Map ─────────────────────────╮╭─────────────────────────────────────────────────────────────────╮
+│ Subprograms                   ││                                                                 │
+│  ƒ somma_pari_e_dispari_in_r… ││  BubbleSort  procedure: performs actions                        │
 │▸ ■ BubbleSort                 ││                                                                 │
 │  ■ SelectionSort2             ││                       ╭────────────────╮                        │
 │  ƒ ScalarProductVdotV         ││         n integer ───▶│                │                        │
 │  ■ saxpy                      ││                       │   BubbleSort   │                        │
-│  ■ MatrixSum                  ││   A array [1..n]… ◀──▶│                │                        │
-│  ■ ScalarProductMdotV         ││                       ╰────────────────╯                        │
+│  ■ MatrixSum                  ││                 A ◀──▶│                │                        │
+│  ■ ScalarProductMdotV         ││   array [1..n] o…     ╰────────────────╯                        │
 │  ■ ScalarProductMdotM         ││                                                                 │
-│  ƒ OddAndEvenSum              ││  usa         nessuno                                            │
-│  ƒ pow                        ││  usata da     main                                              │
-│  ■ main  si parte da qui      ││                                                                 │
-│                               ││   r  provala con valori scelti da te                            │
+│  ƒ OddAndEvenSum              ││  uses        none                                               │
+│  ƒ pow                        ││  used by      main                                              │
+│  ■ main  starts here          ││                                                                 │
+│                               ││   r  try it with values of your choice                          │
 │                               ││                                                                 │
 │                               ││                                                                 │
 │                               ││                                                                 │
@@ -27,4 +27,4 @@
 │                               ││                                                                 │
 ╰───────────────────────────────╯╰─────────────────────────────────────────────────────────────────╯
 
-  ↑↓  scorri   Invio  più dettaglio   Esc  meno dettaglio   r  esegui   E  modifica   ?  aiuto
+  ↑↓  move   Enter  more detail   Esc  less detail   r  run   E  edit   q  quit   ?  help

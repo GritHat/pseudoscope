@@ -1,6 +1,6 @@
- ◆ PSEUDOSCOPE  tree.pscope ▸ Node                                       ▐ Mappa ▌▸▐ Codice ▌▸▐ C ▌
+ ◆ PSEUDOSCOPE  tree.pscope ▸ Node                                           ▐ Map ▌▸▐ Code ▌▸▐ C ▌
 
-╭─ Pseudocodice ─────────────────────────────────╮╭─ C ────────────────────────────────────────────╮
+╭─ Pseudocode ───────────────────────────────────╮╭─ C ────────────────────────────────────────────╮
 │ ▶   3 type Node: record                        ││  struct Node {                                 │
 │     4     key: integer                         ││      int key;                                  │
 │     5     left: Node*                          ││      struct Node *left;                        │
@@ -13,13 +13,13 @@
 │                                                ││                                                │
 │                                                ││                                                │
 │                                                │╰────────────────────────────────────────────────╯
-│                                                │╭─ In memoria ───────────────────────────────────╮
-│                                                ││ in tutto 24 byte                               │
+│                                                │╭─ In memory ────────────────────────────────────╮
+│                                                ││ 24 bytes in all                                │
 │                                                ││                                                │
-│                                                ││    0            key 4 byte                     │
-│                                                ││    4  ┄┄ spazio vuoto (allineamento)           │
-│                                                ││    8                left 8 byte                │
-│                                                ││   16                right 8 byte               │
+│                                                ││    0            key 4 bytes                    │
+│                                                ││    4  ┄┄ padding                               │
+│                                                ││    8                left 8 bytes               │
+│                                                ││   16                right 8 bytes              │
 │                                                ││                                                │
 │                                                ││                                                │
 │                                                ││                                                │
@@ -27,4 +27,4 @@
 │                                                ││                                                │
 ╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────╯
 
-  ↑↓  scorri   Invio  più dettaglio   Esc  meno dettaglio   r  esegui   E  modifica   ?  aiuto
+  ↑↓  move   Enter  more detail   Esc  less detail   r  run   E  edit   q  quit   ?  help

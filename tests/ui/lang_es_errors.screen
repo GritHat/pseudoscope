@@ -1,17 +1,17 @@
  ◆ PSEUDOSCOPE  names.plike
 
-╭─ To fix before going on ─────────────────────────────────────────────────────────────────────────╮
-│▸ ✗ line 11  'p' is already declared at line 1                                                    │
-│  ✗ line 1  'a' is already declared at line 1                                                     │
-│  ✗ line 14  function 'f' has no result type                                                      │
-│  ✗ line 17  parameter 'x' has no type                                                            │
-│  ✗ line 3  'b' is already declared at line 2                                                     │
-│  ✗ line 4  unknown type 'unknown'                                                                │
-│  ✗ line 6  'x' is not declared                                                                   │
-│  ✗ line 7  integer is not a record                                                               │
-│  ✗ line 8  'q' is not declared                                                                   │
-│  ✗ line 8  'p' takes 2 arguments, not 0                                                          │
-│  ✗ line 9  'p' takes 2 arguments, not 0                                                          │
+╭─ Para corregir antes de seguir ──────────────────────────────────────────────────────────────────╮
+│▸ ✗ línea 11  'p' ya está declarado en la línea 1                                                 │
+│  ✗ línea 1  'a' ya está declarado en la línea 1                                                  │
+│  ✗ línea 14  la función 'f' no tiene tipo de resultado                                           │
+│  ✗ línea 17  el parámetro 'x' no tiene tipo                                                      │
+│  ✗ línea 3  'b' ya está declarado en la línea 2                                                  │
+│  ✗ línea 4  el tipo 'unknown' no existe                                                          │
+│  ✗ línea 6  'x' no está declarado                                                                │
+│  ✗ línea 7  integer no es un registro                                                            │
+│  ✗ línea 8  'q' no está declarado                                                                │
+│  ✗ línea 8  'p' recibe 2 argumento(s), no 0                                                      │
+│  ✗ línea 9  'p' recibe 2 argumento(s), no 0                                                      │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────╮
 │     5 begin                                                                                      │
@@ -27,4 +27,4 @@
 │    15 begin                                                                                      │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-  ↑↓  choose   E  edit   Esc  files   ?  help   q  quit
+  ↑↓  elegir   E  editar   Esc  archivos   ?  ayuda   q  salir

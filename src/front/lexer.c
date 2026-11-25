@@ -347,10 +347,10 @@ TokenList lex(const Source *source, const Config *config, Arena *arena, Diag *di
 
 const char *token_kind_name(TokenKind kind) {
     static const char *const NAMES[TOK_COUNT] = {
-        [TOK_EOF] = "end of file", [TOK_IDENT] = "identifier",
-        [TOK_INT] = "integer number", [TOK_FLOAT] = "real number",
-        [TOK_STRING] = "string", [TOK_CHAR] = "character",
-        [TOK_DIM] = "array dimension", [TOK_INOUT] = "'in/out'",
+        [TOK_EOF] = N_("end of file"), [TOK_IDENT] = N_("identifier"),
+        [TOK_INT] = N_("integer number"), [TOK_FLOAT] = N_("real number"),
+        [TOK_STRING] = N_("string"), [TOK_CHAR] = N_("character"),
+        [TOK_DIM] = N_("array dimension"), [TOK_INOUT] = "'in/out'",
         [TOK_ASSIGN] = "':='", [TOK_PLUS] = "'+'", [TOK_MINUS] = "'-'",
         [TOK_STAR] = "'*'", [TOK_SLASH] = "'/'", [TOK_MOD] = "'%'",
         [TOK_LT] = "'<'", [TOK_GT] = "'>'", [TOK_LE] = "'<='", [TOK_GE] = "'>='",

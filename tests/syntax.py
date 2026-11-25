@@ -11,6 +11,8 @@ import sys
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
 
+os.environ["PSEUDOSCOPE_LANG"] = "en"  # what is compared is in English, wherever the tests run
+
 PLIKE = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else "bin/pseudoscope")
 CC = os.environ.get("CC", "cc")
 

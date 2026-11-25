@@ -113,7 +113,7 @@ void draw_communication(App *app, int x, int y, int w, int h) {
         pairs[k].count++;
         newest = k;
     }
-    if (n == 0) print_at(x, y + 1, w, S_DIM, "%s", L("Ancora nessuno ha parlato con nessuno.", "Nobody has talked to anybody yet."));
+    if (n == 0) print_at(x, y + 1, w, S_DIM, "%s", T("Nobody has talked to anybody yet."));
     for (int k = 0; k < n && y + k * 3 + 1 < y + h; k++) {
         int row = y + k * 3 + 1, left = x + 18, right = x + w - 20;
         bool hot = k == newest;
@@ -187,7 +187,7 @@ void draw_objects(App *app, int x, int y, int w, int h) {
             print_at(cx + 2 + used, row, width - used - 6, written ? S(231, C_WRITE_BG, A_BOLD) : S_TEXT, written ? " %s " : "%s", text);
         }
     }
-    if (!drawn) print_at(x, y + 1, w, S_DIM, "%s", L("Nessun oggetto, per ora.", "No objects, for now."));
+    if (!drawn) print_at(x, y + 1, w, S_DIM, "%s", T("No objects, for now."));
 }
 
 /* ---- activity: the subprogram as a flow ---- */
@@ -234,19 +234,19 @@ static void flow_statements(FlowList *list, const Stmt *s, int indent, const cha
             case ST_IF:
                 for (const Stmt *k = s; k; k = k->otherwise) {
                     if (k->kind != ST_IF) {
-                        flow_statements(list, k->body, indent + 1, L("no", "no"));
+                        flow_statements(list, k->body, indent + 1, T("no"));
                         break;
                     }
                     expr_words(k->value, a, sizeof a);
-                    flow(list, indent, 'd', k == s ? edge : L("no", "no"), k, "%s ?", a);
-                    flow_statements(list, k->body, indent + 1, L("sì", "yes"));
+                    flow(list, indent, 'd', k == s ? edge : T("no"), k, "%s ?", a);
+                    flow_statements(list, k->body, indent + 1, T("yes"));
                 }
                 break;
             case ST_WHILE:
                 expr_words(s->value, a, sizeof a);
                 flow(list, indent, 'd', edge, s, "%s ?", a);
-                flow_statements(list, s->body, indent + 1, L("sì", "yes"));
-                flow(list, indent + 1, 'b', "", NULL, "%s", L("↺ di nuovo alla domanda", "↺ back to the question"));
+                flow_statements(list, s->body, indent + 1, T("yes"));
+                flow(list, indent + 1, 'b', "", NULL, "%s", T("↺ back to the question"));
                 break;
             case ST_FOR:
                 expr_words(s->value, a, sizeof a);
@@ -257,7 +257,7 @@ static void flow_statements(FlowList *list, const Stmt *s, int indent, const cha
                 snprintf(both, sizeof both, "%.30s <= %.40s ?", s->target->text, b);
                 flow(list, indent, 'd', "", s, "%s", both);
                 list->items[list->count - 1].phase = PHASE_CONDITION;
-                flow_statements(list, s->body, indent + 1, L("sì", "yes"));
+                flow_statements(list, s->body, indent + 1, T("yes"));
                 if (s->step) expr_words(s->step, a, sizeof a);
                 else snprintf(a, sizeof a, "1");
                 snprintf(both, sizeof both, "%.22s := %.22s + %.20s  ↺", s->target->text, s->target->text, a);
@@ -269,7 +269,7 @@ static void flow_statements(FlowList *list, const Stmt *s, int indent, const cha
                 flow_statements(list, s->body, indent + 1, "");
                 expr_words(s->value, a, sizeof a);
                 flow(list, indent, 'd', "", s, "%s ?", a);
-                flow(list, indent + 1, 'b', L("no", "no"), NULL, "%s", L("↺ da capo", "↺ again"));
+                flow(list, indent + 1, 'b', T("no"), NULL, "%s", T("↺ again"));
                 break;
             case ST_BLOCK: flow_statements(list, s->body, indent, edge); break;
             case ST_VAR: break;
@@ -282,7 +282,7 @@ static void flow_statements(FlowList *list, const Stmt *s, int indent, const cha
                 break;
             case ST_RETURN:
                 expr_words(s->value, a, sizeof a);
-                flow(list, indent, 'e', edge, s, s->value ? L("◉ restituisce %s", "◉ returns %s") : "◉%s", a);
+                flow(list, indent, 'e', edge, s, s->value ? T("◉ returns %s") : "◉%s", a);
                 break;
             case ST_PRINT: case ST_READ:
                 a[0] = '\0';
@@ -291,9 +291,9 @@ static void flow_statements(FlowList *list, const Stmt *s, int indent, const cha
                     size_t n = strlen(a);
                     snprintf(a + n, sizeof a - n, "%s%.60s", i ? ", " : "", b);
                 }
-                flow(list, indent, 'a', edge, s, s->kind == ST_PRINT ? L("≡ stampa %s", "≡ print %s") : L("» legge %s", "» read %s"), a);
+                flow(list, indent, 'a', edge, s, s->kind == ST_PRINT ? T("≡ print %s") : T("» read %s"), a);
                 break;
-            case ST_SEND: flow(list, indent, 'a', edge, s, L("▷ manda %s", "▷ send %s"), s->name); break;
+            case ST_SEND: flow(list, indent, 'a', edge, s, T("▷ send %s"), s->name); break;
             case ST_TODO: flow(list, indent, 'a', edge, s, "%s", "..."); break;
             case ST_STEP: flow(list, indent, 'l', edge, s, "● %s", s->text); break;
             default:

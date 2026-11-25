@@ -124,7 +124,10 @@ void draw_footer(const Hint *hints, int count) {
     int last = count ? text_width(hints[count - 1].key) + text_width(hints[count - 1].label) + 5 : 0;
     for (int i = 0; i < count; i++) {
         int need = text_width(hints[i].key) + text_width(hints[i].label) + 5;
-        if (i < count - 1 && x + need + last > w) continue;
+        if (i < count - 1 && x + need + last > w) {
+            fit_note("hint", x, y, w - x - last, need, hints[i].label);
+            continue;
+        }
         x += print_at(x, y, -1, S_DIM, M_KEY " %s " M_RESET " %s", hints[i].key, hints[i].label) + 2;
     }
 }

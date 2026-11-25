@@ -1,14 +1,14 @@
- ◆ PSEUDOSCOPE  algorithms_mindmap.mmd ▸ mappa mentale
+ ◆ PSEUDOSCOPE  algorithms_mindmap.mmd ▸ mind map
 
 ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │                                                                                                            │
-│ Algorithms                                                            │ Come ci si arriva                  │
+│ Algorithms                                                            │ How to get here                    │
 │  ├─ Sorting                                                           │                                    │
 │  │  ├─ Bubble sort                                                    │ Algorithms                         │
 │  │  ├─ Merge sort                                                     │  Sorting                           │
 │  │  └─  Quicksort                                                     │    Quicksort                       │
 │  ├─ Searching                                                         │                                    │
-│  │  ├─ Linear                                                         │ 0 rami, 0 in tutto sotto           │
+│  │  ├─ Linear                                                         │ 0 branches, 0 below in all         │
 │  │  └─ Binary                                                         │                                    │
 │  └─ Graphs                                                            │                                    │
 │     ├─ Shortest paths                                                 │                                    │
@@ -23,4 +23,4 @@
 │                                                                       │                                    │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-  ↑↓  scorri   →  dentro   ←  fuori   Spazio  va da solo   0  da capo   Esc  file   ?  aiuto
+  ↑↓  move   →  into   ←  out   Space  play   0  restart   Esc  files   ?  help
