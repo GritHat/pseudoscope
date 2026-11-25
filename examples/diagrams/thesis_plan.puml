@@ -1,0 +1,14 @@
+@startgantt
+Project starts 2026-03-02
+-- Study --
+[Read the literature] lasts 10 days
+[Define the method] lasts 5 days
+[Define the method] starts at [Read the literature]'s end
+-- Work --
+[Experiments] lasts 15 days
+[Read the literature] -> [Experiments]
+then [Analysis] lasts 6 days
+[Write] lasts 12 days and starts at [Define the method]'s end
+[Write] is 30% completed
+[Hand in] happens at [Analysis]'s end
+@endgantt

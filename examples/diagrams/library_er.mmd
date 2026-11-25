@@ -1,0 +1,22 @@
+erDiagram
+    MEMBER ||--o{ LOAN : takes
+    BOOK ||--o{ COPY : "exists as"
+    COPY ||--o{ LOAN : "is lent in"
+    AUTHOR }|--|{ BOOK : writes
+    MEMBER {
+        int id PK
+        string name
+        date joined
+    }
+    BOOK {
+        string isbn PK
+        string title
+    }
+    COPY {
+        int number PK
+        string isbn FK
+    }
+    LOAN {
+        int id PK
+        date due
+    }

@@ -110,9 +110,7 @@ void files_open(App *app, const char *directory) {
 }
 
 static const char *kind_of(const Document *doc) {
-    static const char *const IT[] = {"", "diagramma di sequenza", "diagramma di stato", "diagramma delle classi", "diagramma"};
-    static const char *const EN[] = {"", "sequence diagram", "state diagram", "class diagram", "diagram"};
-    if (doc->uml) return L(IT[doc->uml->kind], EN[doc->uml->kind]);
+    if (doc->uml) return uml_kind_name(doc->uml);
     switch (doc->config.dialect) {
         case DIALECT_PSEINT: return "PSeInt";
         case DIALECT_VISUALG: return "VisuAlg";

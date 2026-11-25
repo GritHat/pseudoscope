@@ -295,6 +295,11 @@ void tests_draw(App *app);
 void tests_key(App *app, int key);
 void tests_close(App *app);
 
+void draw_uml_plan(App *app, int x, int y, int w, int h);
+void draw_uml_tree(App *app, int x, int y, int w, int h);
+void draw_uml_pie(App *app, int x, int y, int w, int h);
+long plan_step(const Uml *uml, long day, int direction);
+const char *uml_kind_name(const Uml *uml);
 void uml_draw(App *app);
 void uml_key(App *app, int key);
 int uml_tick(App *app);      /* as run_tick */

@@ -1,0 +1,13 @@
+gantt
+    title Releasing version 2
+    dateFormat YYYY-MM-DD
+    section Design
+    Requirements        :done, req, 2026-01-05, 5d
+    Architecture        :done, arch, after req, 4d
+    section Build
+    Core                :active, core, after arch, 10d
+    Interface           :ui, after arch, 8d
+    Integration         :crit, int, after core, 4d
+    section Release
+    Testing             :test, after int, 5d
+    Go live             :milestone, live, after test, 0d

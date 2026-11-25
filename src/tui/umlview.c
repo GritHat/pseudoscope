@@ -140,6 +140,29 @@ static void class_box(const UmlClass *c, int x, int y, int w, bool selected, int
     }
 }
 
+static const char *many_words(const char *many) {
+    if (!many) return "";
+    if (strcmp(many, "zero or more") == 0) return L("zero o più", "zero or more");
+    if (strcmp(many, "one or more") == 0) return L("uno o più", "one or more");
+    if (strcmp(many, "zero or one") == 0) return L("zero o uno", "zero or one");
+    return L("uno", "one");
+}
+
+const char *uml_kind_name(const Uml *u) {
+    static const char *const IT[] = {"", "diagramma di sequenza", "diagramma di stato", "diagramma delle classi", "diagramma",
+                                     "piano (Gantt)", "entità e relazioni", "albero", "torta"};
+    static const char *const EN[] = {"", "sequence diagram", "state diagram", "class diagram", "diagram", "plan (Gantt)",
+                                     "entities and relationships", "tree", "pie"};
+    if (u->kind == UML_TREE && u->tree_kind) {
+        if (strcmp(u->tree_kind, "mind map") == 0) return L("mappa mentale", "mind map");
+        if (strcmp(u->tree_kind, "work breakdown") == 0) return L("scomposizione del lavoro (WBS)", "work breakdown (WBS)");
+        if (strcmp(u->tree_kind, "timeline") == 0) return L("linea del tempo", "timeline");
+        if (strcmp(u->tree_kind, "journey") == 0) return L("percorso", "journey");
+        if (strcmp(u->tree_kind, "outline") == 0) return L("indice", "outline");
+    }
+    return L(IT[u->kind], EN[u->kind]);
+}
+
 static const char *relation_words(const char *kind) {
     if (strcmp(kind, "extends") == 0) return L("è un tipo di", "is a kind of");
     if (strcmp(kind, "implements") == 0) return L("realizza", "implements");
@@ -171,6 +194,14 @@ static void draw_uml_classes(App *app, int x, int y, int w, int h) {
         const UmlRelation *r = &u->relations[i];
         if (r->from != app->walk.selected && r->to != app->walk.selected) continue;
         bool out = r->from == app->walk.selected;
+        if (r->from_many) { /* entities: how many of each */
+            const UmlClass *other = &u->classes[out ? r->to : r->from];
+            print_at(sx, row++, side - 3, S_TEXT, M_FOCUS "%s " M_RESET M_DIM "%s", many_words(out ? r->from_many : r->to_many), L("di questa", "of this"));
+            print_at(sx, row++, side - 3, S_TEXT, M_DIM "  %s", r->text[0] ? r->text : "—");
+            print_at(sx, row++, side - 3, S_TEXT, M_FOCUS "%s " M_TYPE M_BOLD "%s", many_words(out ? r->to_many : r->from_many), other->name);
+            row++;
+            continue;
+        }
         if (out) print_at(sx, row++, side - 3, S_TEXT, M_DIM "%s " M_TYPE M_BOLD "%s", relation_words(r->kind), u->classes[r->to].name);
         else print_at(sx, row++, side - 3, S_TEXT, M_TYPE M_BOLD "%s" M_RESET M_DIM " %s %s", u->classes[r->from].name, relation_words(r->kind), L("questa", "this"));
     }
@@ -189,28 +220,54 @@ void uml_draw(App *app) {
     int w = screen_width(), h = screen_height();
     char path[300];
     const char *name = strrchr(app->doc->path, '/');
-    static const char *const IT[] = {"", "diagramma di sequenza", "diagramma di stato", "diagramma delle classi", "diagramma"};
-    static const char *const EN[] = {"", "sequence diagram", "state diagram", "class diagram", "diagram"};
-    snprintf(path, sizeof path, M_TEXT "%s" M_FAINT " ▸ " M_TYPE "%s%s%s", name ? name + 1 : app->doc->path, L(IT[u->kind], EN[u->kind]),
+    snprintf(path, sizeof path, M_TEXT "%s" M_FAINT " ▸ " M_TYPE "%s%s%s", name ? name + 1 : app->doc->path, uml_kind_name(u),
              u->title ? M_FAINT " ▸ " M_TEXT : "", u->title ? u->title : "");
     draw_header(path, NULL, 0, 0, 0);
     draw_box(0, 2, w, h - 4, C_TYPE, u->title ? u->title : NULL);
     int x = 2, y = 4, iw = w - 4, ih = h - 7;
-    if (u->kind == UML_SEQUENCE) draw_uml_sequence(app, x, y, iw, ih);
-    else if (u->kind == UML_CLASS) draw_uml_classes(app, x, y, iw, ih);
-    else draw_uml_graph(app, x, y, iw, ih);
-    if (u->kind == UML_SEQUENCE) {
-        const Hint hints[] = {{"→", L("messaggio", "message")}, {"←", L("indietro", "back")}, {L("Spazio", "Space"), L("va da solo", "play")}, {"g", L("tutto", "all")},
-                              {"Tab", L("altra alternativa", "other branch")}, {"0", L("da capo", "restart")},
-                              {"Esc", L("file", "files")}, {"?", L("aiuto", "help")}};
-        draw_footer(hints, 8);
-    } else if (u->kind == UML_CLASS) {
-        const Hint hints[] = {{"↑↓", L("classe", "class")}, {"E", L("modifica", "edit")}, {"Esc", L("file", "files")}, {"?", L("aiuto", "help")}};
-        draw_footer(hints, 4);
-    } else {
-        const Hint hints[] = {{"↑↓", L("quale freccia", "which arrow")}, {"→", L("segui", "follow")}, {"←", L("indietro", "back")},
-                              {L("Spazio", "Space"), L("va da solo", "play")}, {"0", L("da capo", "restart")}, {"Esc", L("file", "files")}, {"?", L("aiuto", "help")}};
-        draw_footer(hints, 7);
+    const char *play = L("va da solo", "play"), *space = L("Spazio", "Space"), *files = L("file", "files"), *help = L("aiuto", "help");
+    switch (u->kind) {
+        case UML_SEQUENCE: {
+            draw_uml_sequence(app, x, y, iw, ih);
+            const Hint hints[] = {{"→", L("messaggio", "message")}, {"←", L("indietro", "back")}, {space, play}, {"g", L("tutto", "all")},
+                                  {"Tab", L("altra alternativa", "other branch")}, {"0", L("da capo", "restart")},
+                                  {"Esc", files}, {"?", help}};
+            draw_footer(hints, 8);
+            break;
+        }
+        case UML_CLASS: case UML_ER: {
+            draw_uml_classes(app, x, y, iw, ih);
+            const Hint hints[] = {{"↑↓", u->kind == UML_ER ? L("entità", "entity") : L("classe", "class")}, {"E", L("modifica", "edit")},
+                                  {"Esc", files}, {"?", help}};
+            draw_footer(hints, 4);
+            break;
+        }
+        case UML_GANTT: {
+            draw_uml_plan(app, x, y, iw, ih);
+            const Hint hints[] = {{"→", L("avanti nel tempo", "on in time")}, {"←", L("indietro", "back")}, {space, play},
+                                  {"↑↓", L("attività", "task")}, {"0", L("da capo", "restart")}, {"Esc", files}, {"?", help}};
+            draw_footer(hints, 7);
+            break;
+        }
+        case UML_TREE: {
+            draw_uml_tree(app, x, y, iw, ih);
+            const Hint hints[] = {{"↑↓", L("scorri", "move")}, {"→", L("dentro", "into")}, {"←", L("fuori", "out")}, {space, play},
+                                  {"0", L("da capo", "restart")}, {"Esc", files}, {"?", help}};
+            draw_footer(hints, 7);
+            break;
+        }
+        case UML_PIE: {
+            draw_uml_pie(app, x, y, iw, ih);
+            const Hint hints[] = {{"↑↓", L("parte", "slice")}, {"Esc", files}, {"?", help}};
+            draw_footer(hints, 3);
+            break;
+        }
+        default: {
+            draw_uml_graph(app, x, y, iw, ih);
+            const Hint hints[] = {{"↑↓", L("quale freccia", "which arrow")}, {"→", L("segui", "follow")}, {"←", L("indietro", "back")},
+                                  {space, play}, {"0", L("da capo", "restart")}, {"Esc", files}, {"?", help}};
+            draw_footer(hints, 7);
+        }
     }
 }
 
@@ -218,6 +275,7 @@ static void restart(App *app) {
     const Uml *u = app->doc->uml;
     app->walk = (UmlWalk){0};
     if (u->kind == UML_SEQUENCE) app->walk.at = 1;
+    if (u->kind == UML_GANTT || u->kind == UML_TREE || u->kind == UML_PIE || u->kind == UML_ER) return;
     for (int i = 0; u->kind != UML_SEQUENCE && i < u->node_count; i++) {
         if (u->nodes[i].shape == UML_START && out_edges(u, i)) {
             app->walk.at = i;
@@ -255,9 +313,10 @@ int uml_tick(App *app) {
     long long now = now_ms();
     if (now >= k->next_tick) {
         k->next_tick = now + 900;
-        if (app->doc->uml->kind == UML_SEQUENCE) {
+        UmlKind kind = app->doc->uml->kind;
+        if (kind == UML_SEQUENCE || kind == UML_GANTT || kind == UML_TREE) {
             int before = k->at;
-            uml_key(app, K_RIGHT);
+            uml_key(app, kind == UML_TREE ? K_DOWN : K_RIGHT);
             k->playing = k->at != before;
         } else {
             follow_least(app);
@@ -283,7 +342,7 @@ void uml_key(App *app, int key) {
         }
         case 'q': app->quit = true; return;
         case ' ':
-            if (u->kind == UML_CLASS) return;
+            if (u->kind == UML_CLASS || u->kind == UML_ER || u->kind == UML_PIE) return;
             k->playing = !k->playing;
             k->next_tick = now_ms();
             return;
@@ -309,7 +368,37 @@ void uml_key(App *app, int key) {
         }
         return;
     }
-    if (u->kind == UML_CLASS) {
+    if (u->kind == UML_GANTT) {
+        long last = 0;
+        for (int i = 0; i < u->task_count; i++)
+            if (u->tasks[i].end > last) last = u->tasks[i].end;
+        if (key == K_RIGHT && k->at < last) k->at = (int)plan_step(u, k->at, 1);
+        else if (key == K_LEFT && k->at > 0) k->at = (int)plan_step(u, k->at, -1);
+        else if (key == K_DOWN && k->selected < u->task_count - 1) k->selected++;
+        else if (key == K_UP && k->selected > 0) k->selected--;
+        else if (key == 'g' || key == K_END) k->at = (int)last;
+        return;
+    }
+    if (u->kind == UML_TREE) {
+        if (key == K_DOWN && k->at < u->node_count - 1) k->at++;
+        else if (key == K_UP && k->at > 0) k->at--;
+        else if (key == K_LEFT && u->nodes[k->at].parent >= 0) k->at = u->nodes[k->at].parent;
+        else if ((key == K_RIGHT || key == K_ENTER) && k->at + 1 < u->node_count && u->nodes[k->at + 1].parent == k->at) k->at++;
+        else if (key == K_TAB) { /* the next branch at the same depth */
+            for (int i = k->at + 1; i < u->node_count; i++) {
+                if (u->nodes[i].depth > u->nodes[k->at].depth) continue;
+                k->at = i;
+                break;
+            }
+        } else if (key == 'g' || key == K_END) k->at = u->node_count - 1;
+        return;
+    }
+    if (u->kind == UML_PIE) {
+        if (key == K_DOWN && k->selected < u->node_count - 1) k->selected++;
+        else if (key == K_UP && k->selected > 0) k->selected--;
+        return;
+    }
+    if (u->kind == UML_CLASS || u->kind == UML_ER) {
         if ((key == K_DOWN || key == K_RIGHT || key == K_TAB) && k->selected < u->class_count - 1) k->selected++;
         if ((key == K_UP || key == K_LEFT) && k->selected > 0) k->selected--;
         return;
