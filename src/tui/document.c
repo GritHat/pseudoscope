@@ -30,6 +30,8 @@ static void split_lines(Document *doc) {
     doc->line_count = n;
 }
 
+static bool is_letter_like(char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
+
 static int token_kind_style(const Token *t) {
     switch (t->kind) {
         case TOK_INTEGER: case TOK_REAL: case TOK_LOGICAL: case TOK_CHARACTER: case TOK_ARRAY:
@@ -41,7 +43,9 @@ static int token_kind_style(const Token *t) {
             char c = t->text[0];
             return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '.' ? H_KEYWORD : H_PLAIN;
         }
+        case TOK_STRINGTYPE: return H_TYPE;
         default:
+            if (t->kind >= TOK_PROGRAM && t->kind <= TOK_UNTIL_WHILE && is_letter_like(t->text[0])) return H_KEYWORD;
             return t->kind >= TOK_FUNCTION && t->kind <= TOK_READ ? H_KEYWORD : H_PLAIN;
     }
 }
@@ -55,7 +59,7 @@ static void color_tokens(Document *doc) {
         const Token *t = &doc->tokens.items[i];
         if (t->kind == TOK_EOF) continue;
         size_t at = (size_t)(doc->lines[t->loc.line - 1] + t->loc.column - 1);
-        size_t n = strlen(t->text) + (t->kind == TOK_STRING || t->kind == TOK_CHAR ? 2 : 0);
+        size_t n = (size_t)t->length;
         int kind = token_kind_style(t);
         if (t->kind == TOK_IDENT && doc->program) {
             for (const Function *f = doc->program->functions; f; f = f->next)
@@ -184,7 +188,7 @@ Document *document_load(const char *path, const Config *config) {
     struct stat st;
     if (stat(path, &st) == 0) doc->modified = st.st_mtime;
     doc->path = strdup(path);
-    doc->config = *config;
+    doc->config = config_for(*config, path);
     doc->main_item = -1;
     doc->source = (Source){doc->path, doc->text.data, doc->text.length};
     split_lines(doc);

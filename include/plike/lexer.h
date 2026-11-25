@@ -25,6 +25,13 @@ typedef enum {
     TOK_AT, TOK_ARROW, TOK_DOT, TOK_DOTDOT, TOK_ELLIPSIS,
     TOK_LPAREN, TOK_RPAREN, TOK_LBRACKET, TOK_RBRACKET,
     TOK_COMMA, TOK_COLON, TOK_SEMICOLON,
+
+    /* only in other dialects */
+    TOK_PROGRAM, TOK_ENDPROGRAM, TOK_DECLARE, TOK_AS, TOK_DIMENSION, TOK_BYREF, TOK_STRINGTYPE,
+    TOK_SWITCH, TOK_CASE, TOK_OTHERWISE, TOK_ENDSWITCH, TOK_NOLINE, TOK_PRINTLN, TOK_CALL,
+    TOK_RETURNS, TOK_CONST, TOK_NEXT, TOK_ENDTYPE, TOK_IGNORE, TOK_UNTIL_WHILE,
+    TOK_POWER, TOK_IDIV, TOK_RDIV, TOK_CONCAT,
+    TOK_LBRACE, TOK_RBRACE, TOK_INCREMENT, TOK_DECREMENT, TOK_ADD_ASSIGN, TOK_SUB_ASSIGN,
     TOK_COUNT
 } TokenKind;
 
@@ -35,6 +42,7 @@ typedef struct {
      * escapes kept as written (they are the C ones). */
     const char *text;
     bool starts_line;
+    int length;   /* in the source */
 } Token;
 
 typedef struct {
@@ -45,6 +53,9 @@ typedef struct {
 /* Splits the source into tokens. Bad characters are reported and skipped; the
  * list always ends with TOK_EOF. */
 TokenList lex(const Source *source, const Config *config, Arena *arena, Diag *diag);
+
+/* The other dialects. */
+TokenList lex_dialect(const Source *source, const Config *config, Arena *arena, Diag *diag);
 
 const char *token_kind_name(TokenKind kind);
 

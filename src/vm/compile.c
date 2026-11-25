@@ -42,7 +42,7 @@ static bool is_number(const Type *t) {
 }
 
 static void convert(Compiler *c, Type *to) {
-    if (is_number(to) || to->kind == TY_POINTER) emit(c, OP_CONVERT)->type = to;
+    if (is_number(to) || to->kind == TY_POINTER || to->kind == TY_STRING) emit(c, OP_CONVERT)->type = to;
 }
 
 static void note(Compiler *c, const Expr *expr) { emit(c, OP_EVAL)->expr = expr; }

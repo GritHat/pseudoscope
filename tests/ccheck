@@ -3,4 +3,4 @@
 # stop at the first invalid access or undefined behaviour.
 exec "${TEST_CC:-${CC:-cc}}" -Wall -Wextra -Werror -Wno-unknown-warning-option -Wno-unused-variable -Wno-unused-parameter \
     -Wno-unused-but-set-variable -Wno-unused-but-set-parameter \
-    -g -fsanitize=address,undefined -fno-sanitize-recover=all "$@"
+    -include "$(dirname "$0")/asan_options.h" -g -fsanitize=address,undefined -fno-sanitize-recover=all "$@"

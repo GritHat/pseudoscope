@@ -88,7 +88,8 @@ static void push(Lexer *lx, TokenKind kind, Loc loc, const char *text, size_t le
         lx->capacity = capacity;
     }
     lx->items[lx->count++] = (Token){
-        kind, loc, arena_strndup(lx->arena, text, length), lx->fresh_line};
+        kind, loc, arena_strndup(lx->arena, text, length), lx->fresh_line,
+        (int)length + (kind == TOK_STRING || kind == TOK_CHAR ? 2 : 0)};
     lx->fresh_line = false;
 }
 
@@ -325,6 +326,7 @@ static void lex_symbol(Lexer *lx) {
 }
 
 TokenList lex(const Source *source, const Config *config, Arena *arena, Diag *diag) {
+    if (config->dialect != DIALECT_PLIKE) return lex_dialect(source, config, arena, diag);
     Lexer lx = {.source = source, .config = config, .arena = arena, .diag = diag,
                 .line = 1, .fresh_line = true};
     if (source->length >= 3 && memcmp(source->text, "\xEF\xBB\xBF", 3) == 0)
@@ -359,7 +361,9 @@ const char *token_kind_name(TokenKind kind) {
         [TOK_ARROW] = "'->'", [TOK_DOT] = "'.'", [TOK_DOTDOT] = "'..'", [TOK_ELLIPSIS] = "'...'",
         [TOK_LPAREN] = "'('", [TOK_RPAREN] = "')'", [TOK_LBRACKET] = "'['",
         [TOK_RBRACKET] = "']'", [TOK_COMMA] = "','", [TOK_COLON] = "':'",
-        [TOK_SEMICOLON] = "';'", [TOK_TRUE] = "'true'", [TOK_FALSE] = "'false'",
+        [TOK_SEMICOLON] = "';'", [TOK_POWER] = "'^'", [TOK_IDIV] = "'div'", [TOK_RDIV] = "'/'",
+        [TOK_CONCAT] = "'&'", [TOK_LBRACE] = "'{'", [TOK_RBRACE] = "'}'", [TOK_STRINGTYPE] = "'string'",
+        [TOK_ENDPROGRAM] = "the end of the program", [TOK_ENDSWITCH] = "the end of the cases", [TOK_TRUE] = "'true'", [TOK_FALSE] = "'false'",
     };
     if (kind >= 0 && kind < TOK_COUNT && NAMES[kind]) return NAMES[kind];
     static char keyword[32];

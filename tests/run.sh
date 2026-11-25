@@ -2,6 +2,7 @@
 # End-to-end tests.
 #   programs/  translated, compiled, run; output compared with NAME.out
 #              (NAME.in: input, NAME.opts: options, NAME.status: exit status)
+#   dialects/  programs in other pseudocodes (FILE.in, FILE.out)
 #   accept/    syntax that must be accepted, and give C that compiles
 #   errors/    programs to refuse; messages compared with NAME.err
 #   ui/        NAME.ui: program, size, keys, options; compared with NAME.screen
@@ -44,6 +45,28 @@ for file in *.plike; do
     else
         compare "programs/$name (exec)" "$name.out" "$tmp/out"
     fi
+done
+
+cd "$here/dialects" || exit 1
+for file in *.psc *.alg *.por *.pse; do
+    input=/dev/null; [ -f "$file.in" ] && input=$file.in
+    for how in exec "run --cc=$here/ccheck"; do
+        # shellcheck disable=SC2086
+        "$plike" $how "$file" < "$input" > "$tmp/out" 2> "$tmp/err"
+        got=$?
+        if [ "$got" != 0 ]; then
+            echo "exit status $got, expected 0" >> "$tmp/err"
+            fail "dialects/$file ($how)" "$tmp/err"
+        else
+            compare "dialects/$file ($how)" "$file.out" "$tmp/out"
+        fi
+    done
+done
+
+# systems, classes, designs: their own tests, and the examples
+cd "$here/.." || exit 1
+for file in examples/systems/*.plike examples/advanced/*.plike; do
+    if "$plike" test "$file" > "$tmp/out" 2>&1; then pass; else fail "$file" "$tmp/out"; fi
 done
 
 cd "$here/accept" || exit 1

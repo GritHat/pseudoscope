@@ -1,6 +1,7 @@
 #include "plike/parser.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define MAX_DEPTH 500
@@ -22,7 +23,34 @@ typedef struct {
     Link **links_tail;
     Class *klass;   /* being parsed */
     bool in_test;
+
+    /* other dialects */
+    Function *function;         /* being read */
+    struct Dimensioned *dimensioned;
+    struct Constant *constants;
+    Stmt *initial;              /* first values of the globals */
+    int switches;
 } Parser;
+
+typedef struct Dimensioned {
+    VarDecl *decl;
+    struct Dimensioned *next;
+} Dimensioned;
+
+typedef struct Constant {
+    const char *name;
+    Expr *value;
+    struct Constant *next;
+} Constant;
+
+static bool foreign(const Parser *p) { return p->config->dialect != DIALECT_PLIKE; }
+static Stmt *foreign_statement(Parser *p, bool *handled);
+static bool is_case_label(const Parser *p);
+static Stmt *parse_statement(Parser *p);
+static Stmt *parse_simple(Parser *p);
+static Stmt *parse_return(Parser *p);
+static Stmt *parse_io(Parser *p, StmtKind kind);
+static bool parse_dims(Parser *p, DimList *dims);
 
 static Expr *parse_expr(Parser *p);
 static Expr *parse_postfix(Parser *p);
@@ -74,7 +102,8 @@ static void syntax_error(Parser *p, const char *expected) {
             break;
         default: {
             char found[40];
-            snprintf(found, sizeof found, "%s", diag_text(p->diag, token_kind_name(token->kind)));
+            if (token->kind >= TOK_PROGRAM && token->text[0]) snprintf(found, sizeof found, "'%.36s'", token->text);
+            else snprintf(found, sizeof found, "%s", diag_text(p->diag, token_kind_name(token->kind)));
             diag_error(p->diag, token->loc, "expected %s, found %s", expected, found);
         }
     }
@@ -147,6 +176,10 @@ static bool parse_args(Parser *p, ExprList *args, TokenKind close, const char *e
                 return false;
             }
             list_add(p, args, arg);
+            while (p->config->dialect == DIALECT_VISUALG && check(p, TOK_COLON)) { /* x:8:2, a width */
+                advance(p);
+                match(p, TOK_INT);
+            }
         } while (match(p, TOK_COMMA));
     }
     p->brackets--;
@@ -160,7 +193,14 @@ static Expr *parse_primary(Parser *p) {
         case TOK_STRING: return new_leaf(p, EX_STRING);
         case TOK_CHAR: return new_leaf(p, EX_CHAR);
         case TOK_TRUE: case TOK_FALSE: return new_leaf(p, EX_BOOL);
-        case TOK_IDENT: return new_leaf(p, EX_NAME);
+        case TOK_IDENT:
+            for (const struct Constant *c = p->constants; c; c = c->next) {
+                if (strcmp(c->name, cur(p)->text) == 0) {
+                    advance(p);
+                    return c->value;
+                }
+            }
+            return new_leaf(p, EX_NAME);
         case TOK_LPAREN: {
             advance(p);
             p->brackets++;
@@ -236,8 +276,9 @@ static int precedence(TokenKind op) {
         case TOK_EQ: case TOK_NE: return 6;
         case TOK_LT: case TOK_GT: case TOK_LE: case TOK_GE: return 7;
         case TOK_SHL: case TOK_SHR: return 8;
-        case TOK_PLUS: case TOK_MINUS: return 9;
-        case TOK_STAR: case TOK_SLASH: case TOK_MOD: return 10;
+        case TOK_PLUS: case TOK_MINUS: case TOK_CONCAT: return 9;
+        case TOK_STAR: case TOK_SLASH: case TOK_MOD: case TOK_RDIV: case TOK_IDIV: return 10;
+        case TOK_POWER: return 11;
         default: return 0;
     }
 }
@@ -248,7 +289,7 @@ static Expr *parse_binary(Parser *p, int min_precedence) {
         const Token *op = cur(p);
         TokenKind kind = op->kind;
         /* "a = b" compares, even when '=' is also the assignment operator. */
-        if (kind == TOK_ASSIGN && strcmp(op->text, "=") == 0) kind = TOK_EQ;
+        if (kind == TOK_ASSIGN && strcmp(op->text, "=") == 0 && !foreign(p)) kind = TOK_EQ;
         int level = precedence(kind);
         if (!level || level < min_precedence) break;
         /* Statements need no ';', so a '*' that opens a line starts a new one:
@@ -258,6 +299,17 @@ static Expr *parse_binary(Parser *p, int min_precedence) {
         advance(p);
         Expr *right = parse_binary(p, level + 1);
         if (!right) return NULL;
+        if (kind == TOK_POWER) {
+            Expr *name = new_expr(p, EX_NAME, op->loc, NULL, NULL);
+            name->text = "pow";
+            Expr *call = new_expr(p, EX_APPLY, op->loc, name, NULL);
+            list_add(p, &call->args, left);
+            list_add(p, &call->args, right);
+            call->depth = (left->depth > right->depth ? left->depth : right->depth) + 1;
+            left = call;
+            continue;
+        }
+        if (kind == TOK_IDIV) kind = TOK_SLASH;
         left = new_expr(p, EX_BINARY, op->loc, left, right);
         left->op = kind;
     }
@@ -302,7 +354,7 @@ static bool parse_dims(Parser *p, DimList *dims) {
                 }
             } else {
                 dim.hi = parse_expr(p);
-                if (dim.hi && match(p, TOK_DOTDOT)) {
+                if (dim.hi && (match(p, TOK_DOTDOT) || (p->config->dialect == DIALECT_CAMBRIDGE && match(p, TOK_COLON)))) {
                     dim.lo = dim.hi;
                     dim.hi = parse_expr(p);
                 }
@@ -388,7 +440,7 @@ static TypeSpec *parse_type(Parser *p) {
 
     spec->pointers = parse_stars(p);
     switch (cur(p)->kind) {
-        case TOK_INTEGER: case TOK_REAL: case TOK_LOGICAL: case TOK_CHARACTER:
+        case TOK_INTEGER: case TOK_REAL: case TOK_LOGICAL: case TOK_CHARACTER: case TOK_STRINGTYPE:
             spec->base = advance(p)->kind;
             break;
         case TOK_IDENT:
@@ -786,6 +838,8 @@ static bool ends_statements(TokenKind kind) {
         case TOK_EOF: case TOK_END: case TOK_ENDFUNCTION: case TOK_ENDPROCEDURE:
         case TOK_ELSE: case TOK_ELSEIF: case TOK_ENDIF: case TOK_ENDWHILE:
         case TOK_ENDFOR: case TOK_UNTIL: case TOK_FUNCTION: case TOK_PROCEDURE:
+        case TOK_ENDPROGRAM: case TOK_OTHERWISE: case TOK_ENDSWITCH: case TOK_NEXT: case TOK_UNTIL_WHILE:
+        case TOK_RBRACE: case TOK_CASE: case TOK_ENDTYPE: case TOK_PROGRAM:
             return true;
         default:
             return false;
@@ -829,7 +883,8 @@ static Stmt *parse_if(Parser *p) { /* at 'if'; "elseif" chains stay flat */
         Stmt *branch = new_stmt(p, ST_IF);
         advance(p);
         branch->value = parse_expr(p);
-        if (!branch->value || !expect(p, TOK_THEN, "'then'")) return NULL;
+        if (!branch->value) return NULL;
+        if (!match(p, TOK_THEN) && !foreign(p) && !expect(p, TOK_THEN, "'then'")) return NULL;
         branch->body = parse_statements(p);
         *link = branch;
         link = &branch->otherwise;
@@ -852,7 +907,7 @@ static Stmt *parse_for(Parser *p) {
         return NULL;
     }
     stmt->target = new_leaf(p, EX_NAME);
-    if (!match(p, TOK_ASSIGN) && !match(p, TOK_EQ)) {
+    if (!match(p, TOK_ASSIGN) && !match(p, TOK_EQ) && !(foreign(p) && match(p, TOK_OF))) {
         syntax_error(p, "':='");
         return NULL;
     }
@@ -864,14 +919,19 @@ static Stmt *parse_for(Parser *p) {
         stmt->step = parse_expr(p);
         if (!stmt->step) return NULL;
     }
-    if (!expect(p, TOK_DO, "'do'")) return NULL;
+    if (!match(p, TOK_DO) && !foreign(p) && !expect(p, TOK_DO, "'do'")) return NULL;
     stmt->body = parse_statements(p);
+    if (match(p, TOK_NEXT)) { /* NEXT i */
+        if (check(p, TOK_IDENT) && !cur(p)->starts_line) advance(p);
+        return stmt;
+    }
     return expect(p, TOK_ENDFOR, "'endfor'") ? stmt : NULL;
 }
 
 /* print and read: the parentheses around the arguments are optional. */
 static Stmt *parse_io(Parser *p, StmtKind kind) {
     Stmt *stmt = new_stmt(p, kind);
+    if (foreign(p)) stmt->text = cur(p)->text;
     advance(p);
     int start = p->pos;
     if (match(p, TOK_LPAREN)) {
@@ -894,6 +954,7 @@ static Stmt *parse_io(Parser *p, StmtKind kind) {
         p->pos = start;
     }
     do {
+        if (foreign(p) && cur(p)->starts_line) break; /* just a new line */
         Expr *arg = parse_expr(p);
         if (!arg) return NULL;
         list_add(p, &stmt->args, arg);
@@ -923,7 +984,7 @@ static Stmt *parse_simple(Parser *p) {
     Stmt *stmt = new_stmt(p, ST_CALL);
     Expr *expr = parse_unary(p);
     if (!expr) return NULL;
-    if (match(p, TOK_ASSIGN)) {
+    if (match(p, TOK_ASSIGN) || (foreign(p) && match(p, TOK_EQ))) {
         stmt->kind = ST_ASSIGN;
         stmt->target = expr;
         stmt->value = parse_expr(p);
@@ -1058,7 +1119,10 @@ static Stmt *parse_word_statement(Parser *p, bool *handled) {
 static Stmt *parse_statement(Parser *p) {
     Stmt *stmt;
     bool handled = false;
-    if (check(p, TOK_IDENT) || (p->in_test && check(p, TOK_STEP))) {
+    if (foreign(p)) {
+        stmt = foreign_statement(p, &handled);
+        if (handled) return stmt;
+    } else if (check(p, TOK_IDENT) || (p->in_test && check(p, TOK_STEP))) {
         stmt = parse_word_statement(p, &handled);
         if (handled) return stmt;
     }
@@ -1076,14 +1140,22 @@ static Stmt *parse_statement(Parser *p) {
             stmt = new_stmt(p, ST_WHILE);
             advance(p);
             stmt->value = parse_expr(p);
-            if (!stmt->value || !expect(p, TOK_DO, "'do'")) return NULL;
+            if (!stmt->value) return NULL;
+            if (!match(p, TOK_DO) && !foreign(p) && !expect(p, TOK_DO, "'do'")) return NULL;
             stmt->body = parse_statements(p);
             return expect(p, TOK_ENDWHILE, "'endwhile'") ? stmt : NULL;
         case TOK_REPEAT:
             stmt = new_stmt(p, ST_REPEAT);
             advance(p);
             stmt->body = parse_statements(p);
-            if (!expect(p, TOK_UNTIL, "'until'")) return NULL;
+            if (match(p, TOK_UNTIL_WHILE)) { /* Mientras Que: goes on while it is true */
+                Expr *test = parse_expr(p);
+                if (!test) return NULL;
+                stmt->value = new_expr(p, EX_UNARY, test->loc, test, NULL);
+                stmt->value->op = TOK_NOT;
+                return stmt;
+            }
+            if (!(foreign(p) && match(p, TOK_TO)) && !expect(p, TOK_UNTIL, "'until'")) return NULL;
             stmt->value = parse_expr(p);
             return stmt->value ? stmt : NULL;
         case TOK_BEGIN:
@@ -1112,9 +1184,12 @@ static Stmt *parse_statements(Parser *p) {
     for (;;) {
         while (match(p, TOK_SEMICOLON)) {}
         if (ends_statements(cur(p)->kind) || p->diag->too_many) break;
+        if (p->switches > 0 && is_case_label(p)) break;
+        if (foreign(p) && (check(p, TOK_TYPE) || check(p, TOK_TO))) break;
         Stmt *stmt = parse_statement(p);
         if (stmt) {
             *tail = stmt;
+            while (stmt->next) stmt = stmt->next; /* some dialects give more than one */
             tail = &stmt->next;
         } else {
             p->brackets = 0;
@@ -1125,6 +1200,8 @@ static Stmt *parse_statements(Parser *p) {
     leave(p);
     return first;
 }
+
+#include "foreign.inc"
 
 /* ---- program ---- */
 
@@ -1183,6 +1260,11 @@ Program *parse(TokenList tokens, const Config *config, Arena *arena, Diag *diag)
                      .functions_tail = &program->functions,
                      .classes_tail = &program->classes, .links_tail = &program->links};
     Parser *p = &parser;
+    if (foreign(p)) {
+        foreign_program(p);
+        if (!diag->errors) infer_types(p);
+        return program;
+    }
     for (;;) {
         while (match(p, TOK_SEMICOLON)) {}
         if (check(p, TOK_EOF) || diag->too_many) break;

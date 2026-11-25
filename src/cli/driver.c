@@ -268,8 +268,11 @@ static int start_ui(const Options *options) {
     return run_ui(&ui);
 }
 
-int run_command(const Options *options) {
-    if (options->command == CMD_UI) return start_ui(options);
+int run_command(const Options *given) {
+    if (given->command == CMD_UI) return start_ui(given);
+    Options adjusted = *given;
+    const Options *options = &adjusted;
+    adjusted.config = config_for(given->config, given->input);
     StrBuf text = {0};
     if (!read_file(options->input, &text)) {
         strbuf_free(&text);

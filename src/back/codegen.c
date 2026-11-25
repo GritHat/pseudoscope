@@ -13,6 +13,7 @@ typedef struct {
     bool uses_math;
     bool uses_abs;
     bool uses_random;
+    bool uses_text;
     LineMap *map;
 } Gen;
 
@@ -24,6 +25,7 @@ enum {
 
 static void gen_expr(Gen *g, const Expr *expr, int min);
 static void gen_statements(Gen *g, const Stmt *stmt);
+static const char *c_operator(TokenKind op);
 
 static void put(Gen *g, const char *text) { strbuf_puts(g->out, text); }
 
@@ -230,6 +232,38 @@ static void gen_address(Gen *g, const Expr *expr, int min) {
 static void gen_call(Gen *g, const Expr *expr) {
     const Symbol *callee = expr->symbol;
     const char *name = callee->c_name;
+    if (callee->builtin && strcmp(name, "random_below") == 0) {
+        g->uses_random = true;
+        put(g, "plike_random(0, ");
+        gen_expr(g, expr->args.items[0], P_ADD);
+        put(g, " - 1)");
+        return;
+    }
+    if (callee->builtin && (strcmp(name, "trunc") == 0 || strcmp(name, "round") == 0)) {
+        g->uses_math = true;
+        strbuf_printf(g->out, "(int)%s(", name);
+        gen_expr(g, expr->args.items[0], P_LOWEST);
+        put(g, ")");
+        return;
+    }
+    if (callee->builtin && strcmp(name, "length") == 0) {
+        g->uses_text = true;
+        put(g, "(int)strlen(");
+        gen_expr(g, expr->args.items[0], P_LOWEST);
+        put(g, ")");
+        return;
+    }
+    if (callee->builtin && expr->type->kind == TY_STRING) {
+        g->uses_text = true;
+        strbuf_printf(g->out, "plike_%s(", name);
+        for (int i = 0; i < expr->args.count; i++) {
+            if (i) put(g, ", ");
+            gen_expr(g, expr->args.items[i], P_LOWEST);
+        }
+        if (strcmp(name, "substring") == 0) strbuf_printf(g->out, ", %d", g->config->index_base);
+        put(g, ")");
+        return;
+    }
     if (callee->builtin && strcmp(name, "random") == 0) {
         g->uses_random = true;
         name = "plike_random";
@@ -277,13 +311,20 @@ static void gen_number(Gen *g, const Expr *expr) {
     put(g, text); /* "1." and "1.f" are valid C */
 }
 
+/* Joining or comparing texts. */
+static bool is_text_op(const Expr *expr) {
+    return expr->kind == EX_BINARY && (expr->base->type->kind == TY_STRING || expr->right->type->kind == TY_STRING);
+}
+
 static int precedence(const Expr *expr) {
     switch (expr->kind) {
         case EX_UNARY:
             if (expr->op != TOK_AT) return P_UNARY;
             return is_by_reference(expr->base) ? P_POSTFIX : precedence(expr->base);
         case EX_NAME: return is_by_reference(expr) ? P_UNARY : P_POSTFIX;
-        case EX_BINARY: break;
+        case EX_BINARY:
+            if (is_text_op(expr)) return expr->type->kind == TY_STRING ? P_POSTFIX : P_EQ;
+            break;
         default: return P_POSTFIX;
     }
     switch (expr->op) {
@@ -375,6 +416,23 @@ static void gen_field(Gen *g, const Expr *expr) {
     put(g, expr->symbol->c_name);
 }
 
+static void gen_as_text(Gen *g, const Expr *expr) {
+    bool text = expr->type->kind == TY_STRING;
+    if (!text) put(g, expr->type->kind == TY_REAL ? "plike_real_text(" : "plike_int_text(");
+    gen_expr(g, expr, P_LOWEST);
+    if (!text) put(g, ")");
+}
+
+static void gen_text_op(Gen *g, const Expr *expr) {
+    g->uses_text = true;
+    put(g, expr->type->kind == TY_STRING ? "plike_concat(" : "strcmp(");
+    gen_as_text(g, expr->base);
+    put(g, ", ");
+    gen_as_text(g, expr->right);
+    put(g, ")");
+    if (expr->type->kind != TY_STRING) strbuf_printf(g->out, " %s 0", c_operator(expr->op));
+}
+
 static void gen_expr(Gen *g, const Expr *expr, int min) {
     int level = precedence(expr);
     bool parens = level < min;
@@ -398,6 +456,17 @@ static void gen_expr(Gen *g, const Expr *expr, int min) {
         case EX_FIELD: gen_field(g, expr); break;
         case EX_UNARY: gen_unary(g, expr); break;
         case EX_BINARY:
+            if (is_text_op(expr)) {
+                gen_text_op(g, expr);
+                break;
+            }
+            if (expr->op == TOK_RDIV) {
+                put(g, "(float)");
+                gen_expr(g, expr->base, P_UNARY);
+                put(g, " / ");
+                gen_operand(g, expr, expr->right, level + 1);
+                break;
+            }
             gen_operand(g, expr, expr->base, level);
             strbuf_printf(g->out, " %s ", c_operator(expr->op));
             gen_operand(g, expr, expr->right, level + 1);
@@ -495,7 +564,18 @@ static void gen_print(Gen *g, const Stmt *stmt) {
     }
     put(g, "printf(\"");
     for (int i = 0; i < stmt->args.count; i++) {
-        if (i > 0) put(g, " ");
+        if (i > 0 && !stmt->joined) put(g, " ");
+        if (stmt->joined) {
+            TypeKind kind = stmt->args.items[i]->type->kind;
+            if (kind == TY_REAL) {
+                put(g, "%.10g");
+                continue;
+            }
+            if (kind == TY_BOOL) {
+                put(g, "%s");
+                continue;
+            }
+        }
         switch (stmt->args.items[i]->type->kind) {
             case TY_REAL: put(g, "%f"); break;
             case TY_CHAR: put(g, "%c"); break;
@@ -506,10 +586,17 @@ static void gen_print(Gen *g, const Stmt *stmt) {
             default: put(g, "%d");
         }
     }
-    put(g, "\\n\"");
+    put(g, stmt->same_line ? "\"" : "\\n\"");
     for (int i = 0; i < stmt->args.count; i++) {
         const Expr *arg = stmt->args.items[i];
         put(g, ", ");
+        if (stmt->joined && arg->type->kind == TY_BOOL) {
+            static const char *const WORDS[][2] = {{"1", "0"}, {"VERDADERO", "FALSO"}, {"VERDADEIRO", "FALSO"},
+                                                   {"verdadeiro", "falso"}, {"TRUE", "FALSE"}};
+            gen_expr(g, arg, P_POSTFIX);
+            strbuf_printf(g->out, " ? \"%s\" : \"%s\"", WORDS[g->config->dialect][0], WORDS[g->config->dialect][1]);
+            continue;
+        }
         bool address = arg->type->kind == TY_POINTER && arg->type->base->kind != TY_CHAR;
         if (address) put(g, "(void *)");
         gen_expr(g, arg, address ? P_UNARY : P_LOWEST);
@@ -522,6 +609,12 @@ static void gen_read(Gen *g, const Stmt *stmt) {
     for (int i = 0; i < stmt->args.count; i++) {
         const Expr *arg = stmt->args.items[i];
         if (i > 0) indent(g);
+        if (arg->type->kind == TY_STRING) {
+            g->uses_text = true;
+            gen_expr(g, arg, P_LOWEST);
+            strbuf_printf(g->out, " = plike_read_text(%d);\n", stmt->loc.line);
+            continue;
+        }
         if (arg->type->kind == TY_BOOL) { /* scanf cannot store into a bool */
             put(g, "{ int plike_input; if (scanf(\"%d\", &plike_input) != 1) ");
             strbuf_printf(g->out, "plike_fail(\"invalid input\", %d); ", stmt->loc.line);
@@ -702,7 +795,7 @@ static void gen_function(Gen *g, const Function *function) {
     if (sym->result) {
         indent(g);
         gen_declarator(g, base_type(g, sym->type), "", sym->result->c_name);
-        put(g, sym->type->kind == TY_RECORD ? " = {0};\n" : " = 0;\n");
+        put(g, sym->type->kind == TY_RECORD ? " = {0};\n" : sym->type->kind == TY_STRING ? " = \"\";\n" : " = 0;\n");
     }
     for (int i = 0; i < sym->param_count; i++) {
         const Symbol *param = sym->params[i];
@@ -766,7 +859,8 @@ void generate(const Program *program, const Config *config, Arena *arena, StrBuf
     if (config->bounds_check && g->uses_fail) strbuf_puts(out, "#include <limits.h>\n");
     if (g->uses_math) strbuf_puts(out, "#include <math.h>\n");
     strbuf_puts(out, "#include <stdbool.h>\n#include <stdio.h>\n");
-    if (g->uses_fail || g->uses_abs) strbuf_puts(out, "#include <stdlib.h>\n");
+    if (g->uses_fail || g->uses_abs || g->uses_text) strbuf_puts(out, "#include <stdlib.h>\n");
+    if (g->uses_text) strbuf_puts(out, "#include <string.h>\n");
     strbuf_puts(out, "\n");
     if (g->uses_fail) {
         strbuf_puts(out,
@@ -774,6 +868,58 @@ void generate(const Program *program, const Config *config, Arena *arena, StrBuf
             "    fflush(stdout);\n"
             "    fprintf(stderr, \"runtime error at line %d: %s\\n\", line, message);\n"
             "    exit(1);\n"
+            "}\n\n");
+    }
+    if (g->uses_text) {
+        strbuf_puts(out,
+            "static inline char *plike_new_text(size_t length) {\n"
+            "    char *text = malloc(length + 1);\n"
+            "    if (!text) exit(1);\n"
+            "    text[length] = '\\0';\n"
+            "    return text;\n"
+            "}\n\n"
+            "static inline const char *plike_concat(const char *a, const char *b) {\n"
+            "    char *text = plike_new_text(strlen(a) + strlen(b));\n"
+            "    strcpy(text, a);\n"
+            "    strcat(text, b);\n"
+            "    return text;\n"
+            "}\n\n"
+            "static inline const char *plike_int_text(int n) {\n"
+            "    char *text = plike_new_text(16);\n"
+            "    snprintf(text, 16, \"%d\", n);\n"
+            "    return text;\n"
+            "}\n\n"
+            "static inline const char *plike_real_text(double x) {\n"
+            "    char *text = plike_new_text(32);\n"
+            "    snprintf(text, 32, \"%.10g\", x);\n"
+            "    return text;\n"
+            "}\n\n"
+            "static inline const char *plike_read_text(int line) {\n"
+            "    char *text = plike_new_text(1999);\n"
+            "    if (scanf(\" %1999[^\\n]\", text) != 1) {\n"
+            "        fprintf(stderr, \"runtime error at line %d: invalid input\\n\", line);\n"
+            "        exit(1);\n"
+            "    }\n"
+            "    return text;\n"
+            "}\n\n"
+            "static inline const char *plike_upper(const char *s) {\n"
+            "    char *text = plike_new_text(strlen(s));\n"
+            "    for (size_t i = 0; s[i]; i++) text[i] = (char)(s[i] >= 'a' && s[i] <= 'z' ? s[i] - 32 : s[i]);\n"
+            "    return text;\n"
+            "}\n\n"
+            "static inline const char *plike_lower(const char *s) {\n"
+            "    char *text = plike_new_text(strlen(s));\n"
+            "    for (size_t i = 0; s[i]; i++) text[i] = (char)(s[i] >= 'A' && s[i] <= 'Z' ? s[i] + 32 : s[i]);\n"
+            "    return text;\n"
+            "}\n\n"
+            "static inline const char *plike_substring(const char *s, int from, int to, int base) {\n"
+            "    int length = (int)strlen(s);\n"
+            "    from = from - base < 0 ? 0 : from - base;\n"
+            "    to = to - base > length - 1 ? length - 1 : to - base;\n"
+            "    if (to < from) return \"\";\n"
+            "    char *text = plike_new_text((size_t)(to - from + 1));\n"
+            "    memcpy(text, s + from, (size_t)(to - from + 1));\n"
+            "    return text;\n"
             "}\n\n");
     }
     if (g->uses_random) {

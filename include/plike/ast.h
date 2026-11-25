@@ -105,6 +105,7 @@ struct VarDecl {
     bool has_dims;      /* brackets after the name */
     DimList dims;
     TypeSpec *spec;     /* NULL for a parameter typed in the body */
+    bool inferred;      /* its type was not written */
     bool spec_inherited;/* "a" in "a, b : real" inside a parameter list */
     ParamMode mode;
     Symbol *symbol;
@@ -124,6 +125,7 @@ struct Function {
     int last_line;
     const char *name;
     const char *full_name;  /* "Stack.push" */
+    const char *result_name;/* PSeInt: the variable that holds the result */
     bool is_procedure;
     bool is_handler;
     bool is_test;
@@ -191,6 +193,8 @@ struct Stmt {
     VarDecl *vars;  /* var */
     const char *name;
     const char *text;
+    bool same_line;  /* print without a new line */
+    bool joined;     /* print without blanks in between, numbers as short as possible */
     const Class *to_all; /* send ... to all C */
     const char *to_all_name;
     Stmt *body;

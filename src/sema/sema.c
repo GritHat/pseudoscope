@@ -103,13 +103,14 @@ static bool assignable(const Type *to, const Type *from, const Expr *value) {
     if (is_number(to) && is_number(from)) return true;
     if (to->kind == TY_POINTER) {
         if (value && is_zero(value)) return true;
-        if (from->kind == TY_STRING) return to->base->kind == TY_CHAR;
+        if (from->kind == TY_STRING) return to->base->kind == TY_CHAR && (!value || value->kind == EX_STRING);
         if (from->kind == TY_ARRAY)
             return from->dims.count == 1 && same_type(to->base, from->base);
         if (from->kind == TY_POINTER && from->base->kind == TY_VOID) /* the sender */
             return to->base->kind == TY_RECORD && to->base->record->klass;
         return same_type(to, from);
     }
+    if (to->kind == TY_STRING) return from->kind == TY_STRING;
     return to->kind == TY_RECORD && same_type(to, from);
 }
 
@@ -267,6 +268,16 @@ static const char *fresh_name(Sema *s, const char *name) {
 }
 
 static const char *c_name(Sema *s, const char *name, bool is_global) {
+    char clean[128];
+    size_t n = 0;
+    bool foreign = false; /* "año" */
+    for (const char *c = name; *c && n + 1 < sizeof clean; c++) {
+        if ((unsigned char)*c >= 0x80) foreign = true;
+        else clean[n++] = *c;
+        if ((unsigned char)*c >= 0xC0) clean[n++] = '_';
+    }
+    clean[n] = '\0';
+    if (foreign) return fresh_name(s, arena_strdup(s->arena, clean));
     bool clash = is_reserved_in_c(name) || (is_global && is_library_name(name));
     return clash ? fresh_name(s, name) : name;
 }
@@ -426,9 +437,14 @@ static Type *resolve_decl_type(Sema *s, VarDecl *decl, TypeSpec *spec, bool dims
         case TOK_REAL: base = &T_REAL; break;
         case TOK_LOGICAL: base = &T_BOOL; break;
         case TOK_CHARACTER: base = &T_CHAR; break;
+        case TOK_STRINGTYPE: base = &T_STRING; break;
         default: {
             Record *record = spec->record;
             if (!record) record = find_record(s, spec->name, spec->loc);
+            if (!record && equals_ignore_case(spec->name, "string")) {
+                base = &T_STRING;
+                break;
+            }
             if (!record) {
                 diag_error(s->diag, spec->loc, "unknown type '%s'", spec->name);
                 return &T_ERROR;
@@ -494,6 +510,8 @@ static const struct {
 } BUILTINS[] = {
     {"sqrt", 1}, {"sin", 1}, {"cos", 1}, {"tan", 1}, {"exp", 1}, {"log", 1},
     {"floor", 1}, {"ceil", 1}, {"fabs", 1}, {"pow", 2}, {"abs", 1}, {"random", 2},
+    {"random_below", 1}, {"trunc", 1}, {"round", 1}, {"length", 1}, {"upper", 1}, {"lower", 1},
+    {"substring", 3}, {"concat", 2},
 };
 
 static Symbol *find_builtin(Sema *s, const char *name) {
@@ -544,6 +562,14 @@ static Type *check_scalar(Sema *s, Expr *expr, const char *what) {
 static void check_argument(Sema *s, Symbol *callee, int index, Expr *arg) {
     Type *type = check_value(s, arg);
     if (!callee->params) { /* builtin */
+        bool text = strcmp(callee->name, "length") == 0 || strcmp(callee->name, "upper") == 0 ||
+                    strcmp(callee->name, "lower") == 0 || strcmp(callee->name, "concat") == 0 ||
+                    (strcmp(callee->name, "substring") == 0 && index == 0);
+        if (text) {
+            if (!is_error(type) && type->kind != TY_STRING)
+                diag_error(s->diag, arg->loc, "'%s' takes a text, not %s", callee->name, type_name(s->arena, type));
+            return;
+        }
         if (!is_error(type) && !is_number(type))
             diag_error(s->diag, arg->loc, "'%s' takes numbers, not %s", callee->name,
                        type_name(s->arena, type));
@@ -557,7 +583,7 @@ static void check_argument(Sema *s, Symbol *callee, int index, Expr *arg) {
         ok = type->kind == TY_ARRAY ? same_type(want, type)
            : type->kind == TY_POINTER && want->dims.count == 1 && same_type(want->base, type->base);
         if (type->kind == TY_STRING)
-            ok = want->base->kind == TY_CHAR && want->dims.count == 1 && param->mode == MODE_IN;
+            ok = want->base->kind == TY_CHAR && want->dims.count == 1 && param->mode == MODE_IN && arg->kind == EX_STRING;
     } else if (param->by_reference) {
         if (arg->kind == EX_UNARY && arg->op == TOK_AMP) { /* swap(&a, &b) */
             ok = type->kind == TY_POINTER && same_type(type->base, want);
@@ -588,7 +614,14 @@ static Type *check_call(Sema *s, Expr *expr, Symbol *callee) {
         return callee->type;
     }
     for (int i = 0; i < expr->args.count; i++) check_argument(s, callee, i, expr->args.items[i]);
-    if (callee->builtin && strcmp(callee->builtin, "random") == 0) return &T_INT;
+    if (callee->builtin) {
+        static const char *const INTS[] = {"random", "random_below", "trunc", "round", "length"};
+        static const char *const TEXTS[] = {"upper", "lower", "substring", "concat"};
+        for (int i = 0; i < 5; i++)
+            if (strcmp(callee->builtin, INTS[i]) == 0) return &T_INT;
+        for (int i = 0; i < 4; i++)
+            if (strcmp(callee->builtin, TEXTS[i]) == 0) return &T_STRING;
+    }
     if (callee->builtin && strcmp(callee->builtin, "abs") == 0 &&
         is_integral(expr->args.items[0]->type))
         return &T_INT;
@@ -799,7 +832,14 @@ static Type *check_binary(Sema *s, Expr *expr) {
     if (is_error(left) || is_error(right)) return &T_ERROR;
     bool numbers = is_number(left) && is_number(right);
     bool integers = is_integral(left) && is_integral(right);
+    bool text = left->kind == TY_STRING || right->kind == TY_STRING;
+    if (text && (expr->op == TOK_PLUS || expr->op == TOK_CONCAT) &&
+        (left->kind == TY_STRING || is_number(left)) && (right->kind == TY_STRING || is_number(right)))
+        return &T_STRING;
     switch (expr->op) {
+        case TOK_RDIV:
+            if (numbers) return &T_REAL;
+            break;
         case TOK_PLUS: case TOK_MINUS:
             if (left->kind == TY_POINTER && is_integral(right)) return left;
             if (expr->op == TOK_PLUS && is_integral(left) && right->kind == TY_POINTER) return right;
@@ -815,7 +855,7 @@ static Type *check_binary(Sema *s, Expr *expr) {
             if (is_scalar(left) && is_scalar(right)) return &T_BOOL;
             break;
         default: /* comparisons */
-            if (numbers) return &T_BOOL;
+            if (numbers || (left->kind == TY_STRING && right->kind == TY_STRING)) return &T_BOOL;
             if (left->kind == TY_POINTER && right->kind == TY_POINTER &&
                 (left->base->kind == TY_VOID || right->base->kind == TY_VOID))
                 return &T_BOOL;
@@ -1005,7 +1045,7 @@ static void check_io(Sema *s, Stmt *stmt) {
         Type *type = check_value(s, arg);
         if (is_error(type)) continue;
         if (stmt->kind == ST_READ) {
-            if (!is_lvalue(arg) || !is_number(type))
+            if (!is_lvalue(arg) || (!is_number(type) && type->kind != TY_STRING))
                 diag_error(s->diag, arg->loc, "read needs a variable of a basic type");
         } else if (!is_scalar(type) && !is_text(type)) {
             diag_error(s->diag, arg->loc, "cannot print %s", type_name(s->arena, type));

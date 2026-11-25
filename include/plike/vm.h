@@ -16,13 +16,13 @@ typedef struct {
     uint32_t serial;     /* tells a dead object from a newer one in its place */
 } Pointer;
 
-typedef enum { V_INT, V_FLOAT, V_DOUBLE, V_POINTER } ValueKind;
+typedef enum { V_INT, V_FLOAT, V_DOUBLE, V_POINTER, V_TEXT } ValueKind;
 
 typedef struct {
     ValueKind kind;
     bool known;          /* false until something is stored */
     union {
-        int32_t i;
+        int32_t i;           /* V_TEXT: which text */
         float f;
         double d;
         Pointer p;

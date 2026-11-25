@@ -34,6 +34,8 @@ static void print_help(FILE *out) {
         "  ast         print the syntax tree\n"
         "\n"
         "Language:\n"
+        "      --dialect=NAME        plike, pseint, visualg, portugol or cambridge\n"
+        "                            (default: from the extension .plike .psc .alg .por .pse)\n"
         "  -a, --assignment=STYLE    colon-equals (default) or equals\n"
         "  -i, --indexing=BASE       first index of arrays without a range:\n"
         "                            one (default) or zero\n"
@@ -75,7 +77,7 @@ static int choose(const char *option, const char *value, const char *const *choi
     return -1;
 }
 
-enum { OPT_OPERATORS = 256, OPT_CC, OPT_DOT, OPT_COLOR, OPT_STEPS, OPT_LANG, OPT_KEYS, OPT_SIZE };
+enum { OPT_OPERATORS = 256, OPT_CC, OPT_DOT, OPT_COLOR, OPT_STEPS, OPT_DIALECT, OPT_LANG, OPT_KEYS, OPT_SIZE };
 
 bool parse_options(int argc, char **argv, Options *options, int *status) {
     static const struct option LONG[] = {
@@ -89,6 +91,7 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
         {"cc", required_argument, NULL, OPT_CC},
         {"dot", no_argument, NULL, OPT_DOT},
         {"color", required_argument, NULL, OPT_COLOR},
+        {"dialect", required_argument, NULL, OPT_DIALECT},
         {"lang", required_argument, NULL, OPT_LANG},
         {"keys", required_argument, NULL, OPT_KEYS},
         {"size", required_argument, NULL, OPT_SIZE},
@@ -105,6 +108,7 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
     static const char *const PARAMS[] = {"decl", "body", "mixed", NULL};
     static const char *const OPERATORS[] = {"standard", "dotted", "mixed", NULL};
     static const char *const BOOLEAN[] = {"false", "true", NULL};
+    static const char *const DIALECTS[] = {"plike", "pseint", "visualg", "portugol", "cambridge", NULL};
     static const char *const LANGUAGES[] = {"it", "en", NULL};
     static const char *const COLOR[] = {"auto", "always", "never", NULL};
 
@@ -132,6 +136,7 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
             case 'i':
                 value = choose("indexing", optarg, INDEXING);
                 options->config.index_base = value;
+                options->config.indexing_given = true;
                 break;
             case 'p':
                 value = choose("params", optarg, PARAMS);
@@ -154,6 +159,11 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
             case 'o': options->output = optarg; break;
             case 'b': options->config.bounds_check = true; break;
             case OPT_CC: options->cc = optarg; break;
+            case OPT_DIALECT:
+                value = choose("dialect", optarg, DIALECTS);
+                options->config.dialect = (Dialect)(value < 0 ? 0 : value);
+                options->config.dialect_given = true;
+                break;
             case OPT_LANG:
                 value = choose("lang", optarg, LANGUAGES);
                 options->lang = optarg;

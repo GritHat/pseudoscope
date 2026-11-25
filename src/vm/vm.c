@@ -40,6 +40,7 @@ typedef struct {
     uint32_t random;
     int life_count, message_count, check_count, expect_row, step_row;
     bool stopped;
+    int pool_count;
 } State;
 
 typedef struct {
@@ -69,6 +70,8 @@ struct Vm {
     Check *checks;
     int check_capacity;
     bool has_classes;
+    char **pool;      /* texts; the first is empty */
+    int pool_capacity;
 
     ARRAY(Touch) touched;
     Level event;      /* of the instruction just executed */
@@ -238,8 +241,8 @@ static Pointer new_object(Vm *vm, const Symbol *symbol, Type *type, int count, b
         const Type *slot = type ? vm_slot_type(vm->config, type, i, &byte) : NULL;
         Value *cell = &s->cells.items[s->cells.count++];
         memset(cell, 0, sizeof *cell);
-        cell->kind = !slot ? V_INT : slot->kind == TY_REAL ? V_FLOAT
-                   : slot->kind == TY_POINTER || slot->kind == TY_STRING ? V_POINTER : V_INT;
+        cell->kind = !slot ? V_INT : slot->kind == TY_REAL ? V_FLOAT : slot->kind == TY_STRING ? V_TEXT
+                   : slot->kind == TY_POINTER ? V_POINTER : V_INT;
         cell->known = zero;
     }
     PUSH(s->objects, object);
@@ -271,6 +274,57 @@ static Value *access(Vm *vm, Pointer p) {
     if (!cell) fail(vm, "access outside of the variable");
     return cell;
 }
+
+/* ---- texts ---- */
+
+static Value make_text(Vm *vm, const char *text) {
+    for (int i = vm->s.pool_count - 1; i >= 0 && i > vm->s.pool_count - 200; i--)
+        if (strcmp(vm->pool[i], text) == 0) return (Value){.kind = V_TEXT, .known = true, .as.i = i};
+    int had = vm->pool_capacity;
+    vm->pool = grow(vm->pool, &vm->pool_capacity, vm->s.pool_count + 1, sizeof *vm->pool);
+    for (int i = had; i < vm->pool_capacity; i++) vm->pool[i] = NULL;
+    free(vm->pool[vm->s.pool_count]); /* a replay writes the same again */
+    vm->pool[vm->s.pool_count] = strdup(text);
+    if (!vm->pool[vm->s.pool_count]) abort();
+    return (Value){.kind = V_TEXT, .known = true, .as.i = vm->s.pool_count++};
+}
+
+static const char *true_word(const Vm *vm, bool v) {
+    switch (vm->config->dialect) {
+        case DIALECT_PSEINT: return v ? "VERDADERO" : "FALSO";
+        case DIALECT_VISUALG: return v ? "VERDADEIRO" : "FALSO";
+        case DIALECT_PORTUGOL: return v ? "verdadeiro" : "falso";
+        case DIALECT_CAMBRIDGE: return v ? "TRUE" : "FALSE";
+        default: return v ? "1" : "0";
+    }
+}
+
+static double as_double(Value v);
+
+/* A value as a text, for printing and joining. */
+static void text_of(const Vm *vm, Value v, const Type *type, char *out, size_t size) {
+    if (v.kind == V_TEXT) {
+        snprintf(out, size, "%s", v.as.i < vm->s.pool_count ? vm->pool[v.as.i] : "");
+    } else if (v.kind == V_POINTER) { /* a literal */
+        size_t n = 0;
+        for (Pointer p = v.as.p; n + 1 < size; p.offset++) {
+            const Value *cell = cell_of(vm, p);
+            if (!cell || cell->as.i == 0) break;
+            out[n++] = (char)cell->as.i;
+        }
+        out[n] = '\0';
+    } else if (v.kind != V_INT) {
+        snprintf(out, size, "%.10g", as_double(v));
+    } else if (type && type->kind == TY_BOOL) {
+        snprintf(out, size, "%s", true_word(vm, v.as.i != 0));
+    } else if (type && type->kind == TY_CHAR) {
+        snprintf(out, size, "%c", v.as.i);
+    } else {
+        snprintf(out, size, "%d", v.as.i);
+    }
+}
+
+#define TEXT_SIZE 2000
 
 /* ---- stack ---- */
 
@@ -323,6 +377,13 @@ static Value converted(Vm *vm, Value v, const Type *to) {
             v = (Value){.kind = V_FLOAT, .known = v.known, .as.f = f};
             break;
         }
+        case TY_STRING:
+            if (v.kind == V_POINTER) {
+                char text[TEXT_SIZE];
+                text_of(vm, v, to, text, sizeof text);
+                v = make_text(vm, text);
+            }
+            break;
         case TY_POINTER:
             if (v.kind != V_POINTER) /* only the constant 0 gets here */
                 v = (Value){.kind = V_POINTER, .known = v.known, .as.p = {0, 0, 0}};
@@ -364,6 +425,26 @@ static Value compare(TokenKind op, int order, bool unordered) {
 static Value binary(Vm *vm, TokenKind op, Value a, Value b, const Expr *expr) {
     bool comparison = op == TOK_EQ || op == TOK_NE || op == TOK_LT || op == TOK_GT ||
                       op == TOK_LE || op == TOK_GE;
+    if (expr && expr->kind == EX_BINARY &&
+        (expr->base->type->kind == TY_STRING || expr->right->type->kind == TY_STRING)) {
+        char left[TEXT_SIZE], right[TEXT_SIZE], both[TEXT_SIZE * 2];
+        text_of(vm, a, expr->base->type, left, sizeof left);
+        text_of(vm, b, expr->right->type, right, sizeof right);
+        if (comparison) {
+            int order = strcmp(left, right);
+            return compare(op, order < 0 ? -1 : order > 0, false);
+        }
+        snprintf(both, sizeof both, "%s%s", left, right);
+        both[TEXT_SIZE - 1] = '\0';
+        return make_text(vm, both);
+    }
+    if (op == TOK_RDIV) {
+        if (as_double(b) == 0) {
+            fail(vm, "division by zero");
+            return a;
+        }
+        return (Value){.kind = V_FLOAT, .known = true, .as.f = (float)(as_double(a) / as_double(b))};
+    }
     if (a.kind == V_POINTER || b.kind == V_POINTER) {
         if (!comparison) return pointer_arithmetic(vm, op, a, b, expr);
         Pointer zero = {0, 0, 0};
@@ -434,6 +515,35 @@ static Value unary(Vm *vm, TokenKind op, Value v) {
 static int32_t random_between(Vm *vm, int32_t lo, int32_t hi);
 
 static Value builtin(Vm *vm, const char *name, Value *args, const Expr *expr) {
+    if (strcmp(name, "random_below") == 0) return make_int(random_between(vm, 0, as_int(vm, args[0]) - 1));
+    if (strcmp(name, "trunc") == 0) return make_int(as_int(vm, (Value){.kind = V_DOUBLE, .as.d = trunc(as_double(args[0]))}));
+    if (strcmp(name, "round") == 0) return make_int(as_int(vm, (Value){.kind = V_DOUBLE, .as.d = round(as_double(args[0]))}));
+    if (strcmp(name, "length") == 0 || strcmp(name, "upper") == 0 || strcmp(name, "lower") == 0 ||
+        strcmp(name, "substring") == 0 || strcmp(name, "concat") == 0) {
+        char text[TEXT_SIZE], more[TEXT_SIZE], both[TEXT_SIZE * 2];
+        text_of(vm, args[0], expr->args.items[0]->type, text, sizeof text);
+        int n = (int)strlen(text);
+        if (name[0] == 'l' && name[1] == 'e') return make_int(n);
+        if (name[0] == 'c') {
+            text_of(vm, args[1], expr->args.items[1]->type, more, sizeof more);
+            snprintf(both, sizeof both, "%s%s", text, more);
+            both[TEXT_SIZE - 1] = '\0';
+            return make_text(vm, both);
+        }
+        if (name[0] == 's') {
+            int from = as_int(vm, args[1]) - vm->config->index_base, to = as_int(vm, args[2]) - vm->config->index_base;
+            if (from < 0) from = 0;
+            if (to > n - 1) to = n - 1;
+            if (to < from) return make_text(vm, "");
+            text[to + 1] = '\0';
+            return make_text(vm, text + from);
+        }
+        for (int i = 0; i < n; i++) {
+            if (name[0] == 'u' && text[i] >= 'a' && text[i] <= 'z') text[i] = (char)(text[i] - 32);
+            if (name[0] == 'l' && text[i] >= 'A' && text[i] <= 'Z') text[i] = (char)(text[i] + 32);
+        }
+        return make_text(vm, text);
+    }
     if (strcmp(name, "random") == 0) return make_int(random_between(vm, as_int(vm, args[0]), as_int(vm, args[1])));
     if (strcmp(name, "abs") == 0 && expr->type->kind == TY_INT) {
         int32_t i = as_int(vm, args[0]);
@@ -856,8 +966,17 @@ static void print_statement(Vm *vm, const Instr *in) {
         char text[400];
         const Type *type = stmt->args.items[i]->type;
         Value v = args[i];
-        if (i > 0) put_output(vm, " ", 1);
+        if (i > 0 && !stmt->joined) put_output(vm, " ", 1);
         text[0] = '\0';
+        if (stmt->joined || v.kind == V_TEXT) {
+            char joined[TEXT_SIZE];
+            if (type->kind == TY_ARRAY || (type->kind == TY_POINTER && v.kind == V_POINTER)) print_text(vm, v.as.p);
+            else {
+                text_of(vm, v, type, joined, sizeof joined);
+                put_output(vm, joined, strlen(joined));
+            }
+            continue;
+        }
         switch (type->kind) {
             case TY_REAL: snprintf(text, sizeof text, "%f", as_double(v)); break;
             case TY_CHAR: {
@@ -879,10 +998,10 @@ static void print_statement(Vm *vm, const Instr *in) {
         }
         put_output(vm, text, strlen(text));
     }
-    put_output(vm, "\n", 1);
+    if (!stmt->same_line) put_output(vm, "\n", 1);
     vm->s.stack.count -= in->a;
     LogEntry entry = {.kind = LOG_PRINT, .stmt = stmt};
-    size_t length = vm->s.output_length - start - 1;
+    size_t length = vm->s.output_length - start - (stmt->same_line ? 0 : 1);
     snprintf(entry.value, sizeof entry.value, "%.*s", (int)(length > 47 ? 47 : length), vm->output + start);
     add_log(vm, entry);
 }
@@ -896,6 +1015,19 @@ static int scan(Vm *vm, const Type *type, Value *out, size_t *next) {
     size_t i = vm->s.input_pos;
     while (i < vm->input_length && strchr(" \t\n\r\f\v", text[i])) i++;
     if (i >= vm->input_length) return vm->input_ended ? 0 : -1;
+    if (type->kind == TY_STRING) { /* the rest of the line */
+        size_t end = i;
+        while (end < vm->input_length && text[end] != '\n') end++;
+        if (end >= vm->input_length && !vm->input_ended) return -1;
+        char line[TEXT_SIZE];
+        size_t n = end - i < sizeof line - 1 ? end - i : sizeof line - 1;
+        memcpy(line, text + i, n);
+        line[n] = '\0';
+        if (n && line[n - 1] == '\r') line[n - 1] = '\0';
+        *out = make_text(vm, line);
+        *next = end;
+        return 1;
+    }
     if (type->kind == TY_CHAR) {
         *out = make_int((int8_t)text[i]);
         *next = i + 1;
@@ -1666,6 +1798,7 @@ static void reset(Vm *vm) {
     State *s = &vm->s;
     s->node = -1;
     s->random = 1;
+    make_text(vm, "");
     s->step_row = -1;
     PUSH(s->objects, (Object){.address = 0x7ffff000u}); /* the null pointer */
     s->serial = 1;
@@ -1845,6 +1978,8 @@ void vm_destroy(Vm *vm) {
     free(vm->lives);
     free(vm->messages);
     free(vm->checks);
+    for (int i = 0; i < vm->pool_capacity; i++) free(vm->pool[i]);
+    free(vm->pool);
     free(vm);
 }
 
@@ -1995,6 +2130,10 @@ void vm_format(const Vm *vm, const Value *v, const Type *type, char *out, size_t
         }
         return;
     }
+    if (v->kind == V_TEXT) {
+        snprintf(out, size, "\"%.*s\"", (int)(size > 8 ? size - 4 : 4), v->as.i < vm->s.pool_count ? vm->pool[v->as.i] : "");
+        return;
+    }
     if (v->kind == V_FLOAT || v->kind == V_DOUBLE) {
         snprintf(out, size, "%.6g", as_double(*v));
         if (!strpbrk(out, ".en") && strlen(out) + 2 < size) strcat(out, ".0");
@@ -2105,7 +2244,7 @@ static int level_of(TokenKind op) {
         case TOK_EQ: case TOK_NE: return 6;
         case TOK_LT: case TOK_GT: case TOK_LE: case TOK_GE: return 7;
         case TOK_SHL: case TOK_SHR: return 8;
-        case TOK_PLUS: case TOK_MINUS: return 9;
+        case TOK_PLUS: case TOK_MINUS: case TOK_CONCAT: return 9;
         default: return 10;
     }
 }
@@ -2131,6 +2270,8 @@ static const char *spelling(TokenKind op) {
         case TOK_MINUS: return "-";
         case TOK_STAR: return "*";
         case TOK_SLASH: return "/";
+        case TOK_RDIV: return "/";
+        case TOK_CONCAT: return "&";
         case TOK_MOD: return "mod";
         case TOK_AT: return "@";
         default: return "?";

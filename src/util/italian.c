@@ -29,6 +29,8 @@ const char *const ITALIAN_MESSAGES[][2] = {
     {"a type name", "il nome di un tipo"},
     {"a variable name", "il nome di una variabile"},
     {"'end' after the record fields", "'end' dopo i campi del record"},
+    {"the end of the program", "la fine del programma"},
+    {"the end of the cases", "la fine dei casi"},
     {"'%s' or 'end %s'", "'%s' oppure 'end %s'"},
 
     {"the name of a state", "il nome di uno stato"},
@@ -107,6 +109,7 @@ const char *const ITALIAN_MESSAGES[][2] = {
     {"the type of '%s' belongs in the parameter list (see --params)",
      "il tipo di '%s' va nella lista dei parametri (vedi --params)"},
     {"'%s' is an %s parameter: it needs a variable", "'%s' è un parametro %s: serve una variabile"},
+    {"'%s' takes a text, not %s", "'%s' vuole un testo, non %s"},
     {"'%s' takes numbers, not %s", "'%s' vuole numeri, non %s"},
     {"'%s' takes %d argument%s, not %d", "valori da passare a '%s': %d%.0s, non %d"},
     {"a procedure has no value", "una procedura non ha un valore"},
