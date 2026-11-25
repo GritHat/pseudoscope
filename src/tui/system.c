@@ -44,7 +44,8 @@ static int draw_tabs(App *app, int x, int y, int w) {
     }
     const Vm *vm = app->run.vm;
     if (has_components(app->doc->program))
-        print_at(w - 22, y, 20, S_DIM, "%s " M_FOCUS M_BOLD "t = %ld", L("tempo", "time"), vm_time(vm));
+        print_at(w - 12 - (w - x > 24 ? 10 : 0), y, 20, S_DIM, w - x > 24 ? "%s " M_FOCUS M_BOLD "t = %ld" : "%.0s" M_FOCUS M_BOLD "t = %ld",
+                 L("tempo", "time"), vm_time(vm));
     return x;
 }
 
