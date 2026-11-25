@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <string.h>
 
 static bool ends_with(const char *s, const char *suffix) {
@@ -335,6 +336,85 @@ static const char *spoken(Doc *d, const char *statement, bool function) {
     return s;
 }
 
+/* One line of a codebox (the clrscode packages, with which Cormen's book is
+ * typeset), as the book prints it: what \\Do, \\Then and \\End say with
+ * commands becomes how far right the line begins. */
+static const char *codebox_line(Doc *d, const char *line, int *level) {
+    static const char *const WORDS[][2] = {
+        {"For", "for "}, {"To", " to "}, {"Downto", " downto "}, {"By", " by "}, {"While", "while "}, {"If", "if "}, {"Return", "return "},
+        {"Until", "until "}, {"Error", "error "}, {"gets", " = "}, {"isequal", " == "}, {"leq", " <= "}, {"le", " <= "}, {"geq", " >= "},
+        {"ge", " >= "}, {"neq", " != "}, {"ne", " != "}, {"lfloor", "\xe2\x8c\x8a"}, {"rfloor", "\xe2\x8c\x8b"}, {"lceil", "\xe2\x8c\x88"},
+        {"rceil", "\xe2\x8c\x89"}, {"infty", "\xe2\x88\x9e"}, {"cdot", "*"}, {"times", "*"}, {"twodots", ":"}, {"ldots", ":"}, {"bmod", " mod "},
+        {"in", " in "}, {"Foreach", "for each "}, {"land", " and "}, {"lor", " or "}, {"neg", " not "}, {"li", ""}, {"zi", ""}, {"quad", " "},
+    };
+    StrBuf text = {0};
+    strbuf_puts(&text, "");
+    int own = -1;
+    for (const char *s = line; *s && *s != '\n';) {
+        if (*s == '%') break;
+        if (*s == '$' || *s == '{' || *s == '}' || *s == '\r') {
+            s++;
+            continue;
+        }
+        if (*s != '\\') {
+            if (own < 0 && *s != ' ' && *s != '\t') own = *level;
+            if (own >= 0) strbuf_append(&text, s, 1);
+            s++;
+            continue;
+        }
+        size_t n = 1;
+        while (isalpha((unsigned char)s[n])) n++;
+        if (n == 1) { /* \\, \\; \\{ and the like: a space, or the sign itself */
+            if (s[1] == '{' || s[1] == '}' || s[1] == '_') strbuf_append(&text, s + 1, 1);
+            else strbuf_puts(&text, " ");
+            s += s[1] ? 2 : 1;
+            continue;
+        }
+        char name[24];
+        snprintf(name, sizeof name, "%.*s", (int)(n - 1 < 23 ? n - 1 : 23), s + 1);
+        s += n;
+        if (!strcmp(name, "Do") || !strcmp(name, "Then") || !strcmp(name, "Repeat")) {
+            if (!strcmp(name, "Repeat")) {
+                if (own < 0) own = *level;
+                strbuf_puts(&text, "repeat");
+            }
+            ++*level;
+        } else if (!strcmp(name, "End")) {
+            if (*level > 1) --*level;
+        } else if (!strcmp(name, "Else") || !strcmp(name, "ElseIf") || !strcmp(name, "ElseNoIf") || !strcmp(name, "Until")) {
+            if (*level > 1) --*level;
+            if (own < 0) own = *level;
+            strbuf_puts(&text, !strcmp(name, "ElseIf") ? "elseif " : !strcmp(name, "Until") ? "until " : "else ");
+            if (!strcmp(name, "Else") || !strcmp(name, "ElseNoIf")) ++*level;
+        } else if (!strcmp(name, "Comment")) {
+            strbuf_puts(&text, " // ");
+        } else if (!strcmp(name, "Procname")) { /* the head: back to the margin, and what follows one step in */
+            own = 0;
+            *level = 1;
+        } else if (!strncmp(name, "attrib", 6)) { /* \\attrib{x}{f}: x.f */
+            const char *after;
+            const char *object = braces(d, s, &after), *field = object ? braces(d, after, &after) : NULL;
+            if (own < 0) own = *level;
+            if (field) {
+                strbuf_printf(&text, "%s.%s", object + (*object == '\\' ? strcspn(object, "{ ") : 0), field);
+                s = after;
+            }
+        } else {
+            const char *said = NULL;
+            for (size_t i = 0; i < sizeof WORDS / sizeof WORDS[0]; i++)
+                if (!strcmp(name, WORDS[i][0])) said = WORDS[i][1];
+            if (said && *said) {
+                if (own < 0) own = *level;
+                strbuf_puts(&text, said);
+            }
+            /* \\proc{Name}, \\id{key}, \\const{nil}, \\textbf{...}: what is inside stays, the braces go */
+        }
+    }
+    const char *kept = own < 0 || !text.length ? "" : arena_printf(d->arena, "%*s%s", own * 4, "", text.data);
+    strbuf_free(&text);
+    return kept;
+}
+
 /* One line of an algorithmic environment, as PSeInt would write it. */
 static const char *algorithmic_line(Doc *d, const char *line, bool *function, bool *inside, bool *main_open) {
     StrBuf clean = {0};
@@ -497,7 +577,8 @@ static void read_latex(Doc *d) {
         const char *rest = s + 7 + strlen(name) + 1;
         bool code = !strcmp(name, "lstlisting") || !strcmp(name, "minted") || !strcmp(name, "verbatim") || !strcmp(name, "Verbatim");
         bool chart = !strcmp(name, "plantuml") || !strcmp(name, "mermaid") || !strcmp(name, "ganttchart");
-        if (strcmp(name, "algorithmic") != 0 && !code && !chart) continue;
+        bool codebox = !strcmp(name, "codebox");
+        if (strcmp(name, "algorithmic") != 0 && !code && !chart && !codebox) continue;
         const char *end = arena_printf(d->arena, "\\end{%s}", name);
         int first = i + 1, last = first - 1;
         for (i = first; i < d->line_count && !strstr(d->lines[i], end); i++) last = i;
@@ -521,7 +602,14 @@ static void read_latex(Doc *d) {
             /* turned into something that is read: the begin and the end lines are part of it */
             int count = last - first + 3;
             char **lines = arena_alloc(d->arena, (size_t)count * sizeof(char *));
-            if (!strcmp(name, "ganttchart")) {
+            if (codebox) { /* Cormen's own way of typesetting it: read as his pseudocode */
+                int level = 0;
+                lines[0] = "";
+                for (int k2 = first; k2 <= last; k2++) lines[k2 - first + 1] = (char *)codebox_line(d, d->lines[k2], &level);
+                lines[count - 1] = "";
+                add_block(d, "codebox", false, DIALECT_CORMEN, first - 1, last + 1, lines);
+                d->blocks->items[d->blocks->count - 1].rewritten = true;
+            } else if (!strcmp(name, "ganttchart")) {
                 const char *names[128];
                 int named = 0;
                 lines[0] = "@startgantt";

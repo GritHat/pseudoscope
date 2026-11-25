@@ -1642,6 +1642,9 @@ static void assign(Gen *g, const Stmt *s) {
     expr(g, target, P_LOWEST);
     put(g, " = ");
     value(g, v, target->type, P_LOWEST);
+    /* TypeScript remembers that an attribute was given nothing, even after
+     * somebody else has given it something: it is told not to */
+    if (TS && target->kind == EX_FIELD && target->type->kind == TY_POINTER && v->kind == EX_INT) putf(g, " as %s", type_text(g, target->type));
     end(g);
 }
 

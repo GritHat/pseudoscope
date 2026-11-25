@@ -258,11 +258,7 @@ msgid "this sign of mathematics is not read: write it out in words%.0s"
 msgstr ""
 
 #: src/front/cormen.c
-msgid "the length of an array is not kept: pass it to the procedure, as in 'SORT(A, n)'%.0s"
-msgstr ""
-
-#: src/front/cormen.c
-msgid "objects with attributes, as in '%s', are not read yet: only numbers, texts and arrays"
+msgid "the length of '%s' is not known here: it is neither made here nor taken by the procedure"
 msgstr ""
 
 #: src/front/cormen.c
@@ -274,7 +270,7 @@ msgid "this 'let' is not understood: write 'let A[1:n] be a new array'%.0s"
 msgstr ""
 
 #: src/front/cormen.c
-msgid "'for each' goes through a set, and sets are not read yet%.0s"
+msgid "'for each' goes through an array made here or taken by the procedure: sets are not read yet%.0s"
 msgstr ""
 
 #: src/front/cormen.c
@@ -282,7 +278,11 @@ msgid "'%s' has nothing above it to go with"
 msgstr ""
 
 #: src/front/cormen.c
-msgid "'return' gives back one value here, not several%.0s"
+msgid "'%s' gives back a different number of values here than elsewhere"
+msgstr ""
+
+#: src/front/cormen.c
+msgid "several values at once come from a procedure that gives back several%.0s"
 msgstr ""
 
 #: src/front/cormen.c

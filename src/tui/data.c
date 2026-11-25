@@ -254,6 +254,8 @@ static int collect(App *app, int frame, const Symbol *const *only, int only_coun
     for (int i = 0; i < count; i++) {
         const Var *var = trial_end ? vm_trial_var(vm, i) : vm_var(vm, frame, i);
         if (!var->live || !var->symbol) continue;
+        size_t named = strlen(var->symbol->name); /* the names of ours, made up to run what has none: not the writer's */
+        if (app->doc->shown && named && var->symbol->name[named - 1] == '_') continue;
         if (only) {
             bool wanted = false;
             for (int k = 0; k < only_count; k++) wanted |= only[k] == var->symbol;
@@ -301,7 +303,6 @@ static void draw_scalars(App *app, const Block *block, int x, int y, int w, int 
     int cx = x, cy = y;
     for (int i = 0; i < block->count; i++) {
         const Var *var = block->vars[i];
-        if (app->doc->shown && (strcmp(var->symbol->name, "res_") == 0 || strcmp(var->symbol->name, "tmp_") == 0)) continue; /* names of ours, made up to run it */
         const Value *v = vm_cell(vm, var->at);
         char text[64];
         cell_text(vm, v, var->symbol->type, text, sizeof text);

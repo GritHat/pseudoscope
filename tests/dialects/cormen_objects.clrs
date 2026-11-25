@@ -1,0 +1,80 @@
+// Linked lists and binary search trees, as in "Introduction to Algorithms":
+// objects with attributes, and NIL. Nothing says what an object is made of:
+// it is worked out from the attributes that are used.
+LIST-SEARCH(L, k)
+    x = L.head
+    while x ≠ NIL and x.key ≠ k
+        x = x.next
+    return x
+
+LIST-PREPEND(L, x)
+    x.next = L.head
+    x.prev = NIL
+    if L.head ≠ NIL
+        L.head.prev = x
+    L.head = x
+
+LIST-DELETE(L, x)
+    if x.prev ≠ NIL
+        x.prev.next = x.next
+    else L.head = x.next
+    if x.next ≠ NIL
+        x.next.prev = x.prev
+
+TREE-INSERT(T, z)
+    x = T.root          // node being compared with z
+    y = NIL             // y will be parent of z
+    while x ≠ NIL       // descend until reaching a leaf
+        y = x
+        if z.key < x.key
+            x = x.left
+        else x = x.right
+    z.p = y             // found the location: insert z with parent y
+    if y == NIL
+        T.root = z      // tree T was empty
+    elseif z.key < y.key
+        y.left = z
+    else y.right = z
+
+INORDER-TREE-WALK(x)
+    if x ≠ NIL
+        INORDER-TREE-WALK(x.left)
+        print x.key
+        INORDER-TREE-WALK(x.right)
+
+TREE-MINIMUM(x)
+    while x.left ≠ NIL
+        x = x.left
+    return x
+
+let L be a new list
+L.head = NIL
+for i = 1 to 4
+    let x be a new node
+    x.key = i * i
+    LIST-PREPEND(L, x)
+found = LIST-SEARCH(L, 9)
+LIST-DELETE(L, found)
+x = L.head
+while x ≠ NIL
+    print x.key
+    x = x.next
+
+let T be a new tree
+T.root = NIL
+let K[1:6] be a new array
+K[1] = 12
+K[2] = 5
+K[3] = 18
+K[4] = 2
+K[5] = 9
+K[6] = 15
+for each k in K
+    let z be a new node
+    z.key = k
+    z.left = NIL
+    z.right = NIL
+    TREE-INSERT(T, z)
+INORDER-TREE-WALK(T.root)
+smallest = TREE-MINIMUM(T.root)
+print smallest.key

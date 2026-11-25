@@ -258,12 +258,8 @@ msgid "this sign of mathematics is not read: write it out in words%.0s"
 msgstr "este sinal matemático não é lido: escreva-o por extenso%.0s"
 
 #: src/front/cormen.c
-msgid "the length of an array is not kept: pass it to the procedure, as in 'SORT(A, n)'%.0s"
-msgstr "o comprimento de um vetor não é guardado: passe-o ao procedimento, como em 'SORT(A, n)'%.0s"
-
-#: src/front/cormen.c
-msgid "objects with attributes, as in '%s', are not read yet: only numbers, texts and arrays"
-msgstr "os objetos com atributos, como em '%s', ainda não são lidos: só números, textos e vetores"
+msgid "the length of '%s' is not known here: it is neither made here nor taken by the procedure"
+msgstr "aqui o comprimento de '%s' não é conhecido: não é criado aqui nem recebido pelo procedimento"
 
 #: src/front/cormen.c
 msgid "an array begins at 0 or at 1 here, not at '%s'"
@@ -274,16 +270,20 @@ msgid "this 'let' is not understood: write 'let A[1:n] be a new array'%.0s"
 msgstr "este 'let' não foi entendido: escreva 'let A[1:n] be a new array'%.0s"
 
 #: src/front/cormen.c
-msgid "'for each' goes through a set, and sets are not read yet%.0s"
-msgstr "'for each' percorre um conjunto, e os conjuntos ainda não são lidos%.0s"
+msgid "'for each' goes through an array made here or taken by the procedure: sets are not read yet%.0s"
+msgstr "'for each' percorre um vetor criado aqui ou recebido pelo procedimento: os conjuntos ainda não são lidos%.0s"
 
 #: src/front/cormen.c
 msgid "'%s' has nothing above it to go with"
 msgstr "'%s' não tem nada acima com que combinar"
 
 #: src/front/cormen.c
-msgid "'return' gives back one value here, not several%.0s"
-msgstr "aqui 'return' devolve um só valor, não vários%.0s"
+msgid "'%s' gives back a different number of values here than elsewhere"
+msgstr "aqui '%s' devolve um número de valores diferente do que em outros lugares"
+
+#: src/front/cormen.c
+msgid "several values at once come from a procedure that gives back several%.0s"
+msgstr "vários valores de uma vez vêm de um procedimento que devolve vários%.0s"
 
 #: src/front/cormen.c
 msgid "the statements outside the procedures go together, in one place%.0s"

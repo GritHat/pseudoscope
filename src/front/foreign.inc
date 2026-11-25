@@ -782,7 +782,34 @@ static void foreign_program(Parser *p) {
 
 /* ---- types that were not written ---- */
 
-enum { IN_UNKNOWN, IN_BOOL, IN_INT, IN_REAL, IN_TEXT };
+enum { IN_UNKNOWN, IN_BOOL, IN_INT, IN_REAL, IN_TEXT, IN_OBJECT };
+
+/* Objects: what has attributes (x.key, x.next) and can be nothing (nil_). No
+ * pseudocode without declarations says what they are made of, so there is one
+ * kind of object, with every attribute that is ever named; what an attribute
+ * holds is worked out like the type of a variable. They are records of the
+ * base language, taken one by one from a store: see add_objects. */
+static struct {
+    const char *name;
+    int kind;
+} object_fields[64];
+static int object_field_count;
+static bool objects_used;
+static Loc objects_loc;
+static bool infer_changed;
+
+static int *object_field(const char *name, Loc loc) {
+    for (int i = 0; i < object_field_count; i++)
+        if (strcmp(object_fields[i].name, name) == 0) return &object_fields[i].kind;
+    static int spare;
+    if (object_field_count == 64) return &spare;
+    if (!objects_used) objects_loc = loc;
+    objects_used = true;
+    object_fields[object_field_count].name = name;
+    object_fields[object_field_count].kind = IN_UNKNOWN;
+    infer_changed = true;
+    return &object_fields[object_field_count++].kind;
+}
 
 typedef struct {
     Parser *p;
@@ -791,6 +818,7 @@ typedef struct {
 
 static int spec_kind(const TypeSpec *spec) {
     if (!spec) return IN_UNKNOWN;
+    if (spec->base == TOK_IDENT && spec->pointers) return IN_OBJECT;
     switch (spec->base) {
         case TOK_INTEGER: return IN_INT;
         case TOK_REAL: return IN_REAL;
@@ -826,6 +854,9 @@ static Function *function_named(Parser *p, const char *name) {
 }
 
 static int infer_expr(Infer *in, const Expr *e) {
+    if (e->kind == EX_NAME && strcmp(e->text, "nil_") == 0) return IN_OBJECT;
+    if (e->kind == EX_FIELD) return *object_field(e->text, e->loc);
+    if (e->kind == EX_APPLY && e->base->kind == EX_NAME && strcmp(e->base->text, "new_object_") == 0) return IN_OBJECT;
     switch (e->kind) {
         case EX_INT: return IN_INT;
         case EX_FLOAT: return IN_REAL;
@@ -875,13 +906,25 @@ static int infer_expr(Infer *in, const Expr *e) {
 
 static TypeSpec *kind_spec(Parser *p, int kind, Loc loc) {
     static const TokenKind BASES[] = {TOK_REAL, TOK_LOGICAL, TOK_INTEGER, TOK_REAL, TOK_STRINGTYPE};
+    if (kind == IN_OBJECT) { /* it is known by where it is: a pointer to the one kind of object */
+        TypeSpec *spec = simple_spec(p, TOK_IDENT, loc);
+        spec->name = "object";
+        spec->pointers = 1;
+        return spec;
+    }
     return simple_spec(p, BASES[kind], loc);
 }
 
-static bool infer_changed;
-
 /* What is stored in a name tells its type; more than one: the widest. */
 static void infer_store(Infer *in, const Expr *target, int kind) {
+    if (target->kind == EX_FIELD) { /* what an attribute is given tells what it holds */
+        int *held = object_field(target->text, target->loc);
+        if (kind > *held) {
+            *held = kind;
+            infer_changed = true;
+        }
+        return;
+    }
     bool indexed = target->kind == EX_INDEX;
     const Expr *name = indexed ? target->base : target;
     if (name->kind != EX_NAME) return;
@@ -905,6 +948,16 @@ static void infer_store(Infer *in, const Expr *target, int kind) {
 
 static void infer_uses(Infer *in, const Expr *e) {
     if (!e) return;
+    if (e->kind == EX_NAME && strcmp(e->text, "nil_") == 0) objects_used = true;
+    if (e->kind == EX_FIELD) { /* what has an attribute is an object */
+        object_field(e->text, e->loc);
+        if (e->base->kind == EX_NAME || e->base->kind == EX_INDEX || e->base->kind == EX_FIELD) infer_store(in, e->base, IN_OBJECT);
+    }
+    if (e->kind == EX_BINARY && e->right && (e->op == TOK_EQ || e->op == TOK_NE)) { /* and so is what is compared with one */
+        int a = infer_expr(in, e->base), b = infer_expr(in, e->right);
+        if (a == IN_OBJECT && b != IN_OBJECT) infer_store(in, e->right, IN_OBJECT);
+        if (b == IN_OBJECT && a != IN_OBJECT) infer_store(in, e->base, IN_OBJECT);
+    }
     if (e->kind == EX_INDEX && e->base->kind == EX_NAME) { /* a parameter that is indexed is an array */
         VarDecl *d = find_decl(in->function->params, e->base->text);
         if (d && !d->has_dims && !(d->spec && d->spec->is_array)) {
@@ -970,6 +1023,63 @@ static void infer_statements(Infer *in, Stmt *s) {
     }
 }
 
+/* nil_ is the pointer to nothing, which the base language writes 0. */
+static void objects_expr(Expr *e) {
+    if (!e) return;
+    if (e->kind == EX_NAME && strcmp(e->text, "nil_") == 0) {
+        e->kind = EX_INT;
+        e->text = "0";
+        return;
+    }
+    objects_expr(e->base);
+    objects_expr(e->right);
+    for (int i = 0; i < e->args.count; i++) objects_expr(e->args.items[i]);
+}
+
+static void objects_statements(Stmt *s) {
+    for (; s; s = s->next) {
+        for (Stmt *b = s; b; b = b->otherwise) {
+            objects_expr(b->target);
+            objects_expr(b->value);
+            objects_expr(b->limit);
+            objects_expr(b->step);
+            for (int i = 0; i < b->args.count; i++) objects_expr(b->args.items[i]);
+            objects_statements(b->body);
+        }
+    }
+}
+
+/* The kind of object there is, the store they are taken from, and the taking
+ * of one: written in the base language, which has all it takes, and added to
+ * the program. */
+static void add_objects(Parser *p) {
+    static const char *const TYPES[] = {"integer", "logical", "integer", "real", "string", "object*"};
+    StrBuf text = {0};
+    strbuf_puts(&text, "type object : record\n");
+    for (int i = 0; i < object_field_count; i++) strbuf_printf(&text, "    %s : %s\n", object_fields[i].name, TYPES[object_fields[i].kind]);
+    if (!object_field_count) strbuf_puts(&text, "    key : integer\n");
+    strbuf_puts(&text, "end\nvar objects_ : array [1..256] of object\nvar objects_used_ : integer\n"
+                       "function new_object_() : object*\nbegin\n    objects_used_ := objects_used_ + 1\n"
+                       "    new_object_ := &objects_[objects_used_]\nend new_object_\n");
+    Source source = {"objects", arena_strndup(p->arena, text.data, text.length), text.length, NULL};
+    strbuf_free(&text);
+    Config plain = CONFIG_DEFAULT;
+    Program *more = parse(lex(&source, &plain, p->arena, p->diag), &plain, p->arena, p->diag);
+    if (!more) return;
+    for (TypeDecl *t = more->types; t; t = t->next) t->loc = objects_loc;
+    TypeDecl **types = &p->program->types;
+    while (*types) types = &(*types)->next;
+    *types = more->types;
+    VarDecl **globals = &p->program->globals;
+    while (*globals) globals = &(*globals)->next;
+    *globals = more->globals;
+    Function **functions = &p->program->functions;
+    while (*functions) functions = &(*functions)->next;
+    *functions = more->functions;
+    for (Function *f = more->functions; f; f = f->next) f->loc = objects_loc;
+    for (Function *f = p->program->functions; f; f = f->next) objects_statements(f->body);
+}
+
 static void finish_decls(Parser *p, VarDecl *d) {
     for (; d; d = d->next)
         if (!d->spec) d->spec = kind_spec(p, IN_UNKNOWN, d->loc); /* a number, then */
@@ -992,7 +1102,9 @@ static void finish_statements(Parser *p, Stmt *s) {
 }
 
 static void infer_types(Parser *p) {
-    for (int round = 0; round < 8; round++) {
+    object_field_count = 0;
+    objects_used = false;
+    for (int round = 0; round < 12; round++) {
         infer_changed = false;
         for (Function *f = p->program->functions; f; f = f->next) {
             Infer in = {p, f};
@@ -1007,6 +1119,7 @@ static void infer_types(Parser *p) {
         }
         if (!infer_changed) break;
     }
+    if (objects_used) add_objects(p);
     for (Function *f = p->program->functions; f; f = f->next) {
         finish_params(p, f->params);
         finish_decls(p, f->locals);

@@ -89,15 +89,28 @@ program.
 
 | | |
 |---|---|
-| Procedures | `NAME(A, n)`, with hyphens in the name; `return`, with a value or without |
-| Statements | `for … to`, `downto`, `by`; `while`; `repeat … until`; `if`, `elseif`, `else`; the `do` and `then` of the older editions |
+| Procedures | `NAME(A, n)`, with hyphens in the name; `return`, with one value, several (`return (q, t)`, taken with `(a, b) = F(x)`) or none |
+| Statements | `for … to`, `downto`, `by`; `for each x in A`; `while`; `repeat … until`; `if`, `elseif`, `else`; the `do` and `then` of the older editions |
 | Assignment | `=` or `←`, also `i = j = e`; `exchange A[i] with A[j]` |
-| Arrays | `A[i]`, `A[i, j]`; `let A[1:n] be a new array`, `let L[0:n] and R[0:m] be new arrays`, from 0 or from 1 |
-| Expressions | `==`, `≠`, `≤`, `≥`, `and`, `or`, `not` (which stop as soon as they know), `mod`, `⌊ ⌋`, `∞`, `TRUE`, `FALSE` |
+| Arrays | `A[i]`, `A[i, j]`; `let A[1:n] be a new array`, `let L[0:n] and R[0:m] be new arrays`, from 0 or from 1; `A.length`, as the third edition writes, or the length passed, as the fourth does |
+| Objects | `x.key`, `x.next`, `L.head`, `T.root`, `NIL`; `let x be a new node` makes one |
+| Expressions | `==`, `≠`, `≤`, `≥`, `and`, `or`, `not` (which stop as soon as they know), `mod`, `⌊ ⌋`, `⌈ ⌉`, `∞`, `TRUE`, `FALSE` |
 | Others | `print`, `error "…"`, comments after `//` or `▷` |
 
+Nothing says what an object is made of: there is one kind of object, with every
+attribute that the program names, and what an attribute holds (a number, a text,
+another object) is worked out from what it is given. So lists, trees and whatever is
+made of nodes that point to one another run, are drawn with their arrows, and are
+translated: see `examples/cormen/structures.clrs`. At most 256 objects are made in a
+run.
+
+In LaTeX, the `codebox` environment of the `clrscode` packages, with which the book is
+typeset, is read too: `\Procname`, `\li`, `\For`, `\Do`, `\End`, `\attrib` and the
+others.
+
 It is shown, and quoted in errors, as it was written; it runs in a rewriting, so a
-message may name a word as another pseudocode would (`'endwhile'`). Not read yet, and
-refused saying so: objects with attributes (`x.key`, `L.head`, `NIL`), `A.length` (pass
-the length, as the fourth edition does), `for each` and sets, several values in one
-`return`, `⌈ ⌉`, and the `codebox` environment of the `clrscode` packages.
+message may name a word as another pseudocode would (`'endwhile'`), and a procedure is
+listed with `_` where its name has `-`. A procedure that asks for `A.length` is listed
+with one more thing it takes, `A_length`. Not read yet, and refused saying so: sets
+(`∪`, `∈`, `∅`) and `for each` over anything but an array, so the graph algorithms
+with `G.V` and `G.Adj[u]`; arrays inside objects (`x.c[i]`, of the B-trees).

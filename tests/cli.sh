@@ -51,8 +51,9 @@ cli "language asked for" 1 env PSEUDOSCOPE_LANG=it LC_ALL=es_ES.UTF-8 "$pseudosc
 cli "a language nobody translated" 1 env PSEUDOSCOPE_LANG= LC_ALL=fr_FR.UTF-8 "$pseudoscope" check bad.plike; has "english otherwise" err "error: 'x' is not declared"
 printf '\\begin{algorithmic}\n\\State $x \\gets 1$\n\\While{$x < 3$}\n\\State $x \\gets x + $\n\\EndWhile\n\\end{algorithmic}\n' > bad.tex
 cli "an algorithm in LaTeX" 1 "$pseudoscope" check bad.tex; has "its line as it was written" err "EndWhile"
-printf 'LIST-SEARCH(L, k)\n    x = L.head\n    return x\n' > list.clrs
-cli "what is not read of Cormen" 1 "$pseudoscope" check list.clrs; has "said, with the line as written" err "x = L.head"
+printf 'BFS(G, s)\n    for each vertex v in G.Adj[s]\n        print v\n' > graph.clrs
+cli "what is not read of Cormen" 1 "$pseudoscope" check graph.clrs; has "said, with the line as written" err "for each vertex v in G.Adj"
+cli "Cormen typeset with codebox" 0 "$pseudoscope" check "$here/dialects/codebox.tex"; has "both procedures" err "2 programs and diagrams checked"
 cli "portuguese" 1 "$pseudoscope" check --lang=pt_BR.UTF-8 bad.plike; has "portuguese text" err "erro: 'x' não está declarado"
 cli "unknown language" 2 "$pseudoscope" check --lang=tlh bad.plike; has "the languages there are" err "(I speak en es it pt)"
 cli "help in spanish" 0 "$pseudoscope" --lang=es --help; has "spanish help" out "Uso: pseudoscope"

@@ -112,6 +112,7 @@ void visit_statements(const Stmt *s, ExprVisitor visit, void *context) {
 static void note_call(void *context, const Expr *e) {
     Item *item = context;
     if (!e->is_call || !e->symbol || !e->symbol->function) return;
+    if (strcmp(e->symbol->function->name, "new_object_") == 0) return; /* ours: where a new object comes from */
     for (int i = 0; i < item->call_count; i++)
         if (item->calls[i] == e->symbol->function) return;
     if (item->call_count < 64) item->calls[item->call_count++] = e->symbol->function;
@@ -243,6 +244,7 @@ static void list_items(Document *doc) {
     list_classes(doc, false);
     for (const Function *f = doc->program->functions; f; f = f->next) {
         if (f->owner || f->is_test) continue;
+        if (doc->shown && strcmp(f->name, "new_object_") == 0) continue; /* ours: where a new object comes from */
         add_function(doc, f, ITEM_FUNCTION);
         doc->item_count--;
         if (!f->is_test && strcmp(f->name, "main") == 0 && !f->params) doc->main_item = doc->item_count;
@@ -264,7 +266,9 @@ static void list_items(Document *doc) {
         item->record = g->spec->record;
         item->first = g->loc.line;
     }
-    if (doc->program->globals) {
+    bool shared = false; /* not counting what is ours: the store of the objects */
+    for (const VarDecl *g = doc->program->globals; g; g = g->next) shared |= !doc->shown || g->name[strlen(g->name) - 1] != '_';
+    if (shared) {
         Item *item = &doc->items[doc->item_count++];
         item->kind = ITEM_GLOBALS;
         item->name = "";
@@ -335,9 +339,11 @@ Document *document_load(const char *path, const Config *config) {
     doc->config = config_for_text(wanted, file, doc->text.data);
     if (doc->config.dialect == DIALECT_CORMEN && !diagram) { /* run in a rewriting of ours, shown as it was written */
         Source written = {doc->path, doc->text.data, doc->text.length, NULL};
-        doc->shown = strdup(doc->text.data);
-        if (!doc->shown) abort();
-        doc->written_as = "Cormen";
+        if (!doc->shown) { /* else a codebox: LaTeX, already kept as it was written */
+            doc->shown = strdup(doc->text.data);
+            if (!doc->shown) abort();
+            doc->written_as = "Cormen";
+        }
         Source run = cormen_source(&written, &doc->config, &doc->arena, &diag);
         doc->text.length = 0;
         doc->text.data[0] = '\0';
