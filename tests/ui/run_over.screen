@@ -1,4 +1,4 @@
- ◆ PSEUDOSCOPE  basic.plike       ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
+ ◆ PSEUDOSCOPE  basic.pscope      ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
   ‖ fermo   main
 ╭─ main ─────────────────────────────────────╮╭─ Dati ─────────────────────────────────────────────╮
 │  162 procedure main()                      ││                                                    │

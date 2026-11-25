@@ -17,7 +17,36 @@ end Cart
 ```
 
 A method is called with a dot, `cart.add(9.9)`. Inside, the fields are used by name, and
-`self` is the object. There is no inheritance. Classes are translated to C.
+`self` is the object.
+
+A class can extend others, be abstract, or be an interface:
+
+```pascal
+abstract class Shape
+    abstract function area(): real
+end Shape
+
+class Circle extends Shape
+    var r: real
+    function area(): real
+    begin
+        area := 3.14 * r * r
+    end area
+end Circle
+
+procedure show(inout s: Shape)      // any shape: the object chooses its area
+begin
+    print(s.area())
+end show
+```
+
+`extends A, B` takes from several classes; a class that two of them extend is there
+once. What is inherited twice under the same name must be written again in the class.
+`super.m()` (or `A.m()`) calls the inherited method. An `interface` only says what its
+classes must be able to do. Components do not extend.
+
+Classes are translated to every language; each takes of inheritance what it has: see
+[translation.md](translation.md).
 
 `...` is a statement: what is still to be written. The program runs all the same, and
 shows who calls whom: a design can be tried before it has any code
@@ -83,7 +112,8 @@ seed 1                                        // the same run every time
 arrives in a state without a handler for it is ignored, and shown as such. Time is
 simulated: the run is the same every time, and one can go back in it.
 
-Components are run by `exec`, `test` and the interface; they are not translated to C.
+Components are run by `exec`, `test` and the interface, and translated to every language
+but C ([translation.md](translation.md)).
 
 ## Tests
 
@@ -105,7 +135,7 @@ end test
 the beginning.
 
 ```sh
-pseudoscope test program.plike
+pseudoscope test program.pscope
 ```
 
 The exit status is 1 if any fails. In the interface, `t` runs them all and Enter shows

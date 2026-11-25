@@ -24,7 +24,7 @@ def read(*patterns):
 
 
 # by kind of file; what is mutated gets words of its own kind
-KINDS = {".plike": read("/*/*.plike", "/../examples/*.plike", "/../examples/*/*.plike")}
+KINDS = {".plike": read("/*/*.plike", "/../examples/*.pscope", "/../examples/*/*.pscope")}
 for ext in (".psc", ".alg", ".por", ".pse"):
     KINDS[ext] = read("/dialects/*" + ext, "/../examples/libraries/*" + ext)
 for ext in (".puml", ".mmd"):

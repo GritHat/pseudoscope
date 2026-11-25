@@ -25,7 +25,7 @@ STORY = [
         {"it": "Si parte dai file: a destra c'è l'anteprima di quello scelto.",
          "en": "It starts from the files, with a preview of the chosen one.", "spot": (40, 2, 84, 24)},
     ]},
-    {"name": "1 · Il primo algoritmo", "open": "examples/basic.plike", "start": "<home>", "steps": [
+    {"name": "1 · Il primo algoritmo", "open": "examples/basic.pscope", "start": "<home>", "steps": [
         {"it": "La mappa del programma: ogni sottoprogramma è una scatola, con ciò che entra e ciò che esce.",
          "en": "The map: each subprogram is a box, with what goes in and what comes out.", "keys": "<down>",
          "spot": (39, 2, 85, 24)},
@@ -46,7 +46,7 @@ STORY = [
         {"it": "E con f il codice diventa il suo diagramma di attività, con il punto in cui siamo.",
          "en": "And f turns the code into its activity diagram, showing where we are.", "keys": "f" + R(6), "spot": CODE},
     ]},
-    {"name": "1 · Il primo algoritmo", "open": "examples/basic.plike", "start": "<home><down>r<enter>" + R(5), "steps": [
+    {"name": "1 · Il primo algoritmo", "open": "examples/basic.pscope", "start": "<home><down>r<enter>" + R(5), "steps": [
         {"it": "Cinque livelli, dall'esterno al dettaglio: il livello decide cosa si vede e quanto è lungo un passo.",
          "en": "Five levels: each decides what you see, and how long a step is.", "spot": LEVELS},
         {"it": "Istruzione: un'espressione diventa il suo valore, un pezzo alla volta.",
@@ -61,7 +61,7 @@ STORY = [
     # ------------------------------------------------------------------
     {"title": "Ricorsione e strutture", "tag": "2 · primo e secondo anno", "sub": "Chi aspetta chi, e dove portano i puntatori",
      "en": "Recursion and data structures: who waits for whom, and where pointers lead"},
-    {"name": "2 · Ricorsione", "open": "examples/fib.plike", "start": "r2", "steps": [
+    {"name": "2 · Ricorsione", "open": "examples/fib.pscope", "start": "r2", "steps": [
         {"it": "Livello Programma: un passo è una chiamata o un ritorno.", "en": "Program level: a step is a call or a return.",
          "keys": R(9), "pace": 0.6},
         {"it": "A destra la pila: ogni chiamata aspetta che finisca quella sopra di lei.",
@@ -70,7 +70,7 @@ STORY = [
          "en": "On the left, the tree: fib(2) is computed twice. That is why it is slow.", "keys": R(12), "pace": 0.4,
          "spot": (0, 2, 74, 21)},
     ]},
-    {"name": "2 · Strutture dati", "open": "examples/tree.plike", "start": "r<right><right><right>3<enter>", "steps": [
+    {"name": "2 · Strutture dati", "open": "examples/tree.pscope", "start": "r<right><right><right>3<enter>", "steps": [
         {"it": "Un albero binario di ricerca costruito dal programma: i puntatori diventano un disegno.",
          "en": "A binary search tree built by the program: pointers become a drawing.", "keys": R(60), "pace": 0.1,
          "spot": ("root  Node*", -2, 0, 64, 9)},
@@ -101,7 +101,7 @@ STORY = [
         {"it": "A destra resta il cammino fatto. Valgono anche classi, attività e diagrammi di flusso.",
          "en": "The way so far stays on the right. Classes, activities and flowcharts work too.", "spot": (84, 3, 40, 22)},
     ]},
-    {"name": "4 · Pseudoclassi", "open": "examples/design/shop.plike", "start": "", "steps": [
+    {"name": "4 · Pseudoclassi", "open": "examples/design/shop.pscope", "start": "", "steps": [
         {"it": "Oppure pseudoclassi ancora vuote: dove c'è «...» il codice non esiste.",
          "en": "Or pseudo-classes still empty: where there is “...” there is no code yet.", "keys": "<home><down><enter>"},
         {"it": "Il progetto gira lo stesso, e mostra chi chiama chi.",
@@ -111,7 +111,7 @@ STORY = [
     # ------------------------------------------------------------------
     {"title": "Un sistema intero", "tag": "5 · end to end", "sub": "Dal clic dell'utente al database, e ritorno",
      "en": "End to end: from the user's click to the database, and back"},
-    {"name": "5 · End to end", "open": "examples/systems/login.plike", "start": "<home><down><down><down><down>", "steps": [
+    {"name": "5 · End to end", "open": "examples/systems/login.pscope", "start": "<home><down><down><down><down>", "steps": [
         {"it": "Tre componenti: ognuno vive per conto suo e reagisce ai messaggi.",
          "en": "Three components: each lives on its own and reacts to messages.", "spot": (39, 2, 85, 12)},
         {"it": "Con t si lanciano tutte le prove. Invio ne mostra una mentre gira.",
@@ -132,7 +132,7 @@ STORY = [
     # ------------------------------------------------------------------
     {"title": "Quando le cose vanno storte", "tag": "6 · reti", "sub": "Un protocollo affidabile su un canale che perde pacchetti",
      "en": "Networks: a reliable protocol over a channel that loses packets"},
-    {"name": "6 · Protocolli", "open": "examples/systems/stop_and_wait.plike", "start": "t<enter>", "steps": [
+    {"name": "6 · Protocolli", "open": "examples/systems/stop_and_wait.pscope", "start": "t<enter>", "steps": [
         {"it": "Stop-and-wait: il canale perde un messaggio su quattro.", "en": "Stop-and-wait: the channel loses one message in four.",
          "keys": R(7), "pace": 0.6},
         {"it": "Ecco: la conferma si è persa.", "en": "There: the acknowledgement got lost.", "keys": R(2), "pace": 0.8,
@@ -150,7 +150,7 @@ STORY = [
     # ------------------------------------------------------------------
     {"title": "Algoritmi avanzati", "tag": "7 · anni successivi", "sub": "Verificare una proprietà, non solo un risultato",
      "en": "Later years: checking a property, not only a result"},
-    {"name": "7 · Grafi", "open": "examples/advanced/dijkstra.plike", "start": "", "steps": [
+    {"name": "7 · Grafi", "open": "examples/advanced/dijkstra.pscope", "start": "", "steps": [
         {"it": "Dijkstra. Una prova verifica le distanze, l'altra una proprietà che deve valere sempre.",
          "en": "Dijkstra. One test checks distances, the other a property that must always hold.", "keys": "t<down>", "pace": 1.0,
          "spot": (0, 2, 124, 6)},
@@ -162,7 +162,7 @@ STORY = [
     # ------------------------------------------------------------------
     {"title": "Sistemi distribuiti", "tag": "8 · magistrale", "sub": "Eleggere un leader, come fa Raft",
      "en": "Master's: electing a leader, as Raft does"},
-    {"name": "8 · Consenso", "open": "examples/systems/election.plike", "start": "t<enter>", "steps": [
+    {"name": "8 · Consenso", "open": "examples/systems/election.pscope", "start": "t<enter>", "steps": [
         {"it": "Cinque nodi. Chi non sente un leader per un po' si candida e chiede i voti.",
          "en": "Five nodes. Whoever hears no leader for a while asks for votes.", "keys": R(14), "pace": 0.25},
         {"it": "Due candidati nello stesso istante!", "en": "Two candidates at the same moment!", "keys": R(4), "pace": 0.4,
@@ -177,7 +177,7 @@ STORY = [
     ]},
     {"title": "E se fosse sbagliato?", "tag": "un esercizio", "color": (255, 135, 120),
      "sub": "La stessa elezione, con una regola dimenticata", "en": "What if it were wrong? The same election, with a rule forgotten"},
-    {"name": "8 · Trovare l'errore", "open": "examples/exercises/two_leaders.plike", "start": "", "steps": [
+    {"name": "8 · Trovare l'errore", "open": "examples/exercises/two_leaders.pscope", "start": "", "steps": [
         {"it": "Le prove falliscono: in un mandato ci sono due leader.", "en": "The tests fail: there are two leaders in the same term.",
          "keys": "t<down>", "pace": 1.0, "spot": (0, 2, 124, 6)},
         {"it": "Si guarda dove succede, sul diagramma dei tempi…", "en": "Let us see where it happens, on the timing diagram…",
@@ -193,6 +193,6 @@ STORY = [
     {"title": "Pseudoscope", "sub": "Dal primo ciclo ai sistemi distribuiti, in qualunque terminale",
      "en": "From the first loop to distributed systems, in any terminal", "seconds": 8,
      "lines": [("make && bin/pseudoscope", "apri la cartella e comincia"),
-               ("pseudoscope test file.plike", "lancia le prove"),
+               ("pseudoscope test file.pscope", "lancia le prove"),
                ("?", "tutti i tasti")]},
 ]

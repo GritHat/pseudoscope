@@ -67,7 +67,7 @@ done
 
 # systems, classes, designs: their own tests, and the examples
 cd "$here/.." || exit 1
-for file in examples/systems/*.plike examples/advanced/*.plike; do
+for file in examples/systems/*.pscope examples/advanced/*.pscope; do
     if "$plike" test "$file" > "$tmp/out" 2>&1; then pass; else fail "$file" "$tmp/out"; fi
 done
 
@@ -99,16 +99,16 @@ for file in *.plike; do
 done
 
 cd "$here/../examples" || exit 1
-for file in *.plike; do
-    opts= ; grep -q 'plike run --indexing=zero' "$file" && opts=--indexing=zero
-    input=/dev/null; [ -f "${file%.plike}.in" ] && input=${file%.plike}.in
+for file in *.pscope; do
+    opts= ; grep -q 'run --indexing=zero' "$file" && opts=--indexing=zero
+    input=/dev/null; [ -f "${file%.pscope}.in" ] && input=${file%.pscope}.in
     if "$plike" run -b $opts --cc="$here/ccheck" "$file" < "$input" > /dev/null 2> "$tmp/err"
     then pass; else fail "examples/$file" "$tmp/err"; fi
 done
 
 # designs: their tests pass, and their diagrams are read as they were
 cd "$here/../examples" || exit 1
-for file in */*.plike; do
+for file in */*.pscope; do
     grep -q '^ *test ' "$file" || continue
     "$plike" test "$file" > "$tmp/out" 2> "$tmp/err"
     got=$? want=0
@@ -147,7 +147,7 @@ for file in *.plike; do
 done
 
 # a file is what its text says, whatever its name
-cp "$here/../examples/fib.plike" "$tmp/noname" && cp "$here/dialects/basico.psc" "$tmp/pseint.txt" && cp "$here/../examples/uml/payment.mmd" "$tmp/drawing"
+cp "$here/../examples/fib.pscope" "$tmp/noname" && cp "$here/dialects/basico.psc" "$tmp/pseint.txt" && cp "$here/../examples/uml/payment.mmd" "$tmp/drawing"
 "$plike" exec "$tmp/noname" > "$tmp/out" 2>&1
 compare "a program without an extension" "$here/uml/noname.out" "$tmp/out"
 "$plike" exec "$tmp/pseint.txt" < "$here/dialects/basico.psc.in" > "$tmp/out" 2>&1

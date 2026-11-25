@@ -1,4 +1,4 @@
-// Arrays start at 0 here: plike run --indexing=zero examples/sorting.plike
+// Arrays start at 0 here: pseudoscope run --indexing=zero examples/sorting.pscope
 
 procedure InsertionSort(in n: integer, in/out arr[n]: array of integer)
     var i, j, key : integer

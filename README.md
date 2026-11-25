@@ -3,18 +3,20 @@
 *[Italiano](README.it.md)*
 
 Pseudocode and designs, brought to life in the terminal. Write an algorithm, a set of
-classes, a distributed system or a UML diagram; watch it run step by step, forwards and
-backwards, from the outside or in every detail; test it; translate it to C.
+classes, a distributed system or a diagram; watch it run step by step, forwards and
+backwards, from the outside or in every detail; test it; translate it to C, C++, Java,
+Rust, TypeScript, JavaScript or Python.
 
 [![Demo](docs/demo/poster.png)](docs/demo/pseudoscope.mp4)
 
-*Seven minutes, no sound; captions in Italian and English. Made with `tools/demo/make.py`.*
+*Seven minutes, no sound; captions in Italian and English. Made with `tools/demo/make.py`,
+before translation to other languages, inheritance, libraries and the newer diagrams.*
 
 It started as `plike-translator`, a first-year project to run the pseudocode used in our
 lectures. That pseudocode never had a fixed syntax, so all the spellings are accepted:
 `A[i,j]`, `A[i][j]` or `A(i,j)`, `and`, `.AND.` or `&&`, `end f` or `endfunction`, and so
-on. It now also reads PSeInt, VisuAlg, Portugol, Cambridge pseudocode, PlantUML and
-Mermaid.
+on. It now also reads PSeInt, VisuAlg, Portugol and Cambridge pseudocode with their
+libraries, PlantUML, Mermaid and Graphviz, and what Markdown and LaTeX documents hold.
 
 ## Build
 
@@ -31,9 +33,12 @@ make install         # optional, PREFIX=/usr/local
 
 ```sh
 bin/pseudoscope                           # the current folder
-bin/pseudoscope ui examples/sorting.plike
+bin/pseudoscope ui examples/sorting.pscope
 tools/pseudoscope-window examples         # in a new window, whatever the terminal
 ```
+
+Programs end in `.pscope` (`.plike` still works), or in nothing: a file is what its
+first lines say it is.
 
 Enter goes deeper, Esc comes back up, `r` runs, `t` tests, `?` lists the keys. It is in
 Italian; `--lang=en` for English. It works in kitty, GNOME Terminal, Ptyxis, Konsole,
@@ -59,17 +64,21 @@ have generated. Every access is checked, and errors say what happened.
 
 | | Try | Look at |
 |---|---|---|
-| Sorting | `examples/sorting.plike` | Function level, `v` for bars, ← to go back |
-| Recursion | `examples/fib.plike` | Program level |
-| Lists and trees | `examples/list.plike`, `tree.plike` | pointers as arrows |
-| Graphs | `examples/advanced/dijkstra.plike` | the tests (`t`), which also check a property |
-| Classes | `examples/advanced/stack_class.plike` | Objects |
-| A design without code | `examples/design/shop.plike` | Sequence |
-| A protocol | `examples/systems/stop_and_wait.plike` | what happens when packets get lost |
-| End to end | `examples/systems/login.plike` | a test, while it runs |
-| Consensus | `examples/systems/election.plike` | Timing: who leads, and when |
-| Find the mistake | `examples/exercises/two_leaders.plike` | which rule is missing? The tests show it |
+| Sorting | `examples/sorting.pscope` | Function level, `v` for bars, ← to go back |
+| Recursion | `examples/fib.pscope` | Program level |
+| Lists and trees | `examples/list.pscope`, `tree.pscope` | pointers as arrows |
+| Graphs | `examples/advanced/dijkstra.pscope` | the tests (`t`), which also check a property |
+| Classes | `examples/advanced/stack_class.pscope` | Objects |
+| Inheritance | `examples/advanced/shapes.pscope` | `T`: the same classes in each language |
+| A design without code | `examples/design/shop.pscope` | Sequence |
+| A protocol | `examples/systems/stop_and_wait.pscope` | what happens when packets get lost |
+| End to end | `examples/systems/login.pscope` | a test, while it runs |
+| Consensus | `examples/systems/election.pscope` | Timing: who leads, and when |
+| Find the mistake | `examples/exercises/two_leaders.pscope` | which rule is missing? The tests show it |
 | UML | `examples/uml` | diagrams, walked through |
+| Plans, entities, mind maps | `examples/diagrams` | a Gantt chart day by day |
+| Lecture notes and papers | `examples/documents` | Markdown and LaTeX, opened like folders |
+| Files and drawings | `examples/libraries` | `d`: what a Portugol program draws |
 
 Components exchange messages over links that delay and lose them; tests say what must
 happen from one end to the other:
@@ -86,14 +95,36 @@ begin
 end test
 ```
 
+## Seven languages
+
+```sh
+pseudoscope translate --to=java program.pscope     # or -o Program.java
+pseudoscope run --to=python program.pscope
+pseudoscope test --to=rust system.pscope           # the tests, translated
+```
+
+| | Classes extend | |
+|---|---|---|
+| C | nothing | `float`, pointers, bounds checks with `-b` |
+| C++ | several classes | references, `std::vector` |
+| Java | one class, and interfaces | what a subprogram changes comes back in a `record` |
+| Rust | interfaces (traits) | tuples; `unsafe` only with globals and pointers |
+| TypeScript, JavaScript | one class, and interfaces | passes `tsc --strict` |
+| Python | several classes | type hints, `abc` |
+
+What a language cannot say is refused with the reason, not written wrong. Components
+and tests are translated too, simulation included: a test gives the same result in
+every language. `make targets` checks it, program by program. See
+[docs/translation.md](docs/translation.md).
+
 ## Command line
 
 ```sh
-pseudoscope exec program.plike            # execute, without a C compiler
-pseudoscope test program.plike            # run its tests
-pseudoscope program.plike -o program.c    # translate to C
-pseudoscope run program.plike             # compile and execute
-pseudoscope build program.plike -o program
+pseudoscope exec program.pscope            # execute, without a C compiler
+pseudoscope test program.pscope            # run its tests
+pseudoscope program.pscope -o program.c    # translate to C (or .cpp .java .rs .ts .js .py)
+pseudoscope run program.pscope             # compile and execute
+pseudoscope build program.pscope -o program
 pseudoscope check program.psc             # only report errors
 pseudoscope ast diagram.puml              # what was understood (--dot for Graphviz)
 ```
@@ -114,16 +145,19 @@ spelling of P-like:
 
 ## Limits
 
-Classes have no inheritance. Components and tests are run, not translated to C. Of the
-diagrams, the kinds listed in [docs/diagrams.md](docs/diagrams.md) are read.
+Components and tests are not translated to C. Files, drawings and the other library
+functions of the pseudocodes run here and are not translated. Pointers to plain values
+exist only in C, C++ and Rust. `algorithm2e` and the keyboard, mouse and network of
+Portugol Studio are not read. Each document says what else is missing.
 
 ## Documentation
 
 - [The interface](docs/interface.md)
 - [The language](docs/language.md)
 - [Systems: classes, components, tests](docs/systems.md)
+- [Translating: seven languages](docs/translation.md)
 - [Other pseudocodes](docs/dialects.md)
-- [Diagrams](docs/diagrams.md)
+- [Diagrams and documents](docs/diagrams.md)
 - [How it works](docs/design.md)
 
 ## Tests
@@ -131,6 +165,7 @@ diagrams, the kinds listed in [docs/diagrams.md](docs/diagrams.md) are read.
 ```sh
 make test       # unit tests, end-to-end tests, screens, syntax matrix
 make sanitize   # the same, with the program under ASan and UBSan
+make targets    # every program in every language whose tools are installed
 make fuzz       # mutated programs and diagrams, random keys
 ```
 

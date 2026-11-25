@@ -40,7 +40,7 @@ $(BUILD)/%.o: %.c
 test: unit e2e syntax
 
 unit: $(BUILD)/unit
-	$(BUILD)/unit tests/programs/*.plike tests/targets/*.plike examples/*/*.plike
+	$(BUILD)/unit tests/programs/*.plike tests/targets/*.plike examples/*/*.pscope
 
 e2e: $(PLIKE)
 	PLIKE=$(PLIKE) tests/run.sh

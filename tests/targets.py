@@ -76,7 +76,7 @@ def same(expected, got):
 
 def ends(path, options):
     """Some systems go on for ever: there is nothing to compare."""
-    base = path[: -len(".plike")]
+    base = path[: -len(".pscope")]
     stdin = open(base + ".in") if os.path.exists(base + ".in") else subprocess.DEVNULL
     try:
         result = subprocess.run([tool, "exec", "--steps=3000000", *options, path], stdin=stdin, capture_output=True, timeout=60)
@@ -87,6 +87,7 @@ def ends(path, options):
 
 # The examples that some language cannot say, and why.
 REFUSED = {
+    "advanced/shapes.pscope": "rust",  # classes that extend classes
 }
 
 
@@ -112,16 +113,16 @@ def cases():
     for folder in ["."] + sorted(d for d in os.listdir(examples) if os.path.isdir(os.path.join(examples, d))):
         for name in sorted(os.listdir(os.path.join(examples, folder))):
             path = os.path.normpath(os.path.join(examples, folder, name))
-            if not name.endswith(".plike") or (word and word not in name):
+            if not name.endswith(".pscope") or (word and word not in name):
                 continue
             text = open(path).read()
-            options = ["--indexing=zero"] if "plike run --indexing=zero" in text else []
+            options = ["--indexing=zero"] if "run --indexing=zero" in text else []
             refused = REFUSED.get(os.path.join(folder, name).lstrip("./"), "").split()
             label = "examples" if folder == "." else "examples/" + folder
             if re.search(r"^\s*test\s+\"", text, re.M):
-                found.append((label, name + " tests", path, path[: -len(".plike")], options, refused, True))
+                found.append((label, name + " tests", path, path[: -len(".pscope")], options, refused, True))
             if re.search(r"^\s*procedure\s+main\b", text, re.M | re.I) and ends(path, options):
-                found.append((label, name, path, path[: -len(".plike")], options, refused, False))
+                found.append((label, name, path, path[: -len(".pscope")], options, refused, False))
     return found
 
 

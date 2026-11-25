@@ -28,3 +28,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: make fuzz
+
+  # Each program translated to each language, compiled or run with its tools.
+  targets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm install --global typescript
+      - run: make
+      - run: make targets

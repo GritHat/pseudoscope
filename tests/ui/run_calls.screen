@@ -1,4 +1,4 @@
- ◆ PSEUDOSCOPE  fib.plike         ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
+ ◆ PSEUDOSCOPE  fib.pscope        ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
   ‖ fermo   main ▸ fib ▸ fib
 ╭─ Chiamate ───────────────────────────────────────────────╮╭─ Pila: chi aspetta chi ──────────────╮
 │   main()                                                 ││ ╭──────────────────────────────────╮ │

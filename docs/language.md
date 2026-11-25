@@ -10,6 +10,9 @@ A file holds procedures, functions, global variables and record types, in any or
 they can be used before they are declared. It can also hold classes, components and
 tests: see [systems.md](systems.md). For other pseudocodes see [dialects.md](dialects.md).
 
+Files end in `.pscope` (or `.plike`, as before), or in nothing at all: what a file is,
+is told by how it begins.
+
 ```pascal
 procedure name(parameters)
     declarations
@@ -131,6 +134,21 @@ Word operators also exist between dots: `.and.`, `.not.`, `.eq.`, `.mod.`, `.tru
 
 Numbers: `12`, `0xFF`, `0o17`, `017` (octal), `0b101`, `1.5`, `2.`, `1e-3`.
 Text: `"string"`, `'c'`, with the C escapes.
+
+## Functions that are always there
+
+| | |
+|---|---|
+| numbers | `sqrt` `sin` `cos` `tan` `asin` `acos` `atan` `exp` `log` `log10` `pow` `floor` `ceil` `abs` `min` `max` `trunc` `round` |
+| chance | `random(a, b)`, always the same after `seed n` |
+| texts | `length` `upper` `lower` `substring(s, from, to)` `concat` |
+| texts, run here only | `text_of` `number_of` `char_code` `char_of` `position` `left` `right` `mid` `replace` |
+| files, run here only | `file_open(name, mode)` `file_read` `file_write` `file_eof` `file_close` `file_exists` |
+| drawings, run here only | `canvas(w, h)` `color` `rgb` `clear` `rect` `ellipse` `line` `point` `draw_text` `show` |
+
+A file is read from the disk once, and written to it when the program ends: going
+back in time undoes what was written. What a program draws is shown with `d`, or saved
+by `exec --canvas=picture.ppm`.
 
 ## Changes from version 1
 

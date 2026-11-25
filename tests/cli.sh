@@ -17,7 +17,7 @@ has() { # description, file, text
 }
 
 cli "help" 0 "$plike" --help;                 has "help text" out "Usage: pseudoscope"
-cli "version" 0 "$plike" --version;           has "version text" out "pseudoscope 3."
+cli "version" 0 "$plike" --version;           has "version text" out "pseudoscope 4."
 cli "no input" 2 "$plike";                    has "no input text" err "no input file"
 cli "unknown option" 2 "$plike" --nope hi.plike
 cli "bad value" 2 "$plike" --indexing=two hi.plike; has "bad value text" err "use zero or one"
