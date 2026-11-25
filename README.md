@@ -1,396 +1,121 @@
-# P-Like Language to C Translator
+# plike
 
-A source-to-source compiler that translates programs written in a Pascal-like language into equivalent C code. The translator supports various language features including procedures, functions, arrays (multi-dimensional), parameter passing modes (in/out/inout), and more.
+Translates P-like, a Pascal-like pseudocode, to C.
 
-## Requirements
+It started as a first-year project, to run the pseudocode used in our algorithms
+lectures. That pseudocode never had a fixed syntax, so the point of the translator
+is to accept all of the spellings: types in the parameter list or in the body,
+`A[i,j]`, `A[i][j]` or `A(i,j)`, `and`, `.AND.` or `&&`, `end f` or `endfunction`,
+`in/out` or `inout`, and so on.
 
-- C compiler (gcc or clang)
-- Make build system
-- (Optional) Graphviz for debug visualization
+```pascal
+procedure BubbleSort (in: n; in/out: A)
+    var i, j, n : integer
+    var A : array [1..n] of real
+    var temp : real
+    var ordinato : logical
+    begin
+        ordinato := FALSE
+        i := 1
+        while (i<n) AND (NOT ordinato) do
+            ordinato := TRUE
+            for j := 1 to n-i do
+                if A(j) > A(j+1) then
+                    temp := A(j)
+                    A(j) := A(j+1)
+                    A(j+1) := temp
+                    ordinato := FALSE
+                endif
+            endfor
+            i := i+1
+        endwhile
+    end
+end BubbleSort
+```
 
-## Building
+becomes
 
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/plike-translator
+```c
+void BubbleSort(int n, float A[n]) {
+    int i;
+    int j;
+    float temp;
+    bool ordinato;
+    ordinato = false;
+    i = 1;
+    while (i < n && !ordinato) {
+        ordinato = true;
+        for (j = 1; j <= n - i; j++) {
+            if (A[j - 1] > A[j]) {
+                temp = A[j - 1];
+                A[j - 1] = A[j];
+                A[j] = temp;
+                ordinato = false;
+            }
+        }
+        i = i + 1;
+    }
+}
+```
+
+## Build
+
+Needs a C11 compiler, make and a POSIX system. The tests also need Python 3.
+
+```sh
+git clone https://github.com/GritHat/plike-translator
 cd plike-translator
-
-# Build the project
-make
-
-# Optional: Build with debug features
-make debug
+make                 # bin/plike
+make install         # optional, PREFIX=/usr/local
 ```
 
-## Usage
+## Use
 
-```bash
-# Basic usage
-./plike input.p output.c
-
-# With mixed parameter declaration (parameter list and body)
-./plike --params=mixed input.p output.c
-
-# With 1-indexed arrays
-./plike --indexing=one input.p output.c
+```sh
+plike program.plike -o program.c          # translate
+plike run program.plike                   # compile and execute
+plike build program.plike -o program      # compile
+plike check program.plike                 # only report errors
+plike ast program.plike                   # syntax tree (--dot for Graphviz)
+plike tokens program.plike
 ```
 
-## Language Features
+`run` and `build` start from a procedure called `main`, without parameters. `-` reads
+the program from the standard input. `plike --help` lists all the options; these
+choose the dialect:
 
-<details>
-<summary>Click to expand language features</summary>
+| Option | Values | Default |
+|---|---|---|
+| `-a`, `--assignment` | `colon-equals`, `equals` | `colon-equals` |
+| `-i`, `--indexing` | `one`, `zero` | `one` |
+| `-p`, `--params` | `decl`, `body`, `mixed` | `mixed` |
+| `--operators` | `standard`, `dotted`, `mixed` | `mixed` |
+| `-m`, `--mixed-arrays` | `true`, `false` | `true` |
 
-### Basic Syntax
-```pascal
-// Function declaration
-function sum(in a: integer, in b: integer): integer
-begin
-    sum := a + b;
-end sum
+`-b` adds bounds checks to the generated program.
 
-// Procedure declaration
-procedure swap(inout x: integer, inout y: integer)
-var temp: integer;
-begin 
-    temp := x;
-    x := y;
-    y := temp;
-end swap
+Errors show where they are:
+
+```
+sum.plike:6:15: error: the array has 1 dimension but 2 indices were given
+    6 |         s := A(i,j)
+      |               ^
 ```
 
-### Array Operations
-```pascal
-// Fixed-size arrays
-var arr: array[10] of integer;
+## Documentation
 
-// Range-based arrays
-var matrix: array[1..5, 1..5] of real;
+- [The language](docs/language.md)
+- [How the translator works](docs/design.md)
+- [Examples](examples)
 
-// Dynamic arrays
-var dynamic: array[n] of integer;
+## Tests
+
+```sh
+make test       # unit tests, end-to-end tests, syntax matrix
+make sanitize   # the same, with the translator under ASan and UBSan
+make fuzz       # mutated programs
 ```
-
-### Parameter Passing Modes
-- `in`: Pass by value (default)
-- `out`: Pass by reference (write-only)
-- `inout`: Pass by reference (read/write)
-
-### Control Structures
-- `if`/`elseif`/`else`/`endif`
-- `while`/`endwhile`
-- `for`/`endfor`
-- `repeat`/`until`
-
-</details>
-
-## What's Missing
-
-Verbose logging as well as Bounds checking (both partially implemented but not functional and so deactivaed by default). Will come in future update.
-
-
-## Architecture
-
-### AST Structure
-<details>
-<summary>Click to see AST diagram</summary>
-
-```mermaid
-classDiagram
-    class ASTNode {
-        +NodeType type
-        +SourceLocation loc
-        +NodeData data
-        +ArrayBoundsData array_bounds
-        +ASTNode** children
-        +int child_count
-        +int child_capacity
-    }
-
-    class NodeData {
-        <<union>>
-        +FunctionData function
-        +VariableData variable
-        +BinaryOpData binary_op
-        +UnaryOpData unary_op
-        +ArrayAccessData array_access
-        +ParameterData parameter
-        +char* value
-    }
-
-    class FunctionData {
-        +char* name
-        +char* return_type
-        +ASTNode* params
-        +ASTNode* body
-        +bool is_procedure
-        +bool type_before_name
-        +bool is_pointer
-        +int pointer_level
-    }
-
-    class VariableData {
-        +char* name
-        +char* type
-        +bool is_array
-        +bool is_pointer
-        +int pointer_level
-        +ArrayInfo array_info
-        +bool is_param
-        +char* param_mode
-        +bool is_constant
-        +SourceLocation decl_loc
-    }
-
-    class Symbol {
-        +char* name
-        +SymbolKind kind
-        +SymbolInfo info
-        +Scope* scope
-    }
-
-    class Scope {
-        +ScopeType type
-        +Scope* parent
-        +Symbol** symbols
-        +int symbol_count
-    }
-
-    ASTNode --* NodeData
-    NodeData --* FunctionData
-    NodeData --* VariableData
-    Symbol --o Scope
-    Scope --o Symbol
-```
-
-</details>
-
-### Component Interactions
-<details>
-<summary>Click to see component interaction diagram</summary>
-
-```mermaid
-sequenceDiagram
-    participant Main
-    participant Config
-    participant Lexer
-    participant Parser
-    participant AST
-    participant SymTab
-    participant Debug
-    participant CodeGen
-    participant Logger
-
-    Main->>Config: Initialize configuration
-    Main->>Debug: Initialize debug system
-    Main->>Lexer: Create lexer
-    
-    activate Lexer
-    Lexer->>Logger: Log initialization
-    Lexer-->>Main: Return lexer instance
-    deactivate Lexer
-
-    Main->>Parser: Create parser
-    activate Parser
-    Parser->>SymTab: Create symbol table
-    Parser->>Lexer: Request tokens
-    loop Parsing
-        Parser->>AST: Create nodes
-        Parser->>SymTab: Update symbols
-        Parser->>Debug: Log parser state
-    end
-    Parser-->>Main: Return AST
-    deactivate Parser
-
-    Main->>CodeGen: Create generator
-    activate CodeGen
-    CodeGen->>AST: Traverse tree
-    CodeGen->>SymTab: Lookup symbols
-    CodeGen->>Debug: Log generation
-    CodeGen->>Logger: Write output
-    deactivate CodeGen
-
-    Main->>Logger: Cleanup
-    Main->>Debug: Cleanup
-```
-
-</details>
-
-### Configuration Impact
-<details>
-<summary>Click to see configuration impact diagram</summary>
-
-```mermaid
-flowchart LR
-    subgraph Configuration
-        direction TB
-        assign[Assignment Style<br>:= vs =]
-        array[Array Indexing<br>0-based vs 1-based]
-        param[Parameter Style<br>Type Declaration]
-        op[Operator Style<br>Standard vs Dotted]
-        bounds[Array Bounds<br>Checking]
-        mixed[Mixed Array<br>Access]
-    end
-
-    subgraph "Component Impacts"
-        direction TB
-        lex[Lexer]
-        parse[Parser]
-        sym[Symbol Table]
-        code[Code Generator]
-        debug[Debug System]
-    end
-
-    assign -->|Token Recognition| lex
-    assign -->|AST Building| parse
-    assign -->|Code Output| code
-    
-    array -->|Symbol Management| sym
-    array -->|Bound Checking| code
-    
-    param -->|Parameter Processing| parse
-    param -->|Symbol Creation| sym
-    
-    op -->|Token Recognition| lex
-    op -->|Expression Parsing| parse
-    
-    bounds -->|Code Generation| code
-    bounds -->|Debug Output| debug
-    
-    mixed -->|Array Access| parse
-    mixed -->|Code Generation| code
-```
-
-</details>
-
-### Translator Architecture
-<details>
-<summary>Click to see translator architecture diagram</summary>
-
-```mermaid
-flowchart TB
-    subgraph Input/Output
-        src[Source Code]
-        cfg[Config Files]
-        out[C Code Output]
-        debug[Debug Output]
-        logs[Log Files]
-    end
-
-    subgraph "Front End"
-        direction TB
-        lexer[Lexical Analyzer]
-        subgraph "Token Processing"
-            tok_stream[Token Stream]
-            tok_valid[Token Validation]
-        end
-        parser[Syntax Parser]
-    end
-
-    subgraph "Symbol Management"
-        direction TB
-        symtab[Symbol Table]
-        subgraph "Scope Management"
-            global[Global Scope]
-            local[Local Scopes]
-        end
-        param[Parameter Management]
-    end
-
-    subgraph "AST Management"
-        direction TB
-        ast[AST Builder]
-        subgraph "Node Types"
-            decl[Declarations]
-            stmt[Statements]
-            expr[Expressions]
-        end
-        valid[AST Validation]
-    end
-
-    subgraph "Code Generation"
-        direction TB
-        codegen[Code Generator]
-        subgraph "Generation Steps"
-            preproc[Preprocessing]
-            trans[Translation]
-            opt[Optimization]
-        end
-    end
-
-    subgraph "Support Systems"
-        direction TB
-        debug_sys[Debug System]
-        logger[Logger]
-        error[Error Handler]
-        config[Config Manager]
-    end
-
-    src --> lexer
-    cfg --> config
-
-    lexer --> tok_stream
-    tok_stream --> tok_valid
-    tok_valid --> parser
-    
-    parser --> ast
-    parser <--> symtab
-    
-    symtab --> global
-    symtab --> local
-    symtab --> param
-    
-    ast --> decl
-    ast --> stmt
-    ast --> expr
-    ast --> valid
-
-    valid --> codegen
-    codegen --> preproc
-    preproc --> trans
-    trans --> opt
-    opt --> out
-
-    config --> lexer
-    config --> parser
-    config --> codegen
-    
-    error --> debug
-    error --> logs
-    
-    logger --> logs
-    debug_sys --> debug
-
-    lexer -.-> logger
-    parser -.-> logger
-    codegen -.-> logger
-    
-    lexer -.-> error
-    parser -.-> error
-    codegen -.-> error
-    
-    style lexer fill:#f9f,stroke:#333,stroke-width:2px
-    style codegen fill:#bbf,stroke:#333,stroke-width:2px
-    style symtab fill:#bfb,stroke:#333,stroke-width:2px
-    style ast fill:#fbf,stroke:#333,stroke-width:2px
-```
-
-</details>
-
-## Configuration Options
-
-The translator supports various configuration options that affect how the code is processed and generated:
-
-- Assignment style (`:=` vs `=`)
-- Array indexing (0-based vs 1-based)
-- Parameter style (type declaration location)
-- Operator style (standard vs dotted logical operators)
-- Debug flags enabling (with graph generation if Graphviz is installed)
-- Mixed array access syntax (`[]` and `()`)
-
-## Contributing
-
-Contributions are welcome! Please read our contributing guidelines before submitting pull requests.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT
