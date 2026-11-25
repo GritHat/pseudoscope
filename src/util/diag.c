@@ -4,13 +4,17 @@
 #include <string.h>
 
 static void print_source_line(Diag *diag, Loc loc) {
-    const char *line = diag->source->text;
+    const char *line = diag->source->shown ? diag->source->shown : diag->source->text;
     for (int i = 1; i < loc.line; i++) {
         line = strchr(line, '\n');
         if (!line) return;
         line++;
     }
     size_t length = strcspn(line, "\r\n");
+    if (diag->source->shown) { /* the columns are those of our rewriting: the line is enough */
+        fprintf(diag->out, "%5d | %.*s\n", loc.line, (int)length, line);
+        return;
+    }
     fprintf(diag->out, "%5d | %.*s\n      | ", loc.line, (int)length, line);
     for (int i = 0; i < loc.column - 1 && (size_t)i < length; i++) {
         unsigned char c = (unsigned char)line[i];

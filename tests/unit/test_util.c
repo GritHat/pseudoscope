@@ -28,7 +28,7 @@ static void test_strbuf(void) {
 }
 
 static void test_diag(void) {
-    Source source = {"t.plike", "ab\n\tcd\n", 7};
+    Source source = {"t.plike", "ab\n\tcd\n", 7, NULL};
     char *text = NULL;
     size_t size = 0;
     FILE *out = open_memstream(&text, &size);

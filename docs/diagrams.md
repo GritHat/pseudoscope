@@ -55,6 +55,7 @@ pseudoscope run --to=python paper.tex # the only program of a paper
 Errors are given at the lines of the document. An algorithm typeset with
 `\Function`, `\State`, `\If`, `\For`, `\While`, `\Return` and mathematics
 (`\gets`, `\leq`, `\bmod`...) is run like any other; types are worked out from how
-things are used. `algorithm2e` is not read.
+things are used. It is shown, and its errors are quoted, as it was written, in LaTeX.
+`algorithm2e` is not read.
 
 Diagrams can also come from a program: see *Watching* in [systems.md](systems.md).

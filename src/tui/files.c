@@ -90,7 +90,7 @@ static bool open_document(App *app, char *real) {
     Document *doc = document_load(real, &app->config);
     if (!doc) return false;
     Arena arena = {0};
-    Source whole = {real, doc->text.data, doc->text.length};
+    Source whole = {real, doc->text.data, doc->text.length, NULL};
     Blocks *blocks = blocks_read(&whole, &arena);
     clear(f);
     free(f->directory);
@@ -185,6 +185,7 @@ void files_open(App *app, const char *directory) {
 
 static const char *kind_of(const Document *doc) {
     if (doc->uml) return uml_kind_name(doc->uml);
+    if (doc->shown) return "LaTeX";
     switch (doc->config.dialect) {
         case DIALECT_PSEINT: return "PSeInt";
         case DIALECT_VISUALG: return "VisuAlg";

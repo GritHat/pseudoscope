@@ -3,7 +3,7 @@
 
 static int parse_errors(const char *text, Config config) {
     Arena arena = {0};
-    Source source = {"t", text, strlen(text)};
+    Source source = {"t", text, strlen(text), NULL};
     FILE *sink = fopen("/dev/null", "w");
     Diag diag = {.source = &source, .out = sink};
     parse(lex(&source, &config, &arena, &diag), &config, &arena, &diag);
@@ -21,7 +21,7 @@ static void test_parameter_modes(void) {
     Arena arena = {0};
     Config config = CONFIG_DEFAULT;
     const char *text = PARAMS("a, b, out: c, d; e, in/out f, g, out h, i : real");
-    Source source = {"t", text, strlen(text)};
+    Source source = {"t", text, strlen(text), NULL};
     Diag diag = {.source = &source, .out = stderr};
     Program *program = parse(lex(&source, &config, &arena, &diag), &config, &arena, &diag);
     const ParamMode want[] = {MODE_IN, MODE_IN, MODE_OUT, MODE_OUT, MODE_IN,

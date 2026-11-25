@@ -402,7 +402,7 @@ static int start_ui(const Options *options) {
 /* Markdown and LaTeX: the programs and the diagrams they hold. */
 static int run_document(const Options *given, const char *file, int number, const StrBuf *text) {
     Arena arena = {0};
-    Source whole = {file, text->data, text->length};
+    Source whole = {file, text->data, text->length, NULL};
     Blocks *blocks = blocks_read(&whole, &arena);
     int status = EXIT_OK;
     if (number > blocks->count) {
@@ -444,7 +444,7 @@ static int run_document(const Options *given, const char *file, int number, cons
         adjusted.config.dialect = b->dialect;
         adjusted.config.dialect_given = true;
         adjusted.config = config_for(adjusted.config, file);
-        Source source = {arena_printf(&arena, "%s#%d", file, i + 1), b->text, strlen(b->text)};
+        Source source = {arena_printf(&arena, "%s#%d", file, i + 1), b->text, strlen(b->text), b->rewritten ? text->data : NULL};
         StrBuf out = {0};
         strbuf_puts(&out, "");
         int result = translate(&adjusted, &source, &arena, &out, b->diagram);
@@ -478,7 +478,7 @@ int run_command(const Options *given) {
     }
     adjusted.config = config_for_text(given->config, standard ? "" : file, standard ? NULL : text.data);
     const char *name = standard ? "<stdin>" : options->input;
-    Source source = {name, text.data, text.length};
+    Source source = {name, text.data, text.length, NULL};
     Arena arena = {0};
     StrBuf out = {0};
     strbuf_puts(&out, "");

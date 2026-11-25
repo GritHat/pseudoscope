@@ -301,6 +301,7 @@ static void draw_scalars(App *app, const Block *block, int x, int y, int w, int 
     int cx = x, cy = y;
     for (int i = 0; i < block->count; i++) {
         const Var *var = block->vars[i];
+        if (app->doc->shown && strcmp(var->symbol->name, "res_") == 0) continue; /* a name of ours, made up to run a LaTeX function */
         const Value *v = vm_cell(vm, var->at);
         char text[64];
         cell_text(vm, v, var->symbol->type, text, sizeof text);

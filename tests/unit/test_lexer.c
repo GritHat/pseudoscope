@@ -6,7 +6,7 @@
 /* Lexes text and renders it as "kind:text" separated by blanks. */
 static char *render(const char *text, Config config, int *errors) {
     Arena arena = {0};
-    Source source = {"t", text, strlen(text)};
+    Source source = {"t", text, strlen(text), NULL};
     FILE *sink = fopen("/dev/null", "w");
     Diag diag = {.source = &source, .out = sink};
     TokenList tokens = lex(&source, &config, &arena, &diag);
@@ -25,7 +25,7 @@ static char *render(const char *text, Config config, int *errors) {
 static void expect(const char *text, Config config, int want_errors, int n,
                    const TokenKind *kinds, int line) {
     Arena arena = {0};
-    Source source = {"t", text, strlen(text)};
+    Source source = {"t", text, strlen(text), NULL};
     FILE *sink = fopen("/dev/null", "w");
     Diag diag = {.source = &source, .out = sink};
     TokenList tokens = lex(&source, &config, &arena, &diag);
@@ -105,7 +105,7 @@ void test_lexer(void) {
     /* positions */
     Arena arena = {0};
     Config config = CONFIG_DEFAULT;
-    Source source = {"t", "a\n  b c", 7};
+    Source source = {"t", "a\n  b c", 7, NULL};
     Diag diag = {.source = &source, .out = stderr};
     TokenList tokens = lex(&source, &config, &arena, &diag);
     CHECK(tokens.items[1].loc.line == 2 && tokens.items[1].loc.column == 3);

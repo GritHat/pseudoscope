@@ -525,6 +525,7 @@ static void read_latex(Doc *d) {
                 for (int k2 = first; k2 <= last; k2++) lines[k2 - first + 1] = (char *)gantt_line(d, d->lines[k2], names, &named);
                 lines[count - 1] = "@endgantt";
                 add_block(d, "pgfgantt", true, 0, first - 1, last + 1, lines);
+                d->blocks->items[d->blocks->count - 1].rewritten = true;
             } else {
                 bool function = false, inside = false, main_open = false;
                 lines[0] = "";
@@ -532,6 +533,7 @@ static void read_latex(Doc *d) {
                     lines[k2 - first + 1] = (char *)algorithmic_line(d, d->lines[k2], &function, &inside, &main_open);
                 lines[count - 1] = main_open ? "FinAlgoritmo" : "";
                 add_block(d, "algorithmic", false, DIALECT_PSEINT, first - 1, last + 1, lines);
+                d->blocks->items[d->blocks->count - 1].rewritten = true;
             }
         }
     }

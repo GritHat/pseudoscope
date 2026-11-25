@@ -307,7 +307,7 @@ Document *document_load(const char *path, const Config *config) {
     bool diagram = kind == FILE_DIAGRAM;
     Diag diag = {.source = &doc->source, .out = stderr, .sink = add_message, .sink_context = doc};
     if (kind == FILE_DOCUMENT) { /* one of the things it holds, or its outline */
-        Source whole = {doc->file, doc->text.data, doc->text.length};
+        Source whole = {doc->file, doc->text.data, doc->text.length, NULL};
         Blocks *blocks = blocks_read(&whole, &doc->arena);
         if (number < 1 || number > blocks->count) {
             doc->source = whole;
@@ -319,6 +319,10 @@ Document *document_load(const char *path, const Config *config) {
             return doc;
         }
         const DocBlock *block = &blocks->items[number - 1];
+        if (block->rewritten) { /* what is run is ours; what is shown is what was written */
+            doc->shown = strdup(doc->text.data);
+            if (!doc->shown) abort();
+        }
         doc->text.length = 0;
         doc->text.data[0] = '\0';
         strbuf_puts(&doc->text, block->text);
@@ -328,8 +332,17 @@ Document *document_load(const char *path, const Config *config) {
         wanted.dialect_given = true;
     }
     doc->config = config_for_text(wanted, file, doc->text.data);
-    doc->source = (Source){doc->path, doc->text.data, doc->text.length};
+    doc->source = (Source){doc->path, doc->text.data, doc->text.length, doc->shown};
     split_lines(doc);
+    if (doc->shown) { /* the same lines, as many: where each begins */
+        doc->shown_lines = malloc((size_t)(doc->line_count + 2) * sizeof(int));
+        if (!doc->shown_lines) abort();
+        int at = 0, end = (int)strlen(doc->shown);
+        doc->shown_lines[at++] = 0;
+        for (int i = 0; i < end && at <= doc->line_count; i++)
+            if (doc->shown[i] == '\n') doc->shown_lines[at++] = i + 1;
+        while (at <= doc->line_count + 1) doc->shown_lines[at++] = end + 1;
+    }
 
     if (diagram) {
         doc->kinds = calloc(doc->text.length + 1, 1);
@@ -351,6 +364,8 @@ void document_free(Document *doc) {
     free(doc->path);
     free(doc->file);
     free(doc->lines);
+    free(doc->shown);
+    free(doc->shown_lines);
     free(doc->kinds);
     free(doc->items);
     strbuf_free(&doc->text);

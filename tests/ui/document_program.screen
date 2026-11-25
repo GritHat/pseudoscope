@@ -1,14 +1,14 @@
  ◆ PSEUDOSCOPE  paper.tex#1                      ▐ System ▌▸▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
   ‖ paused   main ▸ Gcd
 ╭─ Gcd ──────────────────────────────────────────╮╭─ Data ───────────────────────────────────────────────────╮
-│   15 Funcion res_ <- Gcd(a, b)                 ││                                                          │
-│   16 Mientras b <> 0 Hacer                     ││ a  48    b  12    ⇒ Gcd  0    t  18    res_  ·           │
-│   17 t <- b                                    ││                                                          │
-│   18 b <- a  MOD  b  // the remainder          ││                                                          │
-│▶  19 a <- t                                    ││                                                          │
-│   20 FinMientras                               ││                                                          │
-│   21 res_ <- a; Retornar                       ││                                                          │
-│   22 FinFuncion                                ││                                                          │
+│   15 \Function{Gcd}{a, b}                      ││                                                          │
+│   16     \While{$b \neq 0$}                    ││ a  48    b  12    ⇒ Gcd  0    t  18                      │
+│   17         \State $t \gets b$                ││                                                          │
+│   18         \State $b \gets a \bmod b$ \Comm… ││                                                          │
+│▶  19         \State $a \gets t$                ││                                                          │
+│   20     \EndWhile                             ││                                                          │
+│   21     \State \Return $a$                    ││                                                          │
+│   22 \EndFunction                              ││                                                          │
 │                                                ││                                                          │
 │                                                ││                                                          │
 │                                                ││                                                          │

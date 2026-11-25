@@ -443,7 +443,7 @@ static void lex_word(Lexer *lx) {
     for (int i = 0; i < lx->count; i++) {
         const Token *t = &lx->items[i];
         if (t->kind != TOK_IDENT || strlen(t->text) != length) continue;
-        Source other = {"", t->text, length};
+        Source other = {"", t->text, length, NULL};
         Lexer view = {.source = &other};
         size_t k = 0;
         bool same = lx->config->dialect != DIALECT_PORTUGOL;

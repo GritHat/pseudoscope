@@ -40,22 +40,33 @@ void draw_code(int x, int y, int w, int h, const CodeView *view) {
         put_text(x + 1, y + row, S(current ? C_FOCUS : C_FAINT, bg, 0), number);
 
         int col = x + 6, end = x + w;
-        int i = doc->lines[line - 1], stop_at = doc->lines[line] - 1;
-        if (stop_at > (int)doc->text.length) stop_at = (int)doc->text.length;
+        /* a LaTeX algorithm is run in our rewriting of it, and shown as it was written */
+        const char *text = doc->shown ? doc->shown : doc->text.data;
+        const int *starts = doc->shown ? doc->shown_lines : doc->lines;
+        int limit = doc->shown ? (int)strlen(doc->shown) : (int)doc->text.length;
+        int i = starts[line - 1], stop_at = starts[line] - 1;
+        if (stop_at > limit) stop_at = limit;
         short tint = 0;
+        bool command = false, remark = false;
         while (i < stop_at && col < end) {
-            char c = doc->text.data[i];
+            char c = text[i];
             if (c == '\r') break;
             if (c == '\t') {
                 col += 4 - (col - x - 6) % 4;
                 i++;
                 continue;
             }
-            int kind = doc->kinds[i];
-            if (is_word(c) && (i == doc->lines[line - 1] || !is_word(doc->text.data[i - 1]))) {
+            int kind = doc->shown ? H_PLAIN : doc->kinds[i];
+            if (doc->shown) { /* its commands and its comments, at least */
+                if (c == '%') remark = true;
+                else if (c == '\\') command = true;
+                else if (command && !is_word(c)) command = false;
+                kind = remark ? H_COMMENT : command ? H_KEYWORD : H_PLAIN;
+            }
+            if (is_word(c) && (i == starts[line - 1] || !is_word(text[i - 1]))) {
                 int n = 1;
-                while (i + n < stop_at && is_word(doc->text.data[i + n])) n++;
-                tint = kind == H_PLAIN ? tint_of(view, doc->text.data + i, (size_t)n) : 0;
+                while (i + n < stop_at && is_word(text[i + n])) n++;
+                tint = kind == H_PLAIN ? tint_of(view, text + i, (size_t)n) : 0;
             } else if (!is_word(c)) {
                 tint = 0;
             }
@@ -63,8 +74,8 @@ void draw_code(int x, int y, int w, int h, const CodeView *view) {
             if (tint) st = S(tint, C_DEFAULT, A_BOLD);
             st.bg = bg;
             char glyph[5] = "";
-            int n = char_bytes(doc->text.data + i);
-            memcpy(glyph, doc->text.data + i, (size_t)n);
+            int n = char_bytes(text + i);
+            memcpy(glyph, text + i, (size_t)n);
             put_text(col++, y + row, st, glyph);
             i += n;
         }

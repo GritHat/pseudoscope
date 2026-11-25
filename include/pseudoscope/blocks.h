@@ -14,6 +14,7 @@ typedef struct {
     const char *title;      /* the heading it is under, or its caption */
     int line, lines;        /* where it begins, and how long it is */
     const char *text;       /* the document with everything else blanked: lines keep their numbers */
+    bool rewritten;         /* the text is ours, not the writer's: LaTeX said the way we read it */
 } DocBlock;
 
 typedef struct {

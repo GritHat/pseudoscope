@@ -53,6 +53,8 @@ typedef struct {
     Message messages[32];
     int message_count;
     int *lines;              /* offset of each line; lines[0] is the first */
+    char *shown;             /* the lines as their writer wrote them, when the text is our rewriting; else NULL */
+    int *shown_lines;
     int line_count;
     unsigned char *kinds;    /* highlighting of each byte */
     Item *items;

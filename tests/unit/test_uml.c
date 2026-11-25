@@ -11,7 +11,7 @@ typedef struct {
 
 static void draw(Drawn *d, const char *path, const char *text) {
     memset(d, 0, sizeof *d);
-    d->source = (Source){path, text, strlen(text)};
+    d->source = (Source){path, text, strlen(text), NULL};
     d->diag = (Diag){.source = &d->source, .out = fopen("/dev/null", "w")};
     d->uml = uml_parse(&d->source, &d->arena, &d->diag);
 }
@@ -162,7 +162,7 @@ static void test_documents(void) {
     Arena arena = {0};
     static const char MARKDOWN[] = "# Title\n\ntext\n\n## Part\n\n```mermaid\npie\n \"A\" : 1\n```\n\n```python\nprint(1)\n```\n\n"
                                    "~~~pseint\nAlgoritmo X\nEscribir 1\nFinAlgoritmo\n~~~\n";
-    Source md = {"notes.md", MARKDOWN, sizeof MARKDOWN - 1};
+    Source md = {"notes.md", MARKDOWN, sizeof MARKDOWN - 1, NULL};
     Blocks *b = blocks_read(&md, &arena);
     CHECK(b->count == 2 && b->outline && b->outline->node_count == 3);
     if (b->count == 2) {
@@ -176,7 +176,7 @@ static void test_documents(void) {
     }
     static const char LATEX[] = "\\section{One}\n\\begin{algorithmic}\n\\Function{F}{n}\n\\State $r \\gets n \\cdot 2$\n"
                                 "\\State \\Return $r$\n\\EndFunction\n\\end{algorithmic}\n";
-    Source tex = {"paper.tex", LATEX, sizeof LATEX - 1};
+    Source tex = {"paper.tex", LATEX, sizeof LATEX - 1, NULL};
     b = blocks_read(&tex, &arena);
     CHECK(b->count == 1 && b->latex);
     if (b->count == 1) {

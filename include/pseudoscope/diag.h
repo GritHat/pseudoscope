@@ -15,6 +15,7 @@ typedef struct {
     const char *name;
     const char *text; /* NUL-terminated */
     size_t length;
+    const char *shown; /* what the writer wrote, line for line, when the text is our rewriting of it; else NULL */
 } Source;
 
 typedef struct {

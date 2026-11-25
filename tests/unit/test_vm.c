@@ -18,7 +18,7 @@ static bool load(Loaded *l, const char *text, size_t length) {
     memset(l, 0, sizeof *l);
     strbuf_append(&l->text, text, length);
     l->config = CONFIG_DEFAULT;
-    l->source = (Source){"t", l->text.data, l->text.length};
+    l->source = (Source){"t", l->text.data, l->text.length, NULL};
     l->diag = (Diag){.source = &l->source, .out = fopen("/dev/null", "w"), .silent_warnings = true};
     TokenList tokens = lex(&l->source, &l->config, &l->arena, &l->diag);
     l->program = parse(tokens, &l->config, &l->arena, &l->diag);
