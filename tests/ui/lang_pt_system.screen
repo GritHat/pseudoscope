@@ -1,0 +1,30 @@
+ ◆ PSEUDOSCOPE  login.pscope                    ▐ Sistema ▌▸▐ Programa ▌▸▐ Função ▌▸▐ Instrução ▌▸▐ Memória ▌
+  ‖ em pausa   the right password logs in ▸ Server.Login
+  Sequência   Componentes   Estados   Tempos   Comunicação   Verificações               tempo t = 4
+╭────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                 ╭──────╮               ╭────────╮              ╭────────╮             ╭──────────╮         │
+│                 │ test │               │ client │              │ server │             │ database │         │
+│                 ╰──────╯               ╰────────╯              ╰────────╯             ╰──────────╯         │
+│ t=0     ── the user types the password ──────────────────────────────────────────────────────────────────  │
+│ t=0                 │                       │                       │                       ┃↺ start       │
+│ t=1                 │─── Click(2, 2222) ───▶┃                       │                       │              │
+│ t=1                 │                       ◆ Waiting               │                       │              │
+│ t=4                 │                       │─── Login(2, 2222) ───▶┃                       │              │
+│                     │                       │                       ┃                       │              │
+│                     │                       │                       ┃                       │              │
+│                     │                       │                       ┃                       │              │
+│                     │                       │                       ┃                       │              │
+│                     │                       │                       ┃                       │              │
+│                     │                       │                       ┃                       │              │
+│                     │                       │                       ┃                       │              │
+│                     │                       │                       ┃                       │              │
+│                     │                       │                       ┃                       │              │
+│                     │                       │                       ┃                       │              │
+│                     │                       │                       ┃                       │              │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ O que aconteceu ──────────────────────────────────────────────────────────────────────────────────────────╮
+│ ▷ client envia  Login  a server                                                                            │
+│ ◆ client passa a  Waiting   antes era Idle                                                                 │
+│ ▶  Login(2, 2222)  chega a server                                                                          │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+  →  passo   ←  voltar   Espaço  avança   Enter  detalhes   Esc  resumo   Tab  outra visão   ?  ajuda

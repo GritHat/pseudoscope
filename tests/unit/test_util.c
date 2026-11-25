@@ -80,7 +80,7 @@ static void test_languages(void) {
             CHECK_STR(other, english);
         }
     }
-    CHECK(locale_count() >= 3);
+    CHECK(locale_count() >= 4);
     CHECK_STR(locale_code(0), "en");
     CHECK(locale_choose("it_IT.UTF-8"));
     CHECK_STR(locale_code(locale_now()), "it");

@@ -2,7 +2,7 @@
 
 # Pseudoscope
 
-*[English](README.md) · [Español](README.es.md)*
+*[English](README.md) · [Español](README.es.md) · [Português](README.pt.md)*
 
 Pseudocodice e progetti che prendono vita nel terminale. Si scrive un algoritmo, delle
 classi, un sistema distribuito o un diagramma; lo si guarda girare passo per passo,
@@ -30,7 +30,8 @@ in C, C++, Java, Rust, TypeScript, JavaScript o Python.
 - **Sette linguaggi**: C, C++, Java, Rust, TypeScript, JavaScript e Python, prove e
   simulazione comprese; ciò che un linguaggio non sa dire viene rifiutato spiegando
   perché.
-- **Nella tua lingua**: interfaccia, errori e aiuto in inglese, italiano e spagnolo.
+- **Nella tua lingua**: interfaccia, errori e aiuto in inglese, italiano, spagnolo e
+  portoghese.
 
 È nato come un progetto del primo anno per eseguire il P-like, lo pseudocodice usato a
 lezione. Quello pseudocodice non ha mai avuto una sintassi fissa, quindi si
@@ -64,7 +65,7 @@ tasti. Funziona in kitty, GNOME Terminal, Ptyxis, Konsole, xterm e simili, in tm
 screen, sulla console di Linux, e anche senza colori o senza Unicode: vedi
 [docs/interface.md](docs/interface.md).
 
-Parla inglese, italiano e spagnolo: la lingua del sistema, oppure `--lang=it`, oppure
+Parla inglese, italiano, spagnolo e portoghese: la lingua del sistema, oppure `--lang=it`, oppure
 `PSEUDOSCOPE_LANG=es`. Per aggiungerne un'altra basta un file: vedi
 [docs/localization.md](docs/localization.md).
 
@@ -183,7 +184,7 @@ In inglese:
 - [Tradurre: sette linguaggi](docs/translation.md)
 - [Altri pseudocodici](docs/dialects.md)
 - [Diagrammi e documenti](docs/diagrams.md)
-- [Le lingue: inglese, italiano, spagnolo, e come aggiungerne una](docs/localization.md)
+- [Le lingue: inglese, italiano, spagnolo, portoghese, e come aggiungerne una](docs/localization.md)
 - [Come funziona](docs/design.md)
 
 ## Test

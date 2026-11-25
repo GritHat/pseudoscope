@@ -2,7 +2,7 @@
 
 # Pseudoscope
 
-*[Italiano](README.it.md) · [Español](README.es.md)*
+*[Italiano](README.it.md) · [Español](README.es.md) · [Português](README.pt.md)*
 
 Pseudocode and designs, brought to life in the terminal. Write an algorithm, a set of
 classes, a distributed system or a diagram; watch it run step by step, forwards and
@@ -29,7 +29,8 @@ Rust, TypeScript, JavaScript or Python.
   where they are.
 - **Seven languages**: C, C++, Java, Rust, TypeScript, JavaScript and Python, tests and
   simulation included; what a language cannot say is refused with the reason.
-- **In your language**: interface, errors and help in English, Italian and Spanish.
+- **In your language**: interface, errors and help in English, Italian, Spanish and
+  Portuguese.
 
 It started as a first-year project to run P-like, the pseudocode used in our lectures.
 That pseudocode never had a fixed syntax, so all the spellings are accepted:
@@ -62,8 +63,8 @@ Enter goes deeper, Esc comes back up, `r` runs, `t` tests, `?` lists the keys. I
 in kitty, GNOME Terminal, Ptyxis, Konsole, xterm and the like, in tmux and screen, on the
 Linux console, and without colours or Unicode: see [docs/interface.md](docs/interface.md).
 
-It speaks English, Italian and Spanish: the language of the system, or `--lang=it`, or
-`PSEUDOSCOPE_LANG=es`. Adding another is a matter of one file: see
+It speaks English, Italian, Spanish and Portuguese: the language of the system, or
+`--lang=it`, or `PSEUDOSCOPE_LANG=es`. Adding another is a matter of one file: see
 [docs/localization.md](docs/localization.md).
 
 ## One program, five levels
@@ -179,7 +180,7 @@ what else is missing.
 - [Translating: seven languages](docs/translation.md)
 - [Other pseudocodes](docs/dialects.md)
 - [Diagrams and documents](docs/diagrams.md)
-- [Languages: English, Italian, Spanish, and adding one](docs/localization.md)
+- [Languages: English, Italian, Spanish, Portuguese, and adding one](docs/localization.md)
 - [How it works](docs/design.md)
 
 ## Tests

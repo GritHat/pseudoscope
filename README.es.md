@@ -2,7 +2,7 @@
 
 # Pseudoscope
 
-*[English](README.md) · [Italiano](README.it.md)*
+*[English](README.md) · [Italiano](README.it.md) · [Português](README.pt.md)*
 
 Pseudocódigo y diseños que cobran vida en el terminal. Escribe un algoritmo, unas clases,
 un sistema distribuido o un diagrama; míralo funcionar paso a paso, hacia delante y hacia
@@ -29,7 +29,7 @@ TypeScript, JavaScript o Python.
   artículos en LaTeX se abren donde están.
 - **Siete lenguajes**: C, C++, Java, Rust, TypeScript, JavaScript y Python, pruebas y
   simulación incluidas; lo que un lenguaje no sabe decir se rechaza explicando por qué.
-- **En tu idioma**: interfaz, errores y ayuda en inglés, italiano y español.
+- **En tu idioma**: interfaz, errores y ayuda en inglés, italiano, español y portugués.
 
 Nació como un proyecto de primer curso para ejecutar P-like, el pseudocódigo que se
 usaba en clase. Aquel pseudocódigo nunca tuvo una sintaxis fija, así que se
@@ -64,7 +64,7 @@ teclas. Funciona en kitty, GNOME Terminal, Ptyxis, Konsole, xterm y similares, e
 screen, en la consola de Linux, y también sin colores o sin Unicode: ver
 [docs/interface.md](docs/interface.md).
 
-Habla inglés, italiano y español: el idioma del sistema, o `--lang=es`, o
+Habla inglés, italiano, español y portugués: el idioma del sistema, o `--lang=es`, o
 `PSEUDOSCOPE_LANG=es`. Para añadir otro basta un archivo: ver
 [docs/localization.md](docs/localization.md).
 
@@ -184,7 +184,7 @@ En inglés:
 - [Traducir: siete lenguajes](docs/translation.md)
 - [Otros pseudocódigos](docs/dialects.md)
 - [Diagramas y documentos](docs/diagrams.md)
-- [Los idiomas: inglés, italiano, español, y cómo añadir otro](docs/localization.md)
+- [Los idiomas: inglés, italiano, español, portugués, y cómo añadir otro](docs/localization.md)
 - [Cómo funciona](docs/design.md)
 
 ## Pruebas

@@ -1,7 +1,9 @@
 # Languages
 
-Pseudoscope is written in English and speaks English, Italian and Spanish: the
-interface, the errors of a program, the messages of the commands and `--help`.
+Pseudoscope is written in English and speaks English, Italian, Spanish and Portuguese:
+the interface, the errors of a program, the messages of the commands and `--help`.
+Italian is where it was born; Spanish and Portuguese are the languages of the
+pseudocodes it reads, PSeInt, VisuAlg and Portugol.
 
 ```sh
 pseudoscope --lang=es examples          # for once
@@ -33,7 +35,7 @@ English texts too: they are translated where they are shown.
 
 ## Adding a language
 
-1. Copy `lang/pseudoscope.pot` to `lang/CODE.po` (`fr.po`, `pt.po`…) and fill its
+1. Copy `lang/pseudoscope.pot` to `lang/CODE.po` (`fr.po`, `de.po`…) and fill its
    header: `Language: fr` and `X-Language-Name: Français`.
 2. Translate each `msgstr`. Any gettext editor will do, and so will a text editor.
 3. `make`: the language is there, under its code and its name (`--lang=fr`,
