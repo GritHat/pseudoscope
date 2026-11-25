@@ -1,0 +1,68 @@
+#!/bin/sh
+# Opens pseudoscope in a new terminal window: the kind of terminal this is run
+# from, or the first that is installed. PSEUDOSCOPE_TERMINAL chooses one.
+# Without a graphical session it runs here.
+#   pseudoscope-window [FILE or FOLDER]
+
+here=$(cd "$(dirname "$0")" && pwd)
+if command -v pseudoscope >/dev/null 2>&1; then program=$(command -v pseudoscope)
+elif [ -x "$here/pseudoscope" ]; then program=$here/pseudoscope
+else program=$here/../bin/pseudoscope; fi
+[ -x "$program" ] || { echo "pseudoscope-window: pseudoscope is not installed" >&2; exit 1; }
+
+target=${1:-.}
+if [ -z "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]; then
+    if [ "$(uname)" != Darwin ]; then exec "$program" ui "$target"; fi
+fi
+
+# The terminal we are in, from the processes above us.
+current() {
+    pid=$$ n=0
+    while [ "$pid" -gt 1 ] && [ $n -lt 20 ]; do
+        name=$(ps -o comm= -p "$pid" 2>/dev/null)
+        case $name in
+            kitty|alacritty|foot|wezterm*|ghostty|konsole|xterm|urxvt|tilix|terminator|lxterminal|ptyxis*|kgx) echo "${name%%-*}"; return ;;
+            gnome-terminal*) echo gnome-terminal; return ;;
+            xfce4-terminal*) echo xfce4-terminal; return ;;
+            mate-terminal*) echo mate-terminal; return ;;
+        esac
+        pid=$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ')
+        [ -n "$pid" ] || return
+        n=$((n + 1))
+    done
+}
+
+open_in() { # terminal
+    command -v "$1" >/dev/null 2>&1 || return 1
+    case $1 in
+        kitty) kitty --start-as=maximized "$program" ui "$target" ;;
+        alacritty) alacritty -o 'window.startup_mode="Maximized"' -e "$program" ui "$target" ;;
+        foot) foot --maximized "$program" ui "$target" ;;
+        wezterm) wezterm start -- "$program" ui "$target" ;;
+        ghostty) ghostty --maximize=true -e "$program" ui "$target" ;;
+        konsole) konsole --fullscreen -e "$program" ui "$target" ;;
+        gnome-terminal) gnome-terminal --maximize -- "$program" ui "$target" ;;
+        ptyxis) ptyxis --new-window --maximize -- "$program" ui "$target" ;;
+        kgx) kgx -e "$program" ui "$target" ;;
+        xfce4-terminal) xfce4-terminal --maximize -x "$program" ui "$target" ;;
+        mate-terminal) mate-terminal --maximize -x "$program" ui "$target" ;;
+        tilix) tilix --maximize -e "$program ui '$target'" ;;
+        terminator) terminator -m -x "$program" ui "$target" ;;
+        lxterminal) lxterminal -e "$program ui '$target'" ;;
+        urxvt) urxvt -e "$program" ui "$target" ;;
+        xterm) xterm -maximized -e "$program" ui "$target" ;;
+        x-terminal-emulator) x-terminal-emulator -e "$program" ui "$target" ;;
+        *) return 1 ;;
+    esac
+}
+
+if [ "$(uname)" = Darwin ]; then
+    osascript -e "tell application \"Terminal\" to do script \"'$program' ui '$target'\"" -e 'tell application "Terminal" to activate'
+    exit
+fi
+for terminal in "${PSEUDOSCOPE_TERMINAL:-}" "$(current)" kitty gnome-terminal ptyxis kgx konsole xfce4-terminal \
+                mate-terminal tilix terminator alacritty foot wezterm ghostty lxterminal urxvt xterm x-terminal-emulator; do
+    [ -n "$terminal" ] || continue
+    open_in "$terminal" && exit 0
+done
+exec "$program" ui "$target"

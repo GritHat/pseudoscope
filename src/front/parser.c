@@ -741,6 +741,7 @@ static void parse_class(Parser *p) {
     VarDecl **fields = &klass->record->fields;
     while (!p->panic && !check(p, TOK_END) && !check(p, TOK_EOF)) {
         if (match(p, TOK_SEMICOLON)) continue;
+        int before = p->pos;
         if (klass->is_component && is_word(cur(p), "states") && peek(p, 1)->kind == TOK_IDENT) {
             advance(p);
             parse_states(p, klass);
@@ -763,6 +764,8 @@ static void parse_class(Parser *p) {
         } else {
             syntax_error(p, "a variable, a procedure or a function of the class");
         }
+        if (!p->panic && p->pos == before) /* nothing here that we can read */
+            syntax_error(p, "a variable, a procedure or a function of the class");
     }
     p->klass = NULL;
     if (p->panic || !expect(p, TOK_END, "'end'")) return;
@@ -784,8 +787,11 @@ static void parse_test(Parser *p) {
     *p->functions_tail = test;
     p->functions_tail = &test->next;
     VarDecl **tail = &test->locals;
-    while (!p->panic && (check(p, TOK_VAR) || (check(p, TOK_IDENT) && tail != &test->locals)))
+    while (!p->panic && (check(p, TOK_VAR) || (check(p, TOK_IDENT) && tail != &test->locals))) {
+        int before = p->pos;
         tail = parse_var_section(p, tail, true);
+        if (p->pos == before) break;
+    }
     if (p->panic || !expect(p, TOK_BEGIN, "'begin'")) return;
     p->in_test = true;
     test->body = parse_statements(p);

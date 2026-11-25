@@ -1,4 +1,4 @@
- ◆ PLIKE  matrices.plike                                ▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
+ ◆ PSEUDOSCOPE  matrices.plike              ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
   ‖ fermo   MatrixSum
 ╭─ MatrixSum ────────────────────────────────────╮╭─ Dati ───────────────────────────────────────────────────╮
 │    1 procedure MatrixSum (in:m,n,A,B; out:C)   ││                                                          │

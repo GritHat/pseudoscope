@@ -16,8 +16,8 @@ has() { # description, file, text
     if grep -qF -- "$3" "$2"; then pass; else fail "cli: $1" "$2"; fi
 }
 
-cli "help" 0 "$plike" --help;                 has "help text" out "Usage: plike"
-cli "version" 0 "$plike" --version;           has "version text" out "plike 2."
+cli "help" 0 "$plike" --help;                 has "help text" out "Usage: pseudoscope"
+cli "version" 0 "$plike" --version;           has "version text" out "pseudoscope 3."
 cli "no input" 2 "$plike";                    has "no input text" err "no input file"
 cli "unknown option" 2 "$plike" --nope hi.plike
 cli "bad value" 2 "$plike" --indexing=two hi.plike; has "bad value text" err "use zero or one"
@@ -54,4 +54,4 @@ cli "ui files" 0 "$plike" ui . --keys= ;      has "ui files text" out "hi.plike"
 cli "ui open file" 0 "$plike" ui . --keys="<down><down><down><up><home><enter>"
 cli "dot" 0 "$plike" ast --dot hi.plike;      has "dot text" out "digraph"
 "$plike" run - < hi.plike > out 2> err && [ "$(cat out)" = hi ] && pass || fail "cli: standard input" err
-[ -z "$(find "${TMPDIR:-/tmp}" -maxdepth 1 -name 'plike-*' -newer hi.plike 2>/dev/null)" ] && pass || fail "cli: temporary files left"
+[ -z "$(find "${TMPDIR:-/tmp}" -maxdepth 1 -name 'pseudoscope-*' -newer hi.plike 2>/dev/null)" ] && pass || fail "cli: temporary files left"

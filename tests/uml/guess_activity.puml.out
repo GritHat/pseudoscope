@@ -1,0 +1,28 @@
+graph Guess the number
+  node ●
+  node choose a secret number
+  node ◇
+  node ask for a number
+  node is it the secret?
+  node you win
+  node ◉
+  node is it smaller?
+  node say "higher"
+  node say "lower"
+  node tries left?
+  node you lose
+  node ◉
+  ● -> choose a secret number
+  choose a secret number -> ◇
+  ◇ -> ask for a number
+  ask for a number -> is it the secret?
+  is it the secret? -> you win: yes
+  you win -> ◉
+  is it the secret? -> is it smaller?: no
+  is it smaller? -> say "higher": yes
+  is it smaller? -> say "lower": no
+  say "lower" -> tries left?
+  say "higher" -> tries left?
+  tries left? -> ◇: yes
+  tries left? -> you lose: no
+  you lose -> ◉

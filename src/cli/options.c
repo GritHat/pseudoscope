@@ -17,9 +17,9 @@ static const struct {
 
 static void print_help(FILE *out) {
     fputs(
-        "Usage: plike [COMMAND] [OPTIONS] FILE [OUTPUT]\n"
+        "Usage: pseudoscope [COMMAND] [OPTIONS] FILE [OUTPUT]\n"
         "\n"
-        "Translates P-like pseudocode to C. FILE may be - for the standard input.\n"
+        "Pseudocode, and designs, brought to life. FILE may be - for the standard input.\n"
         "\n"
         "Commands:\n"
         "  ui          explore programs and watch them run (FILE may be a folder;\n"
@@ -49,7 +49,7 @@ static void print_help(FILE *out) {
         "  -b, --bounds-check        stop with an error on array indices out of bounds\n"
         "      --cc=COMPILER         C compiler for build and run (default: $CC or cc)\n"
         "      --steps=N             exec: stop after N steps\n"
-        "      --lang=LANG           it or en (default: $PLIKE_LANG, or it for ui and en for\n"
+        "      --lang=LANG           it or en (default: $PSEUDOSCOPE_LANG, or it for ui and en for\n"
         "                            the other commands)\n"
         "      --dot                 ast: Graphviz format\n"
         "\n"
@@ -70,7 +70,7 @@ static void print_help(FILE *out) {
 static int choose(const char *option, const char *value, const char *const *choices) {
     for (int i = 0; choices[i]; i++)
         if (strcmp(value, choices[i]) == 0) return i;
-    fprintf(stderr, "plike: invalid value '%s' for --%s (use", value, option);
+    fprintf(stderr, "pseudoscope: invalid value '%s' for --%s (use", value, option);
     for (int i = 0; choices[i]; i++)
         fprintf(stderr, "%s %s", i == 0 ? "" : choices[i + 1] ? "," : " or", choices[i]);
     fputs(")\n", stderr);
@@ -172,7 +172,7 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
             case OPT_SIZE:
                 if (sscanf(optarg, "%dx%d", &options->width, &options->height) != 2 ||
                     options->width < 1 || options->width > 500 || options->height < 1 || options->height > 200) {
-                    fprintf(stderr, "plike: invalid value '%s' for --size\n", optarg);
+                    fprintf(stderr, "pseudoscope: invalid value '%s' for --size\n", optarg);
                     return false;
                 }
                 break;
@@ -180,7 +180,7 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
                 char *end;
                 options->max_steps = strtol(optarg, &end, 10);
                 if (*end || end == optarg || options->max_steps <= 0) {
-                    fprintf(stderr, "plike: invalid value '%s' for --steps\n", optarg);
+                    fprintf(stderr, "pseudoscope: invalid value '%s' for --steps\n", optarg);
                     return false;
                 }
                 break;
@@ -194,11 +194,11 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
                 *status = EXIT_OK;
                 return false;
             case 'V':
-                puts("plike " PLIKE_VERSION);
+                puts("pseudoscope " PLIKE_VERSION);
                 *status = EXIT_OK;
                 return false;
             default:
-                fputs("Try 'plike --help'.\n", stderr);
+                fputs("Try 'pseudoscope --help'.\n", stderr);
                 return false;
         }
         if (value < 0) return false;
@@ -211,13 +211,13 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
         return true;
     }
     if (optind >= argc) {
-        fputs("plike: no input file\nTry 'plike --help'.\n", stderr);
+        fputs("pseudoscope: no input file\nTry 'pseudoscope --help'.\n", stderr);
         return false;
     }
     options->input = argv[optind++];
     if (optind < argc && !options->output) options->output = argv[optind++];
     if (optind < argc) {
-        fprintf(stderr, "plike: unexpected argument '%s'\n", argv[optind]);
+        fprintf(stderr, "pseudoscope: unexpected argument '%s'\n", argv[optind]);
         return false;
     }
     return true;

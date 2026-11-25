@@ -1,4 +1,4 @@
- ◆ PLIKE  basic.plike                         ▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
+ ◆ PSEUDOSCOPE  basic.plike       ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
   ✓ finito
 ╭─ Codice ───────────────────────────────────╮╭─ Alla fine ────────────────────────────────────────╮
 │   21 procedure BubbleSort (in: n; in/out:…┃││                                                    │

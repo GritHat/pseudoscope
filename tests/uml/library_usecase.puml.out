@@ -1,0 +1,11 @@
+graph Library
+  node Reader
+  node Librarian
+  node Search a book in Library
+  node Borrow a book in Library
+  node Check the card in Library
+  node Register a book in Library
+  Reader -> Search a book
+  Reader -> Borrow a book
+  Borrow a book -> Check the card: include
+  Librarian -> Register a book

@@ -17,12 +17,24 @@ ROUNDS = int(sys.argv[2]) if len(sys.argv) > 2 else 3000
 SEED = int(sys.argv[3]) if len(sys.argv) > 3 else 1
 
 here = os.path.dirname(os.path.abspath(__file__))
-corpus = [open(f, "rb").read() for f in sorted(glob.glob(here + "/*/*.plike"))]
-tokens = sorted(set(t for text in corpus for t in re.findall(rb"\w+|[^\w\s]+", text)))
 
 
-def mutate(rng):
-    text = rng.choice(corpus)
+def read(*patterns):
+    return [open(f, "rb").read() for p in patterns for f in sorted(glob.glob(here + p))]
+
+
+# by kind of file; what is mutated gets words of its own kind
+KINDS = {".plike": read("/*/*.plike", "/../examples/*.plike", "/../examples/*/*.plike")}
+for ext in (".psc", ".alg", ".por", ".pse"):
+    KINDS[ext] = read("/dialects/*" + ext)
+for ext in (".puml", ".mmd"):
+    KINDS[ext] = read("/../examples/uml/*" + ext)
+WORDS = {e: sorted(set(t for text in c for t in re.findall(rb"\w+|[^\w\s]+", text))) for e, c in KINDS.items()}
+WEIGHTS = [10, 1, 1, 1, 1, 1, 1]
+
+
+def mutate(rng, ext):
+    text, tokens = rng.choice(KINDS[ext]), WORDS[ext]
     parts = re.findall(rb"\w+|\s+|[^\w\s]", text)
     for _ in range(rng.randint(1, 6)):
         i = rng.randrange(len(parts))
@@ -47,19 +59,19 @@ def mutate(rng):
 
 KEYS = ["<up>", "<down>", "<left>", "<right>", "<right>", "<right>", "<enter>", "<enter>", "<esc>", "<tab>",
         "<space>", "<back>", "<home>", "<end>", "<pgup>", "<pgdn>", "r", "n", "u", "b", "v", "o", "c",
-        "0", "1", "2", "3", "4", "?", "5", "x", "g"]
+        "0", "1", "2", "3", "4", "?", "5", "x", "g", "1", "t", "f", "m", "<tab>"]
 
 
-def run_ui(rng, text):
+def run_ui(rng, text, ext):
     if rng.randrange(2):
-        text = rng.choice(corpus)  # as it is, to get to run it
+        text = rng.choice(KINDS[ext])  # as it is, to get to run it
     keys = "".join(rng.choice(KEYS) for _ in range(rng.randrange(60)))
     size = f"{rng.choice([20, 80, 81, 100, 160])}x{rng.choice([5, 24, 25, 40])}"
-    with tempfile.NamedTemporaryFile(suffix=".plike") as program:
+    with tempfile.NamedTemporaryFile(suffix=ext) as program:
         program.write(text)
         program.flush()
         try:
-            result = subprocess.run([PLIKE, "ui", program.name, "--keys=r" + keys, "--size=" + size,
+            result = subprocess.run([PLIKE, "ui", program.name, "--keys=" + rng.choice("rt") + keys, "--size=" + size,
                                      rng.choice(["--lang=it", "--lang=en"])], capture_output=True, timeout=120)
         except subprocess.TimeoutExpired:
             return text, "timeout with keys " + keys
@@ -70,15 +82,36 @@ def run_ui(rng, text):
 
 def run(i):
     rng = random.Random(SEED * 1000003 + i)
-    text = mutate(rng)
+    ext = rng.choices(list(KINDS), WEIGHTS)[0]
+    text = mutate(rng, ext)
     if rng.randrange(4) == 0:
-        return run_ui(rng, text)
+        return run_ui(rng, text, ext)
+    if ext != ".plike":
+        with tempfile.NamedTemporaryFile(suffix=ext) as program, tempfile.NamedTemporaryFile(suffix=".c") as output:
+            program.write(text)
+            program.flush()
+            command = rng.choice([["check"], ["ast"], ["exec", "--steps=300000"], ["translate", "-o", output.name]])
+            try:
+                result = subprocess.run([PLIKE, *command, program.name], stdin=subprocess.DEVNULL, capture_output=True, timeout=60)
+            except subprocess.TimeoutExpired:
+                return text, "timeout in " + command[0]
+            bad = b"Sanitizer" in result.stderr or b"runtime error:" in result.stderr or result.returncode < 0
+            if bad:
+                return text, command[0] + "\n" + result.stderr.decode(errors="replace")[:2000]
+            if command[0] == "translate" and result.returncode == 0:
+                result = subprocess.run(["cc", "-std=gnu11", "-w", "-fsyntax-only", output.name], capture_output=True)
+                if result.returncode:
+                    return text, "invalid C: " + result.stderr.decode(errors="replace")[:800]
+        return None
     args = [PLIKE, rng.choice(["translate", "translate", "exec", "exec", "ast", "tokens"]), "-"]
     args += rng.choice([[], ["-b"], ["--indexing=zero"], ["--assignment=equals"],
                         ["--operators=dotted"], ["--mixed-arrays=false"]])
     if args[1] == "exec":
         args += ["--steps=300000"]
-        result = subprocess.run(args, input=text, capture_output=True, timeout=60)
+        try:
+            result = subprocess.run(args, input=text, capture_output=True, timeout=60)
+        except subprocess.TimeoutExpired:
+            return text, "timeout in exec"
         bad = b"Sanitizer" in result.stderr or b"runtime error:" in result.stderr or result.returncode < 0
         return (text, result.stderr.decode(errors="replace")[:1500]) if bad else None
     with tempfile.NamedTemporaryFile(suffix=".c") as output:

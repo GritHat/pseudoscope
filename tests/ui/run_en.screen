@@ -1,4 +1,4 @@
- ◆ PLIKE  fib.plike                               ▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
+ ◆ PSEUDOSCOPE  fib.plike              ▐ System ▌▸▐ Program ▌▸▐ Function ▌▸▐ Statement ▌▸▐ Memory ▌
   ‖ paused   main ▸ fib ▸ fib
 ╭─ fib ──────────────────────────────────────╮╭─ Data ─────────────────────────────────────────────╮
 │    3 function fib(in n: integer): integer  ││                                                    │

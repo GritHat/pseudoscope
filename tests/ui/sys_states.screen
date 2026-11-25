@@ -1,0 +1,36 @@
+ ◆ PSEUDOSCOPE  election.plike                                            ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
+  ‖ fermo   one leader, and another one when it crashes ▸ Node.RequestVote
+  Sequenza   Componenti   Stati   Tempi   Comunicazione   Verifiche                                                   tempo t = 15
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│  nodes[1]  Candidate    nodes[2]  Follower    nodes[3]  Candidate    nodes[4]  Follower    nodes[5]  Follower                            │
+│                                                                                                                                          │
+│  nodes[1]  Node                                                    │ nodes[2]  Node                                                      │
+│                                                                    │                                                                     │
+│  ╭───────────╮                                                     │ ╭───────────╮                                                       │
+│  │ Follower  │── Timeout ──▶ Candidate                             │ │ Follower  │── Timeout ──▶ Candidate                               │
+│  ╰───────────╯                                                     │ ╰───────────╯                                                       │
+│  ╭───────────╮── Timeout ──▶ Candidate                             │ ╭───────────╮── Timeout ──▶ Candidate                               │
+│  │ Candidate │── RequestVote ──▶ Follower                          │ │ Candidate │── RequestVote ──▶ Follower                            │
+│  ╰───────────╯── Vote ──▶ Leader                                   │ ╰───────────╯── Vote ──▶ Leader                                     │
+│               ── Heartbeat ──▶ Follower                            │              ── Heartbeat ──▶ Follower                              │
+│                                                                    │                                                                     │
+│  ╭───────────╮── RequestVote ──▶ Follower                          │ ╭───────────╮── RequestVote ──▶ Follower                            │
+│  │  Leader   │── Heartbeat ──▶ Follower                            │ │  Leader   │── Heartbeat ──▶ Follower                              │
+│  ╰───────────╯                                                     │ ╰───────────╯                                                       │
+│                                                                    │                                                                     │
+│                                                                    │                                                                     │
+│                                                                    │                                                                     │
+│                                                                    │                                                                     │
+│                                                                    │                                                                     │
+│                                                                    │                                                                     │
+│                                                                    │                                                                     │
+│                                                                    │                                                                     │
+│                                                                    │                                                                     │
+│                                                                    │                                                                     │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Cosa è successo ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ ▷ nodes[5] manda  Vote  a nodes[1]                                                                                                       │
+│ ▷ nodes[5] manda  Timeout  a nodes[5]                                                                                                    │
+│ ▶  RequestVote(1, 3)  arriva a nodes[1]                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   Tab  altra vista   g  alla fine   ?  aiuto

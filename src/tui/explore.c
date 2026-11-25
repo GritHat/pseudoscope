@@ -21,7 +21,14 @@ void explore_open(App *app, const char *path) {
     app->doc = doc;
     app->explore = (Explore){0};
     if (doc->ok && doc->main_item >= 0) app->explore.selected = doc->main_item;
+    if (doc->program && doc->program->classes) app->explore.selected = 0;
+    tests_close(app);
+    app->walk = (UmlWalk){0};
     app->view = VIEW_EXPLORE;
+    if (doc->uml && doc->ok) {
+        app->view = VIEW_UML;
+        uml_key(app, '0');
+    }
 }
 
 void explore_reload(App *app) {
@@ -31,6 +38,7 @@ void explore_reload(App *app) {
     explore_open(app, path);
     free(path);
     app->explore = keep;
+    if (app->doc->uml) return;
     if (app->explore.selected >= app->doc->item_count) app->explore.selected = 0;
     if (!app->doc->ok) app->explore.level = 0;
 }
@@ -43,8 +51,8 @@ static const char *const IN_ARROW = "───▶", *const BOTH_ARROW = "◀─�
 static int draw_black_box(const App *app, const Item *item, int x, int y, int w) {
     const Function *f = item->function;
     const Symbol *sym = f->symbol;
-    int left = 0, right = sym->result ? 1 : 0;
-    for (int i = 0; i < sym->param_count; i++) {
+    int left = 0, right = sym->result ? 1 : 0, skip = f->owner ? 1 : 0;
+    for (int i = skip; i < sym->param_count; i++) {
         if (sym->params[i]->mode == MODE_OUT) right++;
         else left++;
     }
@@ -58,7 +66,7 @@ static int draw_black_box(const App *app, const Item *item, int x, int y, int w)
     print_centered(bx + 1, y + height / 2, box - 2, S(C_CALL, C_DEFAULT, A_BOLD), "%s", item->name);
 
     int l = 0, r = 0;
-    for (int i = 0; i < sym->param_count; i++) {
+    for (int i = skip; i < sym->param_count; i++) {
         const Symbol *p = sym->params[i];
         char type[80] = "", label[140];
         describe_type(app->doc, p->type, type, sizeof type);
@@ -106,8 +114,9 @@ static void draw_names(int x, int y, int w, const char *label, const Function **
 static void function_card(const App *app, const Item *item, int x, int y, int w, int h) {
     const Function *f = item->function;
     bool is_function = !f->is_procedure;
-    print_at(x, y, w, S_TEXT, M_CALL M_BOLD "%s" M_RESET "  " M_DIM "%s", item->name,
-             is_function ? L("funzione: calcola un risultato", "function: computes a result")
+    print_at(x, y, w, S_TEXT, M_CALL M_BOLD "%s" M_RESET "  " M_DIM "%s", f->full_name,
+             f->is_handler ? L("reagisce a un messaggio", "reacts to a message")
+             : is_function ? L("funzione: calcola un risultato", "function: computes a result")
                          : L("procedura: esegue delle azioni", "procedure: performs actions"));
     int used = draw_black_box(app, item, x, y + 2, w);
     int row = y + 3 + used;
@@ -132,6 +141,96 @@ static void function_card(const App *app, const Item *item, int x, int y, int w,
                  main_item ? L("esegui il programma", "run the program")
                            : L("provala con valori scelti da te", "try it with values of your choice"));
     }
+}
+
+/* A class as UML draws it; a component with the messages it gets and sends. */
+typedef struct {
+    const char *names[24];
+    int count;
+} Names;
+
+static void add_name(Names *n, const char *name) {
+    for (int i = 0; i < n->count; i++)
+        if (strcmp(n->names[i], name) == 0) return;
+    if (n->count < 24) n->names[n->count++] = name;
+}
+
+static void find_sent(const Stmt *s, Names *out) {
+    for (; s; s = s->next) {
+        for (const Stmt *b = s; b; b = b->otherwise) {
+            bool self = b->target && b->target->kind == EX_NAME && strcmp(b->target->text, "self") == 0;
+            if (b->kind == ST_SEND && !self) add_name(out, b->name);
+            find_sent(b->body, out);
+        }
+    }
+}
+
+static void class_card(const App *app, const Item *item, int x, int y, int w, int h) {
+    const Class *c = item->klass;
+    print_at(x, y, w, S_TEXT, M_TYPE M_BOLD "%s" M_RESET "  " M_DIM "%s", c->name,
+             c->is_component ? L("componente: vive da solo e scambia messaggi", "component: lives on its own and exchanges messages")
+                             : L("classe: dati e operazioni insieme", "class: data and operations together"));
+    Names in = {0}, out = {0}, methods = {0};
+    int fields = 0;
+    for (const VarDecl *f = c->record->fields; f; f = f->next) fields += !f->symbol->type->states;
+    for (const Function *f = app->doc->program->functions; f; f = f->next) {
+        if (f->owner != c) continue;
+        if (f->is_handler && strcmp(f->name, "start") != 0) add_name(&in, f->name);
+        if (!f->is_handler) add_name(&methods, f->name);
+        find_sent(f->body, &out);
+    }
+    int rows = fields + methods.count + (methods.count ? 1 : 0);
+    int ports = in.count > out.count ? in.count : out.count;
+    if (ports > rows) rows = ports;
+    if (rows < 1) rows = 1;
+    if (rows > h - 8) rows = h - 8;
+    int box = c->is_component ? w / 3 : w / 2, bx = x + (c->is_component ? w / 3 : 0);
+    if (box < 24) box = 24;
+    draw_box(bx, y + 2, box, rows + 4, C_TYPE, NULL);
+    print_centered(bx + 1, y + 3, box - 2, S(C_TYPE, C_DEFAULT, A_BOLD), "%s", c->name);
+    hline(bx + 1, y + 4, box - 2, S(C_TYPE, C_DEFAULT, 0), "─");
+    int row = y + 5, bottom = y + 5 + rows;
+    for (const VarDecl *f = c->record->fields; f && row < bottom; f = f->next) {
+        if (f->symbol->type->states) continue;
+        char type[80] = "";
+        describe_type(app->doc, f->symbol->type, type, sizeof type);
+        print_at(bx + 2, row++, box - 4, S(C_READ, C_DEFAULT, 0), "%s " M_FAINT "%s", f->name, type);
+    }
+    if (methods.count && row < bottom) hline(bx + 1, row++, box - 2, S(C_FAINT, C_DEFAULT, 0), "─");
+    for (int i = 0; i < methods.count && row < bottom; i++)
+        print_at(bx + 2, row++, box - 4, S(C_CALL, C_DEFAULT, 0), "%s()", methods.names[i]);
+    for (int i = 0; i < in.count && i < rows; i++) {
+        int used = text_width(in.names[i]), room = w / 3 - 7;
+        if (used > room) used = room;
+        print_at(bx - 5 - used, y + 5 + i, room, S(C_READ, C_DEFAULT, A_BOLD), "%s", in.names[i]);
+        put_text(bx - 4, y + 5 + i, S(C_READ, C_DEFAULT, 0), IN_ARROW);
+    }
+    for (int i = 0; i < out.count && i < rows && c->is_component; i++) {
+        put_text(bx + box, y + 5 + i, S(C_WRITE, C_DEFAULT, 0), IN_ARROW);
+        print_at(bx + box + 5, y + 5 + i, w / 3 - 6, S(C_WRITE, C_DEFAULT, A_BOLD), "%s", out.names[i]);
+    }
+    int below = bottom + 2;
+    if (c->states && below + 4 < y + h) {
+        const char *names[64];
+        StateArrow arrows[96];
+        StateView view = {.states = names, .arrows = arrows, .current = -1, .last = -1, .selected = -1};
+        for (const StateName *s = c->states; s && view.state_count < 64; s = s->next) names[view.state_count++] = s->name;
+        view.arrow_count = class_transitions(app->doc, c, arrows, 96);
+        print_at(x, below, w, S_BOLD, "%s", L("I suoi stati", "Its states"));
+        draw_states(x, below + 1, w, y + h - below - 1, &view);
+    }
+}
+
+static void test_card(const App *app, const Item *item, int x, int y, int w, int h) {
+    (void)app;
+    print_wrapped(x, y, w, 2, S_BOLD, "%s", item->name);
+    int row = y + 3;
+    for (const Stmt *s = item->function->body; s && row < y + h - 4; s = s->next) {
+        if (s->kind == ST_STEP) print_at(x, row++, w, S(C_FOCUS, C_DEFAULT, 0), "● %s", s->text);
+        if (s->kind == ST_EXPECT || s->kind == ST_CHECK) print_at(x + 3, row++, w - 3, S_DIM, "%s", s->kind == ST_EXPECT ? s->name : s->text ? s->text : "check");
+    }
+    print_at(x, row + 1, w, S_DIM, M_KEY " r " M_RESET " %s", L("guardala mentre gira", "watch it run"));
+    print_at(x, row + 3, w, S_DIM, M_KEY " t " M_RESET " %s", L("esegui tutte le prove", "run all the tests"));
 }
 
 static int record_height(const Record *record) {
@@ -209,8 +308,17 @@ static void globals_card(const App *app, int x, int y, int w, int h) {
 
 /* ---- levels ---- */
 
+/* Methods stay with their class. */
+static ItemKind section_of(const Item *item) {
+    if (item->function && item->function->owner) return item->function->owner->is_component ? ITEM_COMPONENT : ITEM_CLASS;
+    return item->kind;
+}
+
 static const char *group_title(ItemKind kind) {
     switch (kind) {
+        case ITEM_COMPONENT: return L("Componenti", "Components");
+        case ITEM_CLASS: return L("Classi", "Classes");
+        case ITEM_TEST: return L("Prove", "Tests");
         case ITEM_FUNCTION: return L("Sottoprogrammi", "Subprograms");
         case ITEM_RECORD: return L("Strutture (record)", "Structures (records)");
         default: return L("Dati condivisi", "Shared data");
@@ -224,9 +332,9 @@ static void draw_map(App *app, int w, int h) {
     draw_box(0, 2, list, h - 4, C_READ, L("Mappa", "Map"));
     int row = 3, kind = -1, rows = 0, at = 0;
     for (int i = 0; i < doc->item_count; i++) { /* where the selected one falls */
-        if ((int)doc->items[i].kind != kind) {
+        if ((int)section_of(&doc->items[i]) != kind) {
             rows += kind >= 0 ? 2 : 1;
-            kind = (int)doc->items[i].kind;
+            kind = (int)section_of(&doc->items[i]);
         }
         if (i == app->explore.selected) at = rows;
         rows++;
@@ -237,14 +345,17 @@ static void draw_map(App *app, int w, int h) {
     row = 3 - top;
     for (int i = 0; i < doc->item_count; i++) {
         const Item *item = &doc->items[i];
-        if ((int)item->kind != kind) {
+        if ((int)section_of(item) != kind) {
             if (kind >= 0) row++;
-            kind = (int)item->kind;
-            if (row >= 3 && row < h - 3) print_at(2, row, list - 4, S_DIM, "%s", group_title(item->kind));
+            kind = (int)section_of(item);
+            if (row >= 3 && row < h - 3) print_at(2, row, list - 4, S_DIM, "%s", group_title(section_of(item)));
             row++;
         }
         if (row >= 3 && row < h - 3) {
-            const char *icon = item->kind == ITEM_RECORD ? M_TYPE "▦" : item->kind == ITEM_GLOBALS ? M_READ "●"
+            const char *icon = item->kind == ITEM_COMPONENT || item->kind == ITEM_CLASS ? M_TYPE "▣"
+                             : item->kind == ITEM_TEST ? M_WRITE "✓"
+                             : item->function && item->function->is_handler ? M_READ "  →"
+                             : item->function && item->function->owner ? M_CALL "  ■" : item->kind == ITEM_RECORD ? M_TYPE "▦" : item->kind == ITEM_GLOBALS ? M_READ "●"
                              : item->function->is_procedure ? M_CALL "■" : M_CALL "ƒ";
             draw_table_row(1, row, list - 2, i == app->explore.selected, "%s" M_RESET " %s%s", icon,
                            item->kind == ITEM_GLOBALS ? L("variabili globali", "global variables") : item->name,
@@ -260,6 +371,8 @@ static void draw_map(App *app, int w, int h) {
     }
     int x = list + 3, cw = w - list - 6, ch = h - 7;
     if (item->kind == ITEM_FUNCTION) function_card(app, item, x, 4, cw, ch);
+    else if (item->kind == ITEM_COMPONENT || item->kind == ITEM_CLASS) class_card(app, item, x, 4, cw, ch);
+    else if (item->kind == ITEM_TEST) test_card(app, item, x, 4, cw, ch);
     else if (item->kind == ITEM_RECORD) record_card(app, item, x, 4, cw, ch);
     else globals_card(app, x, 4, cw, ch);
 }
@@ -319,7 +432,7 @@ static void draw_translation(App *app, int w, int h) {
     strbuf_puts(&c, "");
     draw_box(0, 2, half, h - 4, C_BORDER, L("Pseudocodice", "Pseudocode"));
     draw_item_code(app, 2, 3, half - 4, h - 6);
-    if (item->kind == ITEM_RECORD) {
+    if (item->record) {
         int top = (h - 4) / 2;
         draw_box(half, 2, w - half, top, C_BORDER, "C");
         generate_record(app->doc->program, &app->doc->config, &arena, item->record, &c);
@@ -373,7 +486,7 @@ static void where(const App *app, char *out, size_t size) {
     const Item *item = selected_item(app);
     snprintf(out, size, M_TEXT "%s%s%s", name ? name + 1 : app->doc->path,
              item && app->doc->ok && app->explore.level > 0 ? M_FAINT " ▸ " M_CALL : "",
-             item && app->doc->ok && app->explore.level > 0 ? item->name : "");
+             item && app->doc->ok && app->explore.level > 0 ? item->function ? item->function->full_name : item->name : "");
 }
 
 void explore_draw(App *app) {
@@ -394,16 +507,19 @@ void explore_draw(App *app) {
     if (app->explore.level == 0 || !item) {
         draw_map(app, w, h);
     } else if (app->explore.level == 1) {
-        draw_box(0, 2, w, h - 4, C_BORDER, item->kind == ITEM_GLOBALS ? L("variabili globali", "global variables") : item->name);
+        draw_box(0, 2, w, h - 4, C_BORDER, item->kind == ITEM_GLOBALS ? L("variabili globali", "global variables") : item->function ? item->function->full_name : item->name);
         draw_item_code(app, 2, 3, w - 4, h - 6);
     } else {
         draw_translation(app, w, h);
     }
+    bool tests = app->doc->ok && has_tests(app->doc->program);
     const Hint hints[] = {{"↑↓", L("scorri", "move")},
                           {L("Invio", "Enter"), L("più dettaglio", "more detail")},
                           {"Esc", L("meno dettaglio", "less detail")},
-                          {"r", L("esegui", "run")}, {"E", L("modifica", "edit")},
-                          {"q", L("esci", "quit")}, {"?", L("aiuto", "help")}};
+                          {"r", L("esegui", "run")},
+                          {tests ? "t" : "E", tests ? L("prove", "tests") : L("modifica", "edit")},
+                          {tests ? "E" : "q", tests ? L("modifica", "edit") : L("esci", "quit")},
+                          {"?", L("aiuto", "help")}};
     draw_footer(hints, 7);
 }
 
@@ -411,8 +527,10 @@ static void run_selected(App *app) {
     const Item *item = selected_item(app);
     if (!item || !app->doc->ok) return;
     bool main_item = app->doc->main_item >= 0 && item == &app->doc->items[app->doc->main_item];
-    if (main_item || item->kind != ITEM_FUNCTION) {
-        if (app->doc->main_item < 0)
+    if (item->kind == ITEM_TEST) {
+        run_open_test(app, item->function);
+    } else if (main_item || item->kind != ITEM_FUNCTION) {
+        if (app->doc->main_item < 0 && !has_components(app->doc->program))
             snprintf(app->notice, sizeof app->notice, "%s",
                      L("Non c'è un main: scegli un sottoprogramma da provare",
                        "There is no main: choose a subprogram to try"));
@@ -442,7 +560,9 @@ void explore_key(App *app, int key) {
         case K_ENTER: case '+': case K_RIGHT:
             if (!app->doc->ok || !item) return;
             if (e->level == 0) e->line = e->code_top = item->first;
-            if (e->level < (item->kind == ITEM_GLOBALS ? 1 : 2)) e->level++;
+            if (e->level < (item->kind == ITEM_GLOBALS || item->kind == ITEM_TEST || item->kind == ITEM_COMPONENT ||
+                            (item->function && item->function->owner && item->function->owner->is_component) ? 1 : 2))
+                e->level++;
             return;
         case K_ESC: case '-': case K_LEFT: case K_BACKSPACE:
             if (e->level > 0) e->level--;
@@ -455,6 +575,10 @@ void explore_key(App *app, int key) {
             }
             return;
         case 'r': run_selected(app); return;
+        case 't':
+            if (app->doc->ok && has_tests(app->doc->program)) tests_open(app);
+            else snprintf(app->notice, sizeof app->notice, "%s", L("Questo programma non ha prove", "This program has no tests"));
+            return;
         case 'q': app->quit = true; return;
         default: return;
     }

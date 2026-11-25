@@ -1,0 +1,20 @@
+state The life of an order
+  node ●
+  node Cart
+  node Paid
+  node ◉
+  node Shipped
+  node Refunded
+  node Delivered
+  node Returned
+  ● -> Cart
+  Cart -> Cart: add a product
+  Cart -> Paid: pay
+  Cart -> ◉: leave
+  Paid -> Shipped: ship
+  Paid -> Refunded: cancel
+  Shipped -> Delivered: deliver
+  Shipped -> Returned: refuse
+  Returned -> Refunded: check the goods
+  Delivered -> ◉
+  Refunded -> ◉

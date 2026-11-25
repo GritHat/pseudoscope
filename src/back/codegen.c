@@ -832,6 +832,61 @@ static void gen_record(Gen *g, const Record *record) {
     put(g, "};\n\n");
 }
 
+static const struct {
+    const char *name, *code;
+} TEXT_HELPERS[] = { /* only those a program uses are written */
+    {"plike_concat(",
+        "static inline const char *plike_concat(const char *a, const char *b) {\n"
+        "    char *text = plike_new_text(strlen(a) + strlen(b));\n"
+        "    strcpy(text, a);\n"
+        "    strcat(text, b);\n"
+        "    return text;\n"
+        "}\n\n"},
+    {"plike_int_text(",
+        "static inline const char *plike_int_text(int n) {\n"
+        "    char *text = plike_new_text(16);\n"
+        "    snprintf(text, 16, \"%d\", n);\n"
+        "    return text;\n"
+        "}\n\n"},
+    {"plike_real_text(",
+        "static inline const char *plike_real_text(double x) {\n"
+        "    char *text = plike_new_text(32);\n"
+        "    snprintf(text, 32, \"%.10g\", x);\n"
+        "    return text;\n"
+        "}\n\n"},
+    {"plike_read_text(",
+        "static inline const char *plike_read_text(int line) {\n"
+        "    char *text = plike_new_text(1999);\n"
+        "    if (scanf(\" %1999[^\\n]\", text) != 1) {\n"
+        "        fprintf(stderr, \"runtime error at line %d: invalid input\\n\", line);\n"
+        "        exit(1);\n"
+        "    }\n"
+        "    return text;\n"
+        "}\n\n"},
+    {"plike_upper(",
+        "static inline const char *plike_upper(const char *s) {\n"
+        "    char *text = plike_new_text(strlen(s));\n"
+        "    for (size_t i = 0; s[i]; i++) text[i] = (char)(s[i] >= 'a' && s[i] <= 'z' ? s[i] - 32 : s[i]);\n"
+        "    return text;\n"
+        "}\n\n"},
+    {"plike_lower(",
+        "static inline const char *plike_lower(const char *s) {\n"
+        "    char *text = plike_new_text(strlen(s));\n"
+        "    for (size_t i = 0; s[i]; i++) text[i] = (char)(s[i] >= 'A' && s[i] <= 'Z' ? s[i] + 32 : s[i]);\n"
+        "    return text;\n"
+        "}\n\n"},
+    {"plike_substring(",
+        "static inline const char *plike_substring(const char *s, int from, int to, int base) {\n"
+        "    int length = (int)strlen(s);\n"
+        "    from = from - base < 0 ? 0 : from - base;\n"
+        "    to = to - base > length - 1 ? length - 1 : to - base;\n"
+        "    if (to < from) return \"\";\n"
+        "    char *text = plike_new_text((size_t)(to - from + 1));\n"
+        "    memcpy(text, s + from, (size_t)(to - from + 1));\n"
+        "    return text;\n"
+        "}\n\n"},
+};
+
 void generate(const Program *program, const Config *config, Arena *arena, StrBuf *out) {
     /* The body goes first, to know which helpers and headers it needs. */
     StrBuf body = {0};
@@ -862,7 +917,8 @@ void generate(const Program *program, const Config *config, Arena *arena, StrBuf
     if (g->uses_fail || g->uses_abs || g->uses_text) strbuf_puts(out, "#include <stdlib.h>\n");
     if (g->uses_text) strbuf_puts(out, "#include <string.h>\n");
     strbuf_puts(out, "\n");
-    if (g->uses_fail) {
+    bool indexes = config->bounds_check && strstr(body.data, "plike_index(");
+    if (strstr(body.data, "plike_fail(") || indexes) {
         strbuf_puts(out,
             "static inline void plike_fail(const char *message, int line) {\n"
             "    fflush(stdout);\n"
@@ -877,50 +933,9 @@ void generate(const Program *program, const Config *config, Arena *arena, StrBuf
             "    if (!text) exit(1);\n"
             "    text[length] = '\\0';\n"
             "    return text;\n"
-            "}\n\n"
-            "static inline const char *plike_concat(const char *a, const char *b) {\n"
-            "    char *text = plike_new_text(strlen(a) + strlen(b));\n"
-            "    strcpy(text, a);\n"
-            "    strcat(text, b);\n"
-            "    return text;\n"
-            "}\n\n"
-            "static inline const char *plike_int_text(int n) {\n"
-            "    char *text = plike_new_text(16);\n"
-            "    snprintf(text, 16, \"%d\", n);\n"
-            "    return text;\n"
-            "}\n\n"
-            "static inline const char *plike_real_text(double x) {\n"
-            "    char *text = plike_new_text(32);\n"
-            "    snprintf(text, 32, \"%.10g\", x);\n"
-            "    return text;\n"
-            "}\n\n"
-            "static inline const char *plike_read_text(int line) {\n"
-            "    char *text = plike_new_text(1999);\n"
-            "    if (scanf(\" %1999[^\\n]\", text) != 1) {\n"
-            "        fprintf(stderr, \"runtime error at line %d: invalid input\\n\", line);\n"
-            "        exit(1);\n"
-            "    }\n"
-            "    return text;\n"
-            "}\n\n"
-            "static inline const char *plike_upper(const char *s) {\n"
-            "    char *text = plike_new_text(strlen(s));\n"
-            "    for (size_t i = 0; s[i]; i++) text[i] = (char)(s[i] >= 'a' && s[i] <= 'z' ? s[i] - 32 : s[i]);\n"
-            "    return text;\n"
-            "}\n\n"
-            "static inline const char *plike_lower(const char *s) {\n"
-            "    char *text = plike_new_text(strlen(s));\n"
-            "    for (size_t i = 0; s[i]; i++) text[i] = (char)(s[i] >= 'A' && s[i] <= 'Z' ? s[i] + 32 : s[i]);\n"
-            "    return text;\n"
-            "}\n\n"
-            "static inline const char *plike_substring(const char *s, int from, int to, int base) {\n"
-            "    int length = (int)strlen(s);\n"
-            "    from = from - base < 0 ? 0 : from - base;\n"
-            "    to = to - base > length - 1 ? length - 1 : to - base;\n"
-            "    if (to < from) return \"\";\n"
-            "    char *text = plike_new_text((size_t)(to - from + 1));\n"
-            "    memcpy(text, s + from, (size_t)(to - from + 1));\n"
-            "    return text;\n"
             "}\n\n");
+        for (size_t i = 0; i < sizeof TEXT_HELPERS / sizeof TEXT_HELPERS[0]; i++)
+            if (strstr(body.data, TEXT_HELPERS[i].name)) strbuf_puts(out, TEXT_HELPERS[i].code);
     }
     if (g->uses_random) {
         long long seed = 1;
@@ -937,7 +952,7 @@ void generate(const Program *program, const Config *config, Arena *arena, StrBuf
             "    return (int)(lo + (long long)(n % (unsigned)((long long)hi - lo + 1)));\n"
             "}\n\n");
     }
-    if (config->bounds_check && g->uses_fail) {
+    if (indexes) {
         strbuf_puts(out,
             "static inline int plike_index(int index, int lo, int hi, int line) {\n"
             "    if (index < lo || index > hi) plike_fail(\"array index out of bounds\", line);\n"

@@ -1,4 +1,4 @@
- ◆ PLIKE  basic.plike                         ▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
+ ◆ PSEUDOSCOPE  basic.plike       ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
   ‖ fermo   BubbleSort
 ╭─ BubbleSort ───────────────────────────────╮╭─ Dati ─────────────────────────────────────────────╮
 │   23     var A : array [1..n] of real      ││                                                    │

@@ -16,7 +16,9 @@ typedef struct {
     Style st;
 } Cell;
 
-static bool active, headless, basic, full_redraw, term_saved;
+static bool active, headless, full_redraw, term_saved;
+static bool ascii, poor, linux_console, alternate = true;
+static int colors = 256;
 static int width, height;
 static Cell *cur, *prev;
 static struct termios original;
@@ -65,13 +67,15 @@ static void allocate(int w, int h) {
     prev = calloc((size_t)w * (size_t)h, sizeof(Cell));
     if (!cur || !prev) {
         screen_close();
-        fputs("plike: out of memory\n", stderr);
+        fputs("pseudoscope: out of memory\n", stderr);
         exit(3);
     }
     width = w;
     height = h;
     full_redraw = true;
 }
+
+static void detect(void);
 
 static void measure(void) {
     struct winsize ws;
@@ -93,13 +97,15 @@ static void enter_screen(void) {
         tcsetattr(STDIN_FILENO, TCSANOW, &t);
         term_saved = true;
     }
-    out_str("\033[?1049h\033[?25l\033[?7l\033[2J");
+    if (alternate) out_str("\033[?1049h");
+    out_str("\033[?25l\033[?7l\033[0m\033[2J\033[H");
     out_flush();
 }
 
 static void leave_screen(void) {
-    out_str("\033[0m\033[?7h\033[?25h\033[?1049l");
-    if (basic) out_str("\033[2J\033[H"); /* the Linux console has no alternate screen */
+    out_str("\033[0m\033[?7h\033[?25h");
+    if (alternate) out_str("\033[?1049l");
+    else out_str("\033[2J\033[H");
     out_flush();
     if (term_saved) tcsetattr(STDIN_FILENO, TCSANOW, &original);
     term_saved = false;
@@ -107,8 +113,7 @@ static void leave_screen(void) {
 
 bool screen_open(void) {
     if (!isatty(STDOUT_FILENO) || !isatty(STDIN_FILENO)) return false;
-    const char *term = getenv("TERM"), *forced = getenv("PLIKE_BASIC");
-    basic = forced && *forced ? strcmp(forced, "0") != 0 : term && strncmp(term, "linux", 5) == 0;
+    detect();
     struct sigaction sa;
     memset(&sa, 0, sizeof sa);
     sigemptyset(&sa.sa_mask);
@@ -127,6 +132,12 @@ bool screen_open(void) {
 
 void screen_open_headless(int w, int h) {
     headless = active = true;
+    const char *glyphs = getenv("PSEUDOSCOPE_GLYPHS"), *depth = getenv("PSEUDOSCOPE_COLORS");
+    if (glyphs && *glyphs) {
+        ascii = strcmp(glyphs, "ascii") == 0;
+        poor = ascii || strcmp(glyphs, "console") == 0;
+    }
+    if (depth && *depth) colors = strcmp(depth, "256") == 0 ? 256 : strcmp(depth, "0") == 0 ? 0 : 16;
     allocate(w, h);
 }
 
@@ -241,27 +252,40 @@ void frame_begin(void) {
     }
 }
 
-/* Glyphs and colours for the Linux console (code page 437, 16 colours). */
-static const char *basic_glyph(const char *ch) {
-    static const char *const TABLE[][2] = {
-        {"╭", "┌"}, {"╮", "┐"}, {"╰", "└"}, {"╯", "┘"}, {"▶", "►"}, {"◀", "◄"}, {"▸", "►"},
-        {"▾", "▼"}, {"◂", "◄"}, {"✓", "√"}, {"✗", "x"}, {"✎", "="}, {"↻", "»"}, {"‖", "║"},
-        {"…", "~"}, {"●", "•"}, {"◉", "◙"}, {"◆", "♦"}, {"○", "o"}, {"∅", "0"}, {"┄", "·"},
-        {"▁", "_"}, {"▂", "▄"}, {"▃", "▄"}, {"▅", "▄"}, {"▆", "█"}, {"▇", "█"}, {"≡", "≡"},
-        {"━", "═"}, {"┃", "║"}, {"⇄", "="}, {"×", "x"}, {"⚠", "!"}, {"ƒ", "f"}, {"▐", " "}, {"▌", " "},
+/* ---- poorer terminals ---- */
+
+/* Glyphs for the Linux console (code page 437) and, last, for terminals that
+ * only know ASCII. */
+static const char *poor_glyph(const char *ch) {
+    static const char *const TABLE[][3] = {
+        {"╭", "┌", "+"}, {"╮", "┐", "+"}, {"╰", "└", "+"}, {"╯", "┘", "+"}, {"─", "─", "-"}, {"│", "│", "|"},
+        {"├", "├", "+"}, {"└", "└", "`"}, {"┄", "·", "."}, {"╷", "│", "|"}, {"━", "═", "="}, {"┃", "║", "#"},
+        {"▶", "►", ">"}, {"◀", "◄", "<"}, {"▸", "►", ">"}, {"▷", "►", ">"}, {"‹", "<", "<"}, {"›", ">", ">"},
+        {"▼", "▼", "v"}, {"▲", "▲", "^"}, {"→", "→", ">"}, {"←", "←", "<"}, {"↑", "↑", "^"}, {"↓", "↓", "v"},
+        {"⇒", "→", ">"}, {"↻", "»", "@"}, {"↺", "«", "@"}, {"✓", "√", "v"}, {"✗", "x", "x"}, {"✎", "=", "="},
+        {"…", "~", "~"}, {"●", "•", "*"}, {"◉", "◙", "@"}, {"◆", "♦", "*"}, {"◇", "♦", "?"}, {"◷", "○", "o"},
+        {"■", "■", "#"}, {"▪", "■", "*"}, {"▣", "■", "#"}, {"▦", "▒", "#"}, {"ƒ", "f", "f"}, {"∅", "0", "0"},
+        {"⊘", "ø", "/"}, {"≡", "≡", "="}, {"»", "»", ">"}, {"«", "«", "<"}, {"‖", "║", "="}, {"▮", "■", "#"},
+        {"▁", "_", "_"}, {"▂", "_", "_"}, {"▃", "▄", "."}, {"▄", "▄", "o"}, {"▅", "▄", "o"}, {"▆", "█", "O"},
+        {"▇", "█", "O"}, {"█", "█", "#"}, {"▐", " ", " "}, {"▌", " ", " "}, {"·", "·", "."}, {"⚠", "!", "!"},
+        {"≤", "≤", "<"}, {"≥", "≥", ">"}, {"à", "à", "a"}, {"è", "è", "e"}, {"é", "é", "e"}, {"ì", "ì", "i"},
+        {"ò", "ò", "o"}, {"ù", "ù", "u"}, {"È", "E", "E"}, {"À", "A", "A"},
     };
     if ((unsigned char)ch[0] < 0x80) return ch;
     for (size_t i = 0; i < sizeof TABLE / sizeof TABLE[0]; i++)
-        if (strcmp(ch, TABLE[i][0]) == 0) return TABLE[i][1];
-    return ch;
+        if (strcmp(ch, TABLE[i][0]) == 0) return ascii ? TABLE[i][2] : TABLE[i][1];
+    return ascii ? "?" : ch;
 }
 
+/* The nearest of 16 colours; those of the interface are chosen by hand, to
+ * remain distinguishable. */
 static int color16(int c, bool background) {
     static const short MAP[][3] = { /* colour, foreground, background */
         {255, 15, 7}, {252, 7, 7}, {246, 7, 0}, {240, 8, 0}, {235, 8, 0}, {237, 8, 4}, {238, 7, 0},
-        {75, 12, 4}, {25, 12, 4}, {114, 10, 2}, {28, 10, 2}, {221, 14 - 3, 3}, {178, 11, 3},
+        {75, 12, 4}, {25, 12, 4}, {114, 10, 2}, {28, 10, 2}, {221, 11, 3}, {178, 11, 3},
         {177, 13, 5}, {97, 13, 5}, {117, 14, 6}, {31, 14, 6}, {209, 9, 1}, {203, 9, 1}, {160, 9, 1},
-        {150, 10, 2}, {180, 3, 3}, {16, 0, 0}, {231, 15, 7}, {213, 13, 5}, {250, 7, 7},
+        {150, 10, 2}, {180, 3, 3}, {16, 0, 0}, {231, 15, 7}, {213, 13, 5}, {250, 7, 7}, {111, 12, 4},
+        {183, 13, 5}, {58, 11, 3}, {52, 9, 1}, {130, 3, 3}, {125, 5, 5}, {64, 2, 2}, {60, 4, 4},
     };
     for (size_t i = 0; i < sizeof MAP / sizeof MAP[0]; i++)
         if (MAP[i][0] == c) return MAP[i][background ? 2 : 1];
@@ -271,13 +295,21 @@ static int color16(int c, bool background) {
 static void emit_style(Style s) {
     char b[64];
     int n = snprintf(b, sizeof b, "\033[0");
+    if (colors == 0) { /* bold, and reverse for what stands out */
+        bool strong = s.bg >= 0 && s.bg != C_PANEL && s.bg != C_CELL;
+        if (s.attr & A_BOLD) n += snprintf(b + n, sizeof b - (size_t)n, ";1");
+        if (s.attr & A_UNDER) n += snprintf(b + n, sizeof b - (size_t)n, ";4");
+        if (strong) n += snprintf(b + n, sizeof b - (size_t)n, ";7");
+        out_add(b, (size_t)n);
+        out_add("m", 1);
+        return;
+    }
     if (s.attr & A_BOLD) n += snprintf(b + n, sizeof b - (size_t)n, ";1");
-    if (basic) {
-        if (s.fg >= 0) {
-            int c = color16(s.fg, false);
-            n += snprintf(b + n, sizeof b - (size_t)n, ";%d", c < 8 ? 30 + c : 82 + c);
-        }
-        if (s.bg >= 0) n += snprintf(b + n, sizeof b - (size_t)n, ";%d", 40 + color16(s.bg, true));
+    if (colors == 16) {
+        int bg = s.bg >= 0 ? color16(s.bg, true) : -1, fg = s.fg >= 0 ? color16(s.fg, false) : -1;
+        if (bg >= 0 && (fg == bg || fg == 8 || (bg != 0 && fg > 8))) fg = bg == 3 || bg == 6 || bg == 7 || bg == 2 ? 0 : 15;
+        if (fg >= 0) n += snprintf(b + n, sizeof b - (size_t)n, ";%d", fg < 8 ? 30 + fg : 82 + fg);
+        if (bg >= 0) n += snprintf(b + n, sizeof b - (size_t)n, ";%d", 40 + bg);
     } else {
         if (s.attr & A_DIM) n += snprintf(b + n, sizeof b - (size_t)n, ";2");
         if (s.attr & A_ITALIC) n += snprintf(b + n, sizeof b - (size_t)n, ";3");
@@ -287,6 +319,39 @@ static void emit_style(Style s) {
     }
     out_add(b, (size_t)n);
     out_add("m", 1);
+}
+
+static bool has(const char *text, const char *part) { return text && strstr(text, part) != NULL; }
+
+/* What the terminal can do, from the environment; PSEUDOSCOPE_COLORS (256, 16,
+ * 0) and PSEUDOSCOPE_GLYPHS (unicode, console, ascii) decide instead. */
+static void detect(void) {
+    const char *term = getenv("TERM"), *color = getenv("COLORTERM");
+    const char *locale = getenv("LC_ALL");
+    if (!locale || !*locale) locale = getenv("LC_CTYPE");
+    if (!locale || !*locale) locale = getenv("LANG");
+    bool utf8 = has(locale, "UTF-8") || has(locale, "utf8") || has(locale, "utf-8") || has(locale, "UTF8");
+    linux_console = term && strncmp(term, "linux", 5) == 0;
+    alternate = !linux_console && term && strncmp(term, "vt", 2) != 0 && strcmp(term, "ansi") != 0 && strcmp(term, "dumb") != 0;
+
+    colors = 16;
+    if (has(term, "256color") || (color && *color) || has(term, "kitty") || has(term, "alacritty") || has(term, "foot") ||
+        has(term, "ghostty") || has(term, "wezterm"))
+        colors = 256;
+    if (linux_console) colors = 16;
+    if (!term || !*term || strncmp(term, "vt", 2) == 0 || strcmp(term, "dumb") == 0 || strcmp(term, "ansi-m") == 0) colors = 0;
+    const char *no_color = getenv("NO_COLOR");
+    if (no_color && *no_color) colors = 0;
+    ascii = !utf8;
+    poor = ascii || linux_console;
+
+    const char *wanted = getenv("PSEUDOSCOPE_COLORS");
+    if (wanted && *wanted) colors = strcmp(wanted, "256") == 0 ? 256 : strcmp(wanted, "0") == 0 ? 0 : 16;
+    wanted = getenv("PSEUDOSCOPE_GLYPHS");
+    if (wanted && *wanted) {
+        ascii = strcmp(wanted, "ascii") == 0;
+        poor = ascii || strcmp(wanted, "console") == 0;
+    }
 }
 
 static bool same_style(Style a, Style b) { return a.fg == b.fg && a.bg == b.bg && a.attr == b.attr; }
@@ -302,7 +367,7 @@ void frame_end(void) {
             Cell *c = &cur[y * width + x], *p = &prev[y * width + x];
             if (!full_redraw && same_style(c->st, p->st) && strcmp(c->ch, p->ch) == 0) continue;
             if (!any) {
-                out_str("\033[?2026h"); /* one update, where supported */
+                if (colors == 256 && !poor) out_str("\033[?2026h"); /* one update, where supported */
                 any = true;
             }
             if (cx != x || cy != y) {
@@ -313,34 +378,35 @@ void frame_end(void) {
                 emit_style(c->st);
                 now = c->st;
             }
-            out_str(basic ? basic_glyph(c->ch) : c->ch);
+            out_str(poor ? poor_glyph(c->ch) : c->ch);
             *p = *c;
             cx = x + 1;
             cy = y;
         }
     }
     if (any) {
-        out_str("\033[0m\033[?2026l");
+        out_str("\033[0m");
+        if (colors == 256 && !poor) out_str("\033[?2026l");
         out_flush();
     }
     full_redraw = false;
 }
 
-void frame_dump(bool colors) {
+void frame_dump(bool styled) {
     for (int y = 0; y < height; y++) {
         Style now = S(-2, -2, 255);
         int last = width;
-        if (!colors)
+        if (!styled)
             while (last > 0 && strcmp(cur[y * width + last - 1].ch, " ") == 0) last--;
         for (int x = 0; x < last; x++) {
             Cell *c = &cur[y * width + x];
-            if (colors && !same_style(c->st, now)) {
+            if (styled && !same_style(c->st, now)) {
                 emit_style(c->st);
                 now = c->st;
             }
-            out_str(c->ch);
+            out_str(poor ? poor_glyph(c->ch) : c->ch);
         }
-        out_str(colors ? "\033[0m\n" : "\n");
+        out_str(styled ? "\033[0m\n" : "\n");
     }
     out_flush();
 }

@@ -50,8 +50,10 @@ static void draw_help(const App *app) {
         {"b", "punto di arresto ●", "breakpoint ● on the line"},
         {"Invio", "più dettaglio", "more detail"},
         {"Esc", "meno dettaglio", "less detail"},
-        {"1 2 3 4", "direttamente a un livello", "straight to a level"},
-        {"Tab", "un'altra variabile", "another variable"},
+        {"1 … 5", "direttamente a un livello", "straight to a level"},
+        {"Tab", "altra vista o variabile", "other view or variable"},
+        {"m", "altro componente (Stati)", "other component (States)"},
+        {"f", "codice o diagramma di attività", "code or activity diagram"},
         {"v", "array come celle o barre", "arrays as cells or bars"},
         {"o", "cosa è stato stampato", "what was printed"},
         {"c", "tutta la storia", "the whole story"},
@@ -63,6 +65,7 @@ static void draw_help(const App *app) {
         {"Invio", "più dettaglio", "more detail"},
         {"Esc", "meno dettaglio", "less detail"},
         {"r", "esegui, o prova", "run, or try"},
+        {"t", "tutte le prove (test)", "all the tests"},
         {"E", "apri nell'editor", "open in the editor"},
         {"q", "esci", "quit"},
         {NULL, "", ""},
@@ -94,12 +97,13 @@ static void draw_help(const App *app) {
     if (app->view == VIEW_RUN && h > 22) {
         static const Help LEVELS[] = {
             {NULL, "Livello: cosa vedi, e il passo", "Level: what you see, and the step"},
-            {"1", "Programma: chiamate", "Program: a call"},
-            {"2", "Funzione: istruzioni", "Function: a statement"},
-            {"3", "Istruzione: calcoli", "Statement: a piece of it"},
-            {"4", "Memoria: letture, scritture", "Memory: a read or a write"},
+            {"1", "Sistema: messaggi", "System: a message"},
+            {"2", "Programma: chiamate", "Program: a call"},
+            {"3", "Funzione: istruzioni", "Function: a statement"},
+            {"4", "Istruzione: calcoli", "Statement: a piece of it"},
+            {"5", "Memoria: letture, scritture", "Memory: a read or a write"},
         };
-        help_column(LEVELS, 5, half + 3, 14, w - half - 5);
+        help_column(LEVELS, 6, half + 3, 14, w - half - 5);
     }
     const Hint hints[] = {{L("un tasto", "any key"), L("chiudi", "close")}};
     draw_footer(hints, 1);
@@ -122,6 +126,8 @@ static void draw(App *app) {
             case VIEW_EXPLORE: explore_draw(app); break;
             case VIEW_TRIAL: trial_draw(app); break;
             case VIEW_RUN: run_draw(app); break;
+            case VIEW_TESTS: tests_draw(app); break;
+            case VIEW_UML: uml_draw(app); break;
         }
         if (app->notice[0])
             print_centered(0, 1, w, S(C_FOCUS, C_DEFAULT, A_BOLD), " %s ", app->notice);
@@ -156,7 +162,7 @@ static void handle(App *app, int key) {
         app->overlay = OVERLAY_NONE;
     } else if (key == '?' && app->view != VIEW_TRIAL && !(app->view == VIEW_RUN && vm_status(app->run.vm) == VM_NEEDS_INPUT)) {
         app->overlay = OVERLAY_HELP;
-    } else if (key == 'E' && app->view == VIEW_EXPLORE) {
+    } else if (key == 'E' && (app->view == VIEW_EXPLORE || app->view == VIEW_UML)) {
         edit(app);
     } else {
         switch (app->view) {
@@ -164,6 +170,8 @@ static void handle(App *app, int key) {
             case VIEW_EXPLORE: explore_key(app, key); break;
             case VIEW_TRIAL: trial_key(app, key); break;
             case VIEW_RUN: run_key(app, key); break;
+            case VIEW_TESTS: tests_key(app, key); break;
+            case VIEW_UML: uml_key(app, key); break;
         }
     }
 }
@@ -200,14 +208,14 @@ int run_ui(const UiOptions *options) {
     ui_italian = options->italian;
     struct stat st;
     if (stat(options->path, &st) != 0) {
-        fprintf(stderr, "plike: cannot open '%s'\n", options->path);
+        fprintf(stderr, "pseudoscope: cannot open '%s'\n", options->path);
         return 3;
     }
     srand(app.headless ? 1u : (unsigned)time(NULL));
     if (app.headless) {
         screen_open_headless(options->width, options->height);
     } else if (!screen_open()) {
-        fputs("plike: the interface needs a terminal\n", stderr);
+        fputs("pseudoscope: the interface needs a terminal\n", stderr);
         return 2;
     }
     open_path(&app, options->path);
@@ -228,11 +236,12 @@ int run_ui(const UiOptions *options) {
             int wait = run_tick(&app);
             draw(&app);
             handle(&app, screen_key(wait));
-            if (app.doc && app.view == VIEW_EXPLORE && document_changed(app.doc)) explore_reload(&app);
+            if (app.doc && (app.view == VIEW_EXPLORE || app.view == VIEW_UML) && document_changed(app.doc)) explore_reload(&app);
         }
     }
     run_close(&app);
     trial_close(&app);
+    tests_close(&app);
     files_close(&app);
     document_free(app.doc);
     screen_close();

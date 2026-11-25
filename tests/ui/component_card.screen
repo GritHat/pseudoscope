@@ -1,0 +1,34 @@
+ ◆ PSEUDOSCOPE  election.plike                                                     ▐ Mappa ▌▸▐ Codice ▌▸▐ C ▌
+
+╭─ Mappa ──────────────────────────╮╭────────────────────────────────────────────────────────────────────────╮
+│ Componenti                       ││                                                                        │
+│▸ ▣ Node                          ││  Node  componente: vive da solo e scambia messaggi                     │
+│    → start                       ││                                                                        │
+│    ■ wait_for_leader             ││                        ╭──────────────────────╮                        │
+│    ■ step_down                   ││                        │         Node         │                        │
+│    → Timeout                     ││                        │──────────────────────│                        │
+│    → RequestVote                 ││            Timeout ───▶│ id integer           │───▶ RequestVote        │
+│    → Vote                        ││        RequestVote ───▶│ term integer         │───▶ Vote               │
+│    → Beat                        ││               Vote ───▶│ votes integer        │───▶ Heartbeat          │
+│    → Heartbeat                   ││               Beat ───▶│ voted_for integer    │                        │
+│    → Crash                       ││          Heartbeat ───▶│ alive logical        │                        │
+│                                  ││              Crash ───▶│ deadline integer     │                        │
+│ Sottoprogrammi                   ││                        │──────────────────────│                        │
+│  ■ name_nodes                    ││                        │ wait_for_leader()    │                        │
+│  ƒ leader                        ││                        │ step_down()          │                        │
+│  ƒ leaders                       ││                        ╰──────────────────────╯                        │
+│  ■ main  si parte da qui         ││                                                                        │
+│                                  ││  I suoi stati                                                          │
+│ Dati condivisi                   ││  ╭───────────╮                                                         │
+│  ● variabili globali             ││  │ Follower  │── Timeout ──▶ Candidate                                 │
+│                                  ││  ╰───────────╯                                                         │
+│ Prove                            ││  ╭───────────╮── Timeout ──▶ Candidate                                 │
+│  ✓ one leader, and another one … ││  │ Candidate │── RequestVote ──▶ Follower                              │
+│                                  ││  ╰───────────╯── Vote ──▶ Leader                                       │
+│                                  ││               ── Heartbeat ──▶ Follower                                │
+│                                  ││                                                                        │
+│                                  ││                                                                        │
+│                                  ││                                                                        │
+╰──────────────────────────────────╯╰────────────────────────────────────────────────────────────────────────╯
+
+  ↑↓  scorri   Invio  più dettaglio   Esc  meno dettaglio   r  esegui   t  prove   E  modifica   ?  aiuto

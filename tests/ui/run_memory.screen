@@ -1,4 +1,4 @@
- ◆ PLIKE  basic.plike                                             ▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
+ ◆ PSEUDOSCOPE  basic.plike                           ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
   ‖ fermo   BubbleSort
 ╭─ Tradotto in C ────────────────────────────────────╮╭─ Memoria ──────────────────────────────────────────────────────╮
 │  void BubbleSort(int n, float A[n]) {              ││ indirizzo  nome          valore       byte                     │

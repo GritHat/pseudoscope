@@ -1,4 +1,4 @@
- ◆ PLIKE  types.plike
+ ◆ PSEUDOSCOPE  types.plike
 
 ╭─ Da correggere prima di continuare ──────────────────────────────────────────────────────────────╮
 │  ✗ riga 2  il record 'loop' contiene se stesso; usa un puntatore                                 │

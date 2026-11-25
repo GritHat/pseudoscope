@@ -34,5 +34,6 @@ void test_util(void);
 void test_lexer(void);
 void test_parser(void);
 void test_vm(void);
+void test_uml(void);
 
 #endif

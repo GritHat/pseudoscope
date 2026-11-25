@@ -1,0 +1,20 @@
+graph
+  node start
+  node lo <= hi ?
+  node not found
+  node mid = half way
+  node a of mid = x ?
+  node found
+  node a of mid < x ?
+  node lo = mid + 1
+  node hi = mid - 1
+  start -> lo <= hi ?
+  lo <= hi ? -> not found: no
+  lo <= hi ? -> mid = half way: yes
+  mid = half way -> a of mid = x ?
+  a of mid = x ? -> found: yes
+  a of mid = x ? -> a of mid < x ?: no
+  a of mid < x ? -> lo = mid + 1: yes
+  a of mid < x ? -> hi = mid - 1: no
+  lo = mid + 1 -> lo <= hi ?
+  hi = mid - 1 -> lo <= hi ?

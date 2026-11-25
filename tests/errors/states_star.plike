@@ -1,0 +1,6 @@
+component A
+    states**, X
+end A
+procedure main()
+begin
+end main

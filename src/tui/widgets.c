@@ -142,7 +142,9 @@ void draw_header(const char *where, const char *const *levels, int level_count, 
         }
     }
     if (level_count) room = x - 3;
-    print_at(1, 0, room, S_DIM, M_READ M_BOLD "◆ PLIKE" M_RESET "  %s", where);
+    /* the name of the program gives way to where we are */
+    bool narrow = room < 15 + text_width(where);
+    print_at(1, 0, room, S_DIM, narrow ? M_READ M_BOLD "◆" M_RESET " %s" : M_READ M_BOLD "◆ PSEUDOSCOPE" M_RESET "  %s", where);
 }
 
 void draw_table_row(int x, int y, int w, bool selected, const char *format, ...) {

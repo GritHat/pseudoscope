@@ -1,0 +1,19 @@
+sequence Login
+  person User
+  person Web app
+  person Server
+  person Database
+  == The user logs in
+  User -> Web app: types the password
+  Web app -> Server: POST /login
+  Server -> Database: find the user
+  Database --> Server: the stored hash
+  alt the password is right
+  Server -> Server: open a session
+  Server --> Web app: 200 welcome
+  Web app --> User: home page
+  else the password is wrong
+  Server --> Web app: 401 refused
+  Web app --> User: try again
+  end
+  note the same for mobile

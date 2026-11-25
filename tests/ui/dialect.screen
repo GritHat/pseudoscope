@@ -1,0 +1,30 @@
+ ◆ PSEUDOSCOPE  basico.psc                                               ▐ Mappa ▌▸▐ Codice ▌▸▐ C ▌
+
+╭─ Mappa ───────────────────────╮╭─────────────────────────────────────────────────────────────────╮
+│ Sottoprogrammi                ││                                                                 │
+│  ƒ Factorial                  ││  main  procedura: esegue delle azioni                           │
+│  ■ Intercambiar               ││                                                                 │
+│  ■ Ordenar                    ││                       ╭────────────────╮                        │
+│▸ ■ main  si parte da qui      ││                       │      main      │                        │
+│                               ││                       ╰────────────────╯                        │
+│                               ││                                                                 │
+│                               ││  usa          Ordenar   Factorial                               │
+│                               ││  usata da    nessuno                                            │
+│                               ││                                                                 │
+│                               ││   r  esegui il programma                                        │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+╰───────────────────────────────╯╰─────────────────────────────────────────────────────────────────╯
+
+  ↑↓  scorri   Invio  più dettaglio   Esc  meno dettaglio   r  esegui   E  modifica   ?  aiuto

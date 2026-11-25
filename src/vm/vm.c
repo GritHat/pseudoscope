@@ -90,7 +90,7 @@ static void *grow(void *items, int *capacity, int needed, size_t size) {
     while (wanted < needed) wanted *= 2;
     items = realloc(items, (size_t)wanted * size);
     if (!items) {
-        fputs("plike: out of memory\n", stderr);
+        fputs("pseudoscope: out of memory\n", stderr);
         exit(3);
     }
     *capacity = wanted;
@@ -1261,7 +1261,7 @@ static void loop(Vm *vm, const Instr *in) {
     LogEntry entry = {.kind = e.lost ? LOG_LOST : handler ? LOG_DELIVER : LOG_IGNORED, .stmt = e.stmt, .text = e.name};
     snprintf(entry.target, sizeof entry.target, "%s", vm->lives[e.to_life].name);
     snprintf(entry.old, sizeof entry.old, "%s", vm->lives[e.from_life].name);
-    snprintf(entry.value, sizeof entry.value, "%s", m.args);
+    snprintf(entry.value, sizeof entry.value, "%.47s", m.args);
     if (!handler && !e.lost) {
         const char *state = vm_state_name(vm, &vm->lives[e.to_life]);
         snprintf(entry.value, sizeof entry.value, "%s", state ? state : "");

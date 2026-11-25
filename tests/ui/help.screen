@@ -1,4 +1,4 @@
- ◆ PLIKE  Aiuto
+ ◆ PSEUDOSCOPE  Aiuto
 
 ╭─ Tasti ────────────────────────────────────────╮╭─ Colori ───────────────────────────────────────╮
 │ → ←        un passo avanti, indietro           ││                                                │
@@ -11,15 +11,15 @@
 │ b          punto di arresto ●                  ││   ✗       errore, falso                        │
 │ Invio      più dettaglio                       ││   ·       non ha ancora un valore              │
 │ Esc        meno dettaglio                      ││                                                │
-│ 1 2 3 4    direttamente a un livello           ││                                                │
-│ Tab        un'altra variabile                  ││  Livello: cosa vedi, e il passo                │
-│ v          array come celle o barre            ││  1          Programma: chiamate                │
-│ o          cosa è stato stampato               ││  2          Funzione: istruzioni               │
-│ c          tutta la storia                     ││  3          Istruzione: calcoli                │
-│ x          torna a esplorare                   ││  4          Memoria: letture, scritture        │
+│ 1 … 5      direttamente a un livello           ││                                                │
+│ Tab        altra vista o variabile             ││  Livello: cosa vedi, e il passo                │
+│ m          altro componente (Stati)            ││  1          Sistema: messaggi                  │
+│ f          codice o diagramma di attività      ││  2          Programma: chiamate                │
+│ v          array come celle o barre            ││  3          Funzione: istruzioni               │
+│ o          cosa è stato stampato               ││  4          Istruzione: calcoli                │
+│ c          tutta la storia                     ││  5          Memoria: letture, scritture        │
+│ x          torna a esplorare                   ││                                                │
 │ q          esci                                ││                                                │
-│                                                ││                                                │
-│                                                ││                                                │
 │                                                ││                                                │
 │                                                ││                                                │
 │                                                ││                                                │

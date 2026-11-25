@@ -14,7 +14,10 @@ static int compare_entries(const void *a, const void *b) {
 
 static bool is_source(const char *name) {
     const char *dot = strrchr(name, '.');
-    return dot && (strcmp(dot, ".plike") == 0 || strcmp(dot, ".p") == 0);
+    static const char *const KNOWN[] = {".plike", ".p", ".psc", ".alg", ".por", ".pse"};
+    for (size_t i = 0; dot && i < sizeof KNOWN / sizeof KNOWN[0]; i++)
+        if (equals_ignore_case(dot, KNOWN[i])) return true;
+    return is_uml_path(name);
 }
 
 static char *join(const char *directory, const char *name) {
@@ -106,13 +109,28 @@ void files_open(App *app, const char *directory) {
     update_preview(app);
 }
 
+static const char *kind_of(const Document *doc) {
+    static const char *const IT[] = {"", "diagramma di sequenza", "diagramma di stato", "diagramma delle classi", "diagramma"};
+    static const char *const EN[] = {"", "sequence diagram", "state diagram", "class diagram", "diagram"};
+    if (doc->uml) return L(IT[doc->uml->kind], EN[doc->uml->kind]);
+    switch (doc->config.dialect) {
+        case DIALECT_PSEINT: return "PSeInt";
+        case DIALECT_VISUALG: return "VisuAlg";
+        case DIALECT_PORTUGOL: return "Portugol";
+        case DIALECT_CAMBRIDGE: return "Cambridge";
+        default: return "P-like";
+    }
+}
+
 static void draw_preview(const Document *doc, int x, int y, int w, int h) {
+    print_at(x + w - 24, y + 1, 24, S(C_TYPE, C_DEFAULT, A_BOLD), "%24s", kind_of(doc));
     int functions = 0, records = 0;
     for (int i = 0; i < doc->item_count; i++) {
         functions += doc->items[i].kind == ITEM_FUNCTION;
         records += doc->items[i].kind == ITEM_RECORD;
     }
-    print_at(x, y, w, S_TEXT, M_CALL "ƒ" M_RESET " %d %s   " M_TYPE "▦" M_RESET " %d record   " M_DIM "%d %s",
+    if (doc->uml) print_at(x, y, w, S_DIM, "%s", doc->uml->title ? doc->uml->title : "");
+    else print_at(x, y, w, S_TEXT, M_CALL "ƒ" M_RESET " %d %s   " M_TYPE "▦" M_RESET " %d record   " M_DIM "%d %s",
              functions, L("sottoprogrammi", "subprograms"), records, doc->line_count, L("righe", "lines"));
     int errors = 0;
     for (int i = 0; i < doc->message_count; i++) errors += !doc->messages[i].warning;
@@ -135,7 +153,7 @@ void files_draw(App *app) {
     for (int i = 0; i < rows - 1 && f->top + i < f->count; i++) {
         const Entry *e = &f->entries[f->top + i];
         draw_table_row(1, 3 + i, list - 2, f->top + i == f->selected, "%s%s%s",
-                       e->directory ? M_FOCUS "▪ " M_RESET : M_READ "◆ " M_RESET, e->name,
+                       e->directory ? M_FOCUS "▪ " M_RESET : is_uml_path(e->name) ? M_TYPE "▣ " M_RESET : M_READ "◆ " M_RESET, e->name,
                        e->directory ? "/" : "");
     }
     bool any = false;

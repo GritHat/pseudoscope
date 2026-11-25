@@ -50,6 +50,20 @@ static int token_kind_style(const Token *t) {
     }
 }
 
+/* "class", "send" and the like are only words of the language in some places. */
+static bool is_system_word(const Document *doc, int i) {
+    static const char *const WORDS[] = {"class", "component", "states", "on", "when", "send", "after", "become", "cancel", "test",
+                                        "check", "expect", "run", "step", "link", "delay", "loss", "seed", "all", "sender", "self", "stop"};
+    const Token *t = &doc->tokens.items[i];
+    if (doc->config.dialect != DIALECT_PLIKE || !doc->program->classes) return false;
+    for (size_t k = 0; k < sizeof WORDS / sizeof WORDS[0]; k++) {
+        if (!equals_ignore_case(WORDS[k], t->text)) continue;
+        TokenKind next = i + 1 < doc->tokens.count ? doc->tokens.items[i + 1].kind : TOK_EOF;
+        return next != TOK_COLON && next != TOK_ASSIGN && next != TOK_DOT;
+    }
+    return false;
+}
+
 static void color_tokens(Document *doc) {
     size_t length = doc->text.length;
     doc->kinds = calloc(length + 1, 1);
@@ -64,6 +78,7 @@ static void color_tokens(Document *doc) {
         if (t->kind == TOK_IDENT && doc->program) {
             for (const Function *f = doc->program->functions; f; f = f->next)
                 if (strcmp(f->name, t->text) == 0) kind = H_FUNCTION;
+            if (is_system_word(doc, i)) kind = H_KEYWORD;
             for (const TypeDecl *d = doc->program->types; d; d = d->next)
                 if (strcmp(d->name, t->text) == 0) kind = H_RECORD;
         }
@@ -115,6 +130,7 @@ static bool line_has_token(const Document *doc, int line) {
 static void find_ranges(Document *doc) {
     for (int i = 0; i < doc->item_count; i++) {
         Item *item = &doc->items[i];
+        if (item->last >= item->first) continue; /* the parser knows */
         int next = doc->line_count + 1;
         for (int k = 0; k < doc->item_count; k++)
             if (doc->items[k].first > item->first && doc->items[k].first < next) next = doc->items[k].first;
@@ -126,25 +142,114 @@ static void find_ranges(Document *doc) {
     }
 }
 
+/* The states a component may get to, from what its handlers do. */
+typedef struct {
+    const Document *doc;
+    const Class *klass;
+    const char *label;
+    const StateName *guards;
+    StateArrow *out;
+    int count, max, depth;
+} Transitions;
+
+static int state_index(const Class *klass, const char *name) {
+    int i = 0;
+    for (const StateName *s = klass->states; s; s = s->next, i++)
+        if (strcmp(s->name, name) == 0) return i;
+    return -1;
+}
+
+static void add_arrow(Transitions *t, int from, int to) {
+    for (int i = 0; i < t->count; i++)
+        if (t->out[i].from == from && t->out[i].to == to && strcmp(t->out[i].label, t->label) == 0) return;
+    if (t->count < t->max) t->out[t->count++] = (StateArrow){from, to, t->label};
+}
+
+static void find_changes(Transitions *t, const Stmt *s);
+
+static void follow_call(void *context, const Expr *e) {
+    Transitions *t = context;
+    if (!e->is_call || !e->symbol || !e->symbol->function || e->symbol->function->owner != t->klass || t->depth > 3) return;
+    t->depth++;
+    find_changes(t, e->symbol->function->body);
+    t->depth--;
+}
+
+static void find_changes(Transitions *t, const Stmt *s) {
+    for (; s; s = s->next) {
+        for (const Stmt *b = s; b; b = b->otherwise) {
+            if (b->kind == ST_ASSIGN && b->target->type && b->target->type->states && b->value->kind == EX_NAME &&
+                b->value->symbol && b->value->symbol->kind == SYM_STATE) {
+                int to = state_index(t->klass, b->value->text), i = 0;
+                for (const StateName *from = t->klass->states; from; from = from->next, i++) {
+                    bool allowed = !t->guards;
+                    for (const StateName *g = t->guards; g; g = g->next) allowed |= strcmp(g->name, from->name) == 0;
+                    if (allowed && to >= 0 && (i != to || t->guards)) add_arrow(t, i, to);
+                }
+            }
+            visit_expr(b->value, follow_call, t);
+            find_changes(t, b->body);
+        }
+    }
+}
+
+int class_transitions(const Document *doc, const Class *klass, StateArrow *out, int max) {
+    Transitions t = {.doc = doc, .klass = klass, .out = out, .max = max};
+    for (const Function *f = doc->program->functions; f; f = f->next) {
+        if (f->owner != klass || !f->is_handler) continue;
+        t.label = f->name;
+        t.guards = f->guards;
+        find_changes(&t, f->body);
+    }
+    return t.count;
+}
+
+static Item *add_function(Document *doc, const Function *f, ItemKind kind) {
+    Item *item = &doc->items[doc->item_count++];
+    item->kind = kind;
+    item->name = f->name;
+    item->function = f;
+    item->first = f->loc.line;
+    item->last = f->last_line;
+    item->calls = arena_alloc(&doc->arena, 64 * sizeof(Function *));
+    if (doc->ok) visit_statements(f->body, note_call, item);
+    return item;
+}
+
+static void list_classes(Document *doc, bool components) {
+    for (const Class *c = doc->program->classes; c; c = c->next) {
+        if (c->is_component != components) continue;
+        Item *item = &doc->items[doc->item_count++];
+        item->kind = components ? ITEM_COMPONENT : ITEM_CLASS;
+        item->name = c->name;
+        item->klass = c;
+        item->record = c->record;
+        item->first = c->loc.line;
+        item->last = c->last_line;
+        for (const Function *f = doc->program->functions; f; f = f->next)
+            if (f->owner == c) add_function(doc, f, ITEM_FUNCTION);
+    }
+}
+
 static void list_items(Document *doc) {
     int count = 1;
     for (const Function *f = doc->program->functions; f; f = f->next) count++;
     for (const TypeDecl *t = doc->program->types; t; t = t->next) count++;
     for (const VarDecl *g = doc->program->globals; g; g = g->next) count++;
+    for (const Class *c = doc->program->classes; c; c = c->next) count++;
     doc->items = calloc((size_t)count, sizeof(Item));
     if (!doc->items) abort();
+    list_classes(doc, true);
+    list_classes(doc, false);
     for (const Function *f = doc->program->functions; f; f = f->next) {
-        Item *item = &doc->items[doc->item_count];
-        item->kind = ITEM_FUNCTION;
-        item->name = f->name;
-        item->function = f;
-        item->first = f->loc.line;
-        item->calls = arena_alloc(&doc->arena, 64 * sizeof(Function *));
-        if (doc->ok) visit_statements(f->body, note_call, item);
+        if (f->owner || f->is_test) continue;
+        add_function(doc, f, ITEM_FUNCTION);
+        doc->item_count--;
         if (!f->is_test && strcmp(f->name, "main") == 0 && !f->params) doc->main_item = doc->item_count;
         doc->item_count++;
     }
     for (const TypeDecl *t = doc->program->types; t; t = t->next) {
+        if (t->record->klass) continue;
         Item *item = &doc->items[doc->item_count++];
         item->kind = ITEM_RECORD;
         item->name = t->name;
@@ -165,6 +270,8 @@ static void list_items(Document *doc) {
         item->name = "";
         item->first = doc->program->globals->loc.line;
     }
+    for (const Function *f = doc->program->functions; f; f = f->next)
+        if (f->is_test) add_function(doc, f, ITEM_TEST);
     find_ranges(doc);
 }
 
@@ -194,6 +301,13 @@ Document *document_load(const char *path, const Config *config) {
     split_lines(doc);
 
     Diag diag = {.source = &doc->source, .out = stderr, .sink = add_message, .italian = ui_italian, .sink_context = doc};
+    if (is_uml_path(path)) {
+        doc->kinds = calloc(doc->text.length + 1, 1);
+        if (!doc->kinds) abort();
+        doc->uml = uml_parse(&doc->source, &doc->arena, &diag);
+        doc->ok = doc->uml && diag.errors == 0;
+        return doc;
+    }
     doc->tokens = lex(&doc->source, &doc->config, &doc->arena, &diag);
     doc->program = parse(doc->tokens, &doc->config, &doc->arena, &diag);
     doc->ok = diag.errors == 0 && analyze(doc->program, &doc->config, &doc->arena, &diag);

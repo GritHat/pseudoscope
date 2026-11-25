@@ -1,0 +1,13 @@
+sequence
+  person Client
+  person Shop
+  person Bank
+  Client -> Shop: buy
+  Shop -> Bank: charge(30)
+  alt enough money
+  Bank --> Shop: ok
+  Shop --> Client: receipt
+  else no money
+  Bank --> Shop: refused
+  Shop --> Client: sorry
+  end

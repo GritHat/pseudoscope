@@ -3,7 +3,7 @@
 
 #include "plike/config.h"
 
-#define PLIKE_VERSION "2.0.0"
+#define PLIKE_VERSION "3.0.0"
 
 typedef enum {
     CMD_TRANSLATE, CMD_CHECK, CMD_BUILD, CMD_RUN, CMD_EXEC, CMD_TOKENS, CMD_AST, CMD_UI, CMD_TEST

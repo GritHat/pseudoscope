@@ -1,0 +1,23 @@
+class Shop
+  abstract Product
+    +name : string
+    +price : real
+    +{abstract} tax() : real
+  class Book
+    +author : string
+    +tax() : real
+  class Food
+    +expires : date
+    +tax() : real
+  class Cart
+    -items : list
+    +add(p : Product)
+    +total() : real
+  interface Payment
+    +pay(amount : real) : logical
+  class Card
+  Book extends Product
+  Food extends Product
+  Cart has Product: contains
+  Card implements Payment
+  Cart uses Payment: uses

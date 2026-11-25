@@ -1,4 +1,4 @@
- ◆ PLIKE  fib.plike ▸ fib                            ▐ Mappa ▌▸▐ Codice ▌▸▐ C ▌
+ ◆ PSEUDOSCOPE  fib.plike ▸ fib                      ▐ Mappa ▌▸▐ Codice ▌▸▐ C ▌
 
 ╭─ fib ────────────────────────────────────────────────────────────────────────╮
 │     3 function fib(in n: integer): integer                                   │

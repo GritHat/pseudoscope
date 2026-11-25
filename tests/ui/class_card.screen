@@ -1,0 +1,34 @@
+ ◆ PSEUDOSCOPE  shop.plike                                                         ▐ Mappa ▌▸▐ Codice ▌▸▐ C ▌
+
+╭─ Mappa ──────────────────────────╮╭────────────────────────────────────────────────────────────────────────╮
+│ Classi                           ││                                                                        │
+│▸ ▣ Cart                          ││  Cart  classe: dati e operazioni insieme                               │
+│    ■ add                         ││                                                                        │
+│    ■ cost                        ││  ╭────────────────────────────────╮                                    │
+│  ▣ Warehouse                     ││  │              Cart              │                                    │
+│    ■ reserve                     ││  │────────────────────────────────│                                    │
+│    ■ ship                        ││  │ total real                     │                                    │
+│  ▣ Payments                      ││  │────────────────────────────────│                                    │
+│    ■ charge                      ││  │ add()                          │                                    │
+│                                  ││  │ cost()                         │                                    │
+│ Sottoprogrammi                   ││  ╰────────────────────────────────╯                                    │
+│  ■ checkout                      ││                                                                        │
+│  ■ main  si parte da qui         ││                                                                        │
+│                                  ││                                                                        │
+│ Dati condivisi                   ││                                                                        │
+│  ● variabili globali             ││                                                                        │
+│                                  ││                                                                        │
+│                                  ││                                                                        │
+│                                  ││                                                                        │
+│                                  ││                                                                        │
+│                                  ││                                                                        │
+│                                  ││                                                                        │
+│                                  ││                                                                        │
+│                                  ││                                                                        │
+│                                  ││                                                                        │
+│                                  ││                                                                        │
+│                                  ││                                                                        │
+│                                  ││                                                                        │
+╰──────────────────────────────────╯╰────────────────────────────────────────────────────────────────────────╯
+
+  ↑↓  scorri   Invio  più dettaglio   Esc  meno dettaglio   r  esegui   E  modifica   q  esci   ?  aiuto

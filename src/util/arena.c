@@ -16,7 +16,7 @@ struct ArenaBlock {
 };
 
 static void out_of_memory(void) {
-    fputs("plike: out of memory\n", stderr);
+    fputs("pseudoscope: out of memory\n", stderr);
     exit(3);
 }
 

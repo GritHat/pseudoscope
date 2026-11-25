@@ -1,0 +1,32 @@
+ ◆ PSEUDOSCOPE  order_state.puml ▸ diagramma di stato ▸ The life of an order
+
+╭─ The life of an order ─────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                            │
+│ ╭───────────╮                                                           │ Il cammino fatto                 │
+│ │     ●     │────▶ Cart                                                 │                                  │
+│ ╰───────────╯                                                           │  ●                               │
+│ ╭───────────╮── add a product ──▶ Cart                                  │  Cart                            │
+│ │   Cart    │── pay ──▶ Paid                                            │  Cart                            │
+│ ╰───────────╯── leave ──▶ ◉                                             │                                  │
+│                                                                         │                                  │
+│ ╭───────────╮── ship ──▶ Shipped                                        │                                  │
+│ │   Paid    │── cancel ──▶ Refunded                                     │                                  │
+│ ╰───────────╯                                                           │                                  │
+│                                                                         │                                  │
+│ ╭───────────╮                                                           │                                  │
+│ │     ◉     │                                                           │                                  │
+│ ╰───────────╯                                                           │                                  │
+│ ╭───────────╮── deliver ──▶ Delivered                                   │                                  │
+│ │  Shipped  │── refuse ──▶ Returned                                     │                                  │
+│ ╰───────────╯                                                           │                                  │
+│                                                                         │                                  │
+│ ╭───────────╮                                                           │                                  │
+│ │ Refunded  │────▶ ◉                                                    │                                  │
+│ ╰───────────╯                                                           │                                  │
+│ ╭───────────╮                                                           │                                  │
+│ │ Delivered │────▶ ◉                                                    │                                  │
+│ ╰───────────╯                                                           │                                  │
+│                                                                         │                                  │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+  ↑↓  quale freccia   →  segui   ←  indietro   Spazio  va da solo   0  da capo   Esc  file   ?  aiuto

@@ -35,7 +35,7 @@ static void unload(Loaded *l) {
 }
 
 /* Forward to the end, remembering every stop; back to the start; forward again. */
-static void travel(const char *name, const char *text, size_t length, Level level) {
+static void travel(const char *name, const char *text, size_t length, Level level, int test) {
     Loaded l;
     if (!load(&l, text, length)) {
         unload(&l);
@@ -44,7 +44,11 @@ static void travel(const char *name, const char *text, size_t length, Level leve
     enum { MAX = 4000 };
     static uint64_t seen[MAX];
     int count = 0;
-    vm_start(l.vm);
+    const Function *chosen = NULL;
+    for (const Function *f = l.program->functions; f && test >= 0; f = f->next)
+        if (f->is_test && test-- == 0) chosen = f;
+    if (chosen) vm_start_test(l.vm, chosen);
+    else vm_start(l.vm);
     vm_give_input(l.vm, "2 1.5\n2.5 x\n 7\n4\n5\n");
     vm_end_input(l.vm);
     seen[count++] = vm_fingerprint(l.vm);
@@ -78,8 +82,16 @@ static void test_travel(void) {
         size_t n;
         while ((n = fread(chunk, 1, sizeof chunk, file)) > 0) strbuf_append(&text, chunk, n);
         fclose(file);
-        for (int level = LEVEL_CALL; level <= LEVEL_MEMORY; level++)
-            travel(unit_argv[i], text.data, text.length, (Level)level);
+        for (int level = LEVEL_SYSTEM; level <= LEVEL_MEMORY; level++)
+            travel(unit_argv[i], text.data, text.length, (Level)level, -1);
+        Loaded l;
+        int tests = 0;
+        if (load(&l, text.data, text.length))
+            for (const Function *f = l.program->functions; f; f = f->next) tests += f->is_test;
+        unload(&l);
+        for (int test = 0; test < tests; test++)
+            for (int level = LEVEL_SYSTEM; level <= LEVEL_STATEMENT; level++)
+                travel(unit_argv[i], text.data, text.length, (Level)level, test);
         strbuf_free(&text);
     }
 }

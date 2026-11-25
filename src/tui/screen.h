@@ -92,7 +92,7 @@ int screen_height(void);
 
 void frame_begin(void);
 void frame_end(void);
-void frame_dump(bool colors);                 /* headless: to the standard output */
+void frame_dump(bool styled);                 /* headless: to the standard output */
 
 void put_text(int x, int y, Style st, const char *utf8);
 int print_at(int x, int y, int max, Style base, const char *format, ...)

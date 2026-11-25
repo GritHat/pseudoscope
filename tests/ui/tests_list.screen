@@ -1,0 +1,30 @@
+ ◆ PSEUDOSCOPE  login.plike ▸ prove
+
+╭─ Prove ───────────────────────────────────╮╭─ Cosa verifica ─────────────────────────────────────╮
+│ 2 / 2 superate                            ││                                                     │
+│                                           ││  ✓ test -> client: Click                            │
+│▸ ✓ the right password logs in             ││  ✓ client -> server: Login                          │
+│  ✓ a wrong password is refused, then one… ││  ✓ server -> database: Find                         │
+│                                           ││  ✓ database -> server: Found                        │
+│                                           ││  ✓ server -> client: Welcome                        │
+│                                           ││  ✓ client.state = LoggedIn                          │
+│                                           ││  ✓ server.sessions = 1                              │
+│                                           ││                                                     │
+│                                           ││                                                     │
+│                                           ││                                                     │
+│                                           ││                                                     │
+│                                           ││                                                     │
+│                                           ││                                                     │
+│                                           ││                                                     │
+│                                           ││                                                     │
+│                                           ││                                                     │
+│                                           ││                                                     │
+│                                           ││                                                     │
+│                                           ││                                                     │
+│                                           ││                                                     │
+│                                           ││                                                     │
+│                                           ││                                                     │
+│                                           ││                                                     │
+╰───────────────────────────────────────────╯╰─────────────────────────────────────────────────────╯
+
+  ↑↓  scegli   Invio  guardala mentre gira   Esc  indietro   ?  aiuto

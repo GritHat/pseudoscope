@@ -1,0 +1,32 @@
+ ◆ PSEUDOSCOPE  stop_and_wait.plike         ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
+  ‖ fermo   everything arrives, once and in order, even if p ▸ Sender.Transmit
+  Sequenza   Componenti   Stati   Tempi   Comunicazione   Verifiche                     tempo t = 18
+╭────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                             ╭───────╮                                      ╭──────────╮                    │
+│                             │ alice │                                      │ receiver │                    │
+│                             ╰───────╯                                      ╰──────────╯                    │
+│ t=0     ── the channel loses a packet in four ───────────────────────────────────────────────────────────  │
+│ t=0                             ┃↺ start                                         │                         │
+│ t=0                             ┃↺ Transmit                                      │                         │
+│ t=0                             ◆ WaitAck                                        │                         │
+│ t=2                             │───────────────── Data(0, 10) ─────────────────▶┃                         │
+│ t=4                             │                       ✗─────────────── Ack(0) ─│                         │
+│ t=8                             ┃↺ Timeout(1)                                    │                         │
+│ t=11                            │───────────────── Data(0, 10) ─────────────────▶┃                         │
+│ t=13                            ┃◀────────────────── Ack(0) ─────────────────────│                         │
+│ t=13                            ◆ Ready                                          │                         │
+│ t=13                            ┃↺ Transmit                                      │                         │
+│ t=13                            ◆ WaitAck                                        │                         │
+│ t=15                            │───────────────── Data(1, 20) ─────────────────▶┃                         │
+│ t=18                            ┃◀────────────────── Ack(1) ─────────────────────│                         │
+│ t=18                            ◆ Ready                                          │                         │
+│ t=18                            ┃↺  Transmit                                     │                         │
+│                                 ┃                                                │                         │
+│                                 ┃                                                │                         │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Cosa è successo ──────────────────────────────────────────────────────────────────────────────────────────╮
+│ ◆ alice passa a  Ready   prima era WaitAck                                                                 │
+│ ▷ alice manda  Transmit  a alice                                                                           │
+│ ▶  Transmit  arriva a alice                                                                                │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   Tab  altra vista   ?  aiuto

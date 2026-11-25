@@ -11,7 +11,7 @@ import sys
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
 
-PLIKE = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else "bin/plike")
+PLIKE = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else "bin/pseudoscope")
 CC = os.environ.get("CC", "cc")
 
 MODES = ["", "in ", "in: ", "out ", "out: ", "in/out ", "in/out: ", "inout ",

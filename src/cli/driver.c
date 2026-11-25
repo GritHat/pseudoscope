@@ -18,7 +18,7 @@ static bool read_file(const char *path, StrBuf *text) {
     bool is_stdin = strcmp(path, "-") == 0;
     FILE *file = is_stdin ? stdin : fopen(path, "rb");
     if (!file) {
-        fprintf(stderr, "plike: cannot open '%s': %s\n", path, strerror(errno));
+        fprintf(stderr, "pseudoscope: cannot open '%s': %s\n", path, strerror(errno));
         return false;
     }
     char chunk[8192];
@@ -26,7 +26,7 @@ static bool read_file(const char *path, StrBuf *text) {
     strbuf_puts(text, "");
     while ((n = fread(chunk, 1, sizeof chunk, file)) > 0) strbuf_append(text, chunk, n);
     bool ok = !ferror(file);
-    if (!ok) fprintf(stderr, "plike: cannot read '%s': %s\n", path, strerror(errno));
+    if (!ok) fprintf(stderr, "pseudoscope: cannot read '%s': %s\n", path, strerror(errno));
     if (!is_stdin) fclose(file);
     return ok;
 }
@@ -35,12 +35,12 @@ static bool write_file(const char *path, const StrBuf *text) {
     bool is_stdout = !path || strcmp(path, "-") == 0;
     FILE *file = is_stdout ? stdout : fopen(path, "wb");
     if (!file) {
-        fprintf(stderr, "plike: cannot write '%s': %s\n", path, strerror(errno));
+        fprintf(stderr, "pseudoscope: cannot write '%s': %s\n", path, strerror(errno));
         return false;
     }
     bool ok = fwrite(text->data, 1, text->length, file) == text->length;
     ok &= (is_stdout ? fflush(file) : fclose(file)) == 0;
-    if (!ok) fprintf(stderr, "plike: cannot write '%s'\n", is_stdout ? "standard output" : path);
+    if (!ok) fprintf(stderr, "pseudoscope: cannot write '%s'\n", is_stdout ? "standard output" : path);
     return ok;
 }
 
@@ -57,14 +57,14 @@ static int execute(const char *const *args) {
     if (pid < 0) return -1;
     if (pid == 0) {
         execvp(args[0], (char *const *)args);
-        fprintf(stderr, "plike: cannot run '%s': %s\n", args[0], strerror(errno));
+        fprintf(stderr, "pseudoscope: cannot run '%s': %s\n", args[0], strerror(errno));
         _exit(127);
     }
     int status;
     while (waitpid(pid, &status, 0) < 0)
         if (errno != EINTR) return -1;
     if (WIFSIGNALED(status)) {
-        fprintf(stderr, "plike: '%s' was killed by signal %d\n", args[0], WTERMSIG(status));
+        fprintf(stderr, "pseudoscope: '%s' was killed by signal %d\n", args[0], WTERMSIG(status));
         return 128 + WTERMSIG(status);
     }
     return WEXITSTATUS(status);
@@ -74,9 +74,9 @@ static bool compile_c(const Options *options, const char *source, const char *ex
     const char *cc = options->cc ? options->cc : getenv("CC");
     if (!cc || !*cc) cc = "cc";
     const char *const args[] = {cc, "-std=c11", "-O1", "-o", executable, source, "-lm", NULL};
-    if (options->verbose) fprintf(stderr, "plike: compiling with %s\n", cc);
+    if (options->verbose) fprintf(stderr, "pseudoscope: compiling with %s\n", cc);
     if (execute(args) == 0) return true;
-    fputs("plike: the C compiler failed\n", stderr);
+    fputs("pseudoscope: the C compiler failed\n", stderr);
     return false;
 }
 
@@ -91,15 +91,15 @@ static char *default_executable(Arena *arena, const char *input) {
 }
 
 static int no_main(void) {
-    fputs("plike: there is nothing to run: declare a procedure 'main' without parameters\n", stderr);
+    fputs("pseudoscope: there is nothing to run: declare a procedure 'main' without parameters\n", stderr);
     return EXIT_PROBLEMS;
 }
 
 static int build_and_run(const Options *options, const StrBuf *code, Arena *arena) {
     const char *base = getenv("TMPDIR");
-    char *dir = arena_printf(arena, "%s/plike-XXXXXX", base && *base ? base : "/tmp");
+    char *dir = arena_printf(arena, "%s/pseudoscope-XXXXXX", base && *base ? base : "/tmp");
     if (!mkdtemp(dir)) {
-        fprintf(stderr, "plike: cannot create a temporary directory: %s\n", strerror(errno));
+        fprintf(stderr, "pseudoscope: cannot create a temporary directory: %s\n", strerror(errno));
         return EXIT_IO;
     }
     char *source = arena_printf(arena, "%s/program.c", dir);
@@ -109,7 +109,7 @@ static int build_and_run(const Options *options, const StrBuf *code, Arena *aren
     if (write_file(source, code) && compile_c(options, source, executable)) {
         if (options->command == CMD_RUN) {
             const char *const args[] = {executable, NULL};
-            if (options->verbose) fputs("plike: running\n", stderr);
+            if (options->verbose) fputs("pseudoscope: running\n", stderr);
             status = execute(args);
             if (status < 0) status = EXIT_IO;
         } else {
@@ -117,7 +117,7 @@ static int build_and_run(const Options *options, const StrBuf *code, Arena *aren
                                                  : default_executable(arena, options->input);
             const char *const args[] = {"cp", "--", executable, target, NULL};
             if (same_file(options->input, target))
-                fputs("plike: the executable would overwrite the input\n", stderr);
+                fputs("pseudoscope: the executable would overwrite the input\n", stderr);
             else if (execute(args) == 0)
                 status = EXIT_OK;
         }
@@ -152,7 +152,7 @@ static int interpret(const Program *program, const Options *options) {
     }
     fflush(stdout);
     if (vm_status(vm) == VM_READY) {
-        fputs("plike: too many steps, stopped\n", stderr);
+        fputs("pseudoscope: too many steps, stopped\n", stderr);
         vm_destroy(vm);
         return EXIT_PROBLEMS;
     }
@@ -198,11 +198,11 @@ static int run_tests(const Program *program, const Options *options, bool it) {
 }
 
 static void step(const Options *options, const char *text) {
-    if (options->verbose) fprintf(stderr, "plike: %s\n", text);
+    if (options->verbose) fprintf(stderr, "pseudoscope: %s\n", text);
 }
 
 static bool italian(const Options *options, bool otherwise) {
-    const char *lang = options->lang ? options->lang : getenv("PLIKE_LANG");
+    const char *lang = options->lang ? options->lang : getenv("PSEUDOSCOPE_LANG");
     return lang && *lang ? strcmp(lang, "it") == 0 : otherwise;
 }
 
@@ -218,7 +218,7 @@ static int translate(const Options *options, const Source *source, Arena *arena,
         if (!uml || diag.errors) return EXIT_PROBLEMS;
         if (options->command == CMD_CHECK) return options->werror && diag.warnings ? EXIT_PROBLEMS : EXIT_OK;
         if (options->command != CMD_AST) {
-            fputs("plike: a diagram can be opened with ui, check and ast\n", stderr);
+            fputs("pseudoscope: a diagram can be opened with ui, check and ast\n", stderr);
             return EXIT_PROBLEMS;
         }
         uml_dump(uml, out);
@@ -244,14 +244,14 @@ static int translate(const Options *options, const Source *source, Arena *arena,
     step(options, "checking names and types");
     if (!analyze(program, &options->config, arena, &diag)) return EXIT_PROBLEMS;
     if (options->werror && diag.warnings) {
-        fputs("plike: warnings are treated as errors\n", stderr);
+        fputs("pseudoscope: warnings are treated as errors\n", stderr);
         return EXIT_PROBLEMS;
     }
     if (options->command == CMD_CHECK) return EXIT_OK;
 
     if (options->command == CMD_TEST) return run_tests(program, options, diag.italian);
     if (has_components(program) && options->command != CMD_EXEC) {
-        fputs("plike: components live only in exec, test and ui: they are not translated to C\n", stderr);
+        fputs("pseudoscope: components live only in exec, test and ui: they are not translated to C\n", stderr);
         return EXIT_PROBLEMS;
     }
     if (options->command == CMD_EXEC) {
@@ -263,7 +263,7 @@ static int translate(const Options *options, const Source *source, Arena *arena,
     generate(program, &options->config, arena, out);
     if (options->command == CMD_TRANSLATE) {
         if (options->output && same_file(options->input, options->output)) {
-            fputs("plike: the output would overwrite the input\n", stderr);
+            fputs("pseudoscope: the output would overwrite the input\n", stderr);
             return EXIT_USAGE;
         }
         return write_file(options->output, out) ? EXIT_OK : EXIT_IO;

@@ -1,0 +1,32 @@
+ ◆ PSEUDOSCOPE  stop_and_wait.plike         ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
+  ‖ fermo   everything arrives, once and in order, even if p ▸ Receiver.Data
+  Sequenza   Componenti   Stati   Tempi   Comunicazione   Verifiche                     tempo t = 11
+╭────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ ╭─ alice ──────────────────────────────────────────╮ ╭─ receiver ───────────────────────────────────────╮  │
+│ │ Sender                                  WaitAck  │ │ Receiver                                         │  │
+│ │ bit 0                                            │ │ expected 1                                       │  │
+│ │ next 1                                           │ │ count 1                                          │  │
+│ │ total 5                                          │ │ data 10 0 0 0 0                                  │  │
+│ │ resent 1                                         │ │                                                  │  │
+│ ╰──────────────────────────────────────────────────╯ ╰──────────────────────────────────────────────────╯  │
+│                                                                                                            │
+│ In viaggio                                                                                                 │
+│                                                                                                            │
+│        receiver├┄ Ack ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄▶ alice            │
+│                                                                                                            │
+│   in attesa: ◷ alice.Timeout →16                                                                           │
+│                                                                                                            │
+│                                                                                                            │
+│                                                                                                            │
+│                                                                                                            │
+│                                                                                                            │
+│                                                                                                            │
+│                                                                                                            │
+│                                                                                                            │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Cosa è successo ──────────────────────────────────────────────────────────────────────────────────────────╮
+│ ▷ alice manda  Timeout  a alice                                                                            │
+│ ▶  Data(0, 10)  arriva a receiver                                                                          │
+│ ▷ receiver manda  Ack  a alice                                                                             │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   Tab  altra vista   ?  aiuto

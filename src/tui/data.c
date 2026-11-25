@@ -780,7 +780,7 @@ void run_memory_draw(App *app, int x, int y, int w, int h) {
             if (row >= y + h) return;
             bool top = frame == vm_frame_count(vm) - 1;
             print_at(x, row++, w, S_TEXT, "%s%s %s ", top ? M_CHIP_CALL : M_CHIP_OFF, top ? " ▶" : " ",
-                     f ? f->name : vm_trial_count(vm) ? L("prova", "try") : L("globali", "globals"));
+                     f ? f->full_name : vm_trial_count(vm) ? L("prova", "try") : L("globali", "globals"));
         }
         Pointer base = vm_pointer_to(vm, i);
         int from = 0, limit = 8; /* long arrays: around what was touched */

@@ -2,6 +2,7 @@
 #define PLIKE_UI_H
 
 #include "plike/codegen.h"
+#include "plike/uml.h"
 #include "plike/vm.h"
 #include "screen.h"
 
@@ -23,13 +24,14 @@ typedef struct {
     char text[200];
 } Message;
 
-typedef enum { ITEM_FUNCTION, ITEM_RECORD, ITEM_GLOBALS } ItemKind;
+typedef enum { ITEM_COMPONENT, ITEM_CLASS, ITEM_FUNCTION, ITEM_RECORD, ITEM_GLOBALS, ITEM_TEST } ItemKind;
 
 typedef struct {
     ItemKind kind;
     const char *name;
     const Function *function;
     const Record *record;
+    const Class *klass;
     int first, last;         /* source lines */
     const Function **calls;  /* functions: who it calls */
     int call_count;
@@ -43,6 +45,7 @@ typedef struct {
     Arena arena;
     TokenList tokens;
     Program *program;
+    Uml *uml;                /* a diagram instead of a program */
     bool ok;
     Message messages[32];
     int message_count;
@@ -67,6 +70,54 @@ void visit_expr(const Expr *expr, ExprVisitor visit, void *context);
 
 /* "in A: array [1..n] of real", as the source would say it. */
 void describe_type(const Document *doc, const Type *type, char *out, size_t size);
+
+/* The states a component can go to: from, label, to. */
+typedef struct {
+    int from, to;
+    const char *label;
+} StateArrow;
+int class_transitions(const Document *doc, const Class *klass, StateArrow *out, int max);
+
+/* ---- diagrams ---- */
+
+typedef enum { SEQ_MESSAGE, SEQ_RETURN, SEQ_LOST, SEQ_IGNORED, SEQ_STATE, SEQ_STEP, SEQ_CHECK, SEQ_NOTE, SEQ_FRAME } SequenceKind;
+
+typedef struct {
+    SequenceKind kind;
+    int from, to;
+    const char *label;
+    long time;       /* -1: none */
+    bool dashed, ok, activates;
+    int end;         /* row at which the activation ends */
+} SequenceItem;
+
+typedef struct {
+    int from, to;
+    const char *label;
+    double progress;
+    long arrives;
+} SequenceFlying;
+
+typedef struct {
+    const char **lives;
+    const bool *kinds;  /* components, drawn in another colour; or NULL */
+    int life_count, current;
+    const SequenceItem *rows;
+    int row_count, back;
+    const SequenceFlying *flying;
+    int flying_count;
+} SequenceView;
+
+void draw_sequence(int x, int y, int w, int h, const SequenceView *view);
+
+typedef struct {
+    const char **states;
+    int state_count, current;
+    const StateArrow *arrows;
+    int arrow_count, last, selected;
+} StateView;
+
+void draw_states(int x, int y, int w, int h, const StateView *view);
 
 /* ---- widgets ---- */
 
@@ -104,7 +155,7 @@ void draw_table_row(int x, int y, int w, bool selected, const char *format, ...)
 
 /* ---- the application ---- */
 
-typedef enum { VIEW_FILES, VIEW_EXPLORE, VIEW_TRIAL, VIEW_RUN } View;
+typedef enum { VIEW_FILES, VIEW_EXPLORE, VIEW_TRIAL, VIEW_RUN, VIEW_TESTS, VIEW_UML } View;
 typedef enum { OVERLAY_NONE, OVERLAY_HELP, OVERLAY_OUTPUT, OVERLAY_LOG } Overlay;
 
 typedef struct {
@@ -136,6 +187,31 @@ typedef struct {
     char error[120];
 } Trial;
 
+typedef enum { SYS_SEQUENCE, SYS_COMPONENTS, SYS_STATES, SYS_TIMING, SYS_COMMUNICATION, SYS_OBJECTS, SYS_CHECKS, SYS_VIEWS } SystemView;
+
+typedef struct {
+    const Function *test;
+    bool ran, ok;
+    int checks, failed;
+    char message[160];
+    Check items[64];
+} TestResult;
+
+typedef struct {
+    TestResult *results;
+    int count, selected;
+} Tests;
+
+typedef struct {
+    int at;              /* sequence: rows shown; graphs: the node we are in */
+    int choice;          /* branch of the next alternative; arrow to follow */
+    int selected, top;
+    int history[256], arrows[256], depth;
+    bool playing;
+    long long next_tick;
+    unsigned branches;   /* sequence: the branch taken in each alternative */
+} UmlWalk;
+
 typedef enum { GOAL_NONE, GOAL_STOP, GOAL_OVER, GOAL_OUT, GOAL_END } Goal;
 
 typedef struct {
@@ -148,6 +224,10 @@ typedef struct {
     int goal_depth;
     bool *breakpoints;
     const Function *trial;
+    const Function *test;
+    SystemView system;
+    int system_back, system_life;
+    bool activity;           /* the function as a flow instead of its text */
     TrialArgument *args;
     int arg_count;
     int selected_var;
@@ -171,6 +251,8 @@ typedef struct {
     Explore explore;
     Trial trial;
     Run run;
+    Tests tests;
+    UmlWalk walk;
     char notice[160];
 } App;
 
@@ -190,6 +272,7 @@ void trial_key(App *app, int key);
 void trial_close(App *app);
 
 bool run_open(App *app, const Function *trial, TrialArgument *args, int count);
+bool run_open_test(App *app, const Function *test);
 void run_close(App *app);
 void run_draw(App *app);
 void run_key(App *app, int key);
@@ -198,6 +281,23 @@ int run_tick(App *app);  /* milliseconds to the next one */
 void run_data_draw(App *app, int x, int y, int w, int h);
 void run_memory_draw(App *app, int x, int y, int w, int h);
 int run_tints(App *app, const Function *function, Tint *out, int max);
+
+void run_system_draw(App *app, int x, int y, int w, int h);
+bool run_system_has(const App *app, SystemView view);
+
+void draw_timing(App *app, int x, int y, int w, int h);
+void draw_communication(App *app, int x, int y, int w, int h);
+void draw_objects(App *app, int x, int y, int w, int h);
+void draw_activity(App *app, const Function *function, int x, int y, int w, int h);
+
+void tests_open(App *app);
+void tests_draw(App *app);
+void tests_key(App *app, int key);
+void tests_close(App *app);
+
+void uml_draw(App *app);
+void uml_key(App *app, int key);
+int uml_tick(App *app);      /* as run_tick */
 
 long long now_ms(void);
 

@@ -5,10 +5,12 @@
 #   dialects/  programs in other pseudocodes (FILE.in, FILE.out)
 #   accept/    syntax that must be accepted, and give C that compiles
 #   errors/    programs to refuse; messages compared with NAME.err
-#   ui/        NAME.ui: program, size, keys, options; compared with NAME.screen
+#   uml/       what is understood of the diagrams in examples/uml
+#   ui/        NAME.ui: program, size, keys, options, environment; compared
+#              with NAME.screen
 # UPDATE=1 rewrites the expected files.
 here=$(cd "$(dirname "$0")" && pwd)
-plike=$(cd "$(dirname "${PLIKE:-bin/plike}")" && pwd)/$(basename "${PLIKE:-bin/plike}")
+plike=$(cd "$(dirname "${PLIKE:-bin/pseudoscope}")" && pwd)/$(basename "${PLIKE:-bin/pseudoscope}")
 tmp=$(mktemp -d) || exit 1
 trap 'rm -rf "$tmp"' EXIT
 passed=0 failed=0
@@ -104,12 +106,24 @@ for file in *.plike; do
     then pass; else fail "examples/$file" "$tmp/err"; fi
 done
 
+# designs: their tests pass, and their diagrams are read as they were
+cd "$here/../examples" || exit 1
+for file in */*.plike; do
+    grep -q '^ *test ' "$file" || continue
+    if "$plike" test "$file" > "$tmp/out" 2> "$tmp/err"; then pass; else fail "examples/$file" "$tmp/out"; fi
+done
+for file in uml/*; do
+    "$plike" ast "$file" > "$tmp/out" 2>&1
+    compare "examples/$file" "$here/uml/$(basename "$file").out" "$tmp/out"
+done
+
 cd "$here/ui" || exit 1
 for file in *.ui; do
     name=${file%.ui}
-    { IFS= read -r program; IFS= read -r size; IFS= read -r keys; IFS= read -r opts; } < "$file"
+    env=
+    { IFS= read -r program; IFS= read -r size; IFS= read -r keys; IFS= read -r opts; IFS= read -r env; } < "$file"
     # shellcheck disable=SC2086
-    if "$plike" ui "$program" --size="$size" --keys="$keys" $opts > "$tmp/out" 2> "$tmp/err"
+    if env $env "$plike" ui "$program" --size="$size" --keys="$keys" $opts > "$tmp/out" 2> "$tmp/err"
     then compare "ui/$name" "$name.screen" "$tmp/out"
     else fail "ui/$name" "$tmp/err"; fi
 done
