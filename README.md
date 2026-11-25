@@ -114,7 +114,7 @@ pseudoscope test --to=rust system.pscope           # the tests, translated
 
 What a language cannot say is refused with the reason, not written wrong. Components
 and tests are translated too, simulation included: a test gives the same result in
-every language. `make targets` checks it, program by program. See
+all seven. `make targets` checks it, program by program. See
 [docs/translation.md](docs/translation.md).
 
 ## Command line
@@ -145,7 +145,7 @@ spelling of P-like:
 
 ## Limits
 
-Components and tests are not translated to C. Files, drawings and the other library
+Files, drawings and the other library
 functions of the pseudocodes run here and are not translated. Pointers to plain values
 exist only in C, C++ and Rust. `algorithm2e` and the keyboard, mouse and network of
 Portugol Studio are not read. Each document says what else is missing.

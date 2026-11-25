@@ -203,12 +203,6 @@ bool translatable(const Program *program, const Config *config, Lang lang, Diag 
     (void)config;
     Check c = {.program = program, .lang = lang, .diag = diag};
     check_classes(&c);
-    for (const Class *k = program->classes; k && lang == LANG_C; k = k->next) {
-        if (!k->is_component) continue;
-        diag_error(diag, k->loc, "components and tests are not translated to C yet: choose another language with --to");
-        c.problems++;
-        break;
-    }
     if (lang == LANG_C) { /* its own generator: only what it cannot say is looked for */
         for (const Function *f = program->functions; f; f = f->next) check_statements(&c, f->body);
         return c.problems == 0;

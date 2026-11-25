@@ -121,7 +121,6 @@ pseudoscope test --to=java examples/systems/election.pscope
 ```
 
 A translated program runs its `main`; given the argument `test`, its tests.
-Components and tests are not translated to C.
 
 ## What is not translated
 

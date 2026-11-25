@@ -113,7 +113,7 @@ arrives in a state without a handler for it is ignored, and shown as such. Time 
 simulated: the run is the same every time, and one can go back in it.
 
 Components are run by `exec`, `test` and the interface, and translated to every language
-but C ([translation.md](translation.md)).
+([translation.md](translation.md)).
 
 ## Tests
 

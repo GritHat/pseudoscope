@@ -21,7 +21,7 @@ verbose = "-v" in args
 word = args[args.index("-k") + 1] if "-k" in args else ""
 args = [a for i, a in enumerate(args) if a != "-v" and a != "-k" and (i == 0 or args[i - 1] != "-k")]
 tool = os.path.abspath(args[0])
-LANGUAGES = ["cpp", "java", "rust", "ts", "js", "python"]
+LANGUAGES = ["c", "cpp", "java", "rust", "ts", "js", "python"]
 wanted = args[1:] or LANGUAGES
 
 
@@ -34,6 +34,8 @@ def node_version():
 
 
 def available(language):
+    if language == "c":
+        return shutil.which(os.environ.get("CC", "cc")) is not None
     if language == "cpp":
         return shutil.which(os.environ.get("CXX", "c++")) is not None
     if language == "java":
@@ -87,7 +89,7 @@ def ends(path, options):
 
 # The examples that some language cannot say, and why.
 REFUSED = {
-    "advanced/shapes.pscope": "rust",  # classes that extend classes
+    "advanced/shapes.pscope": "rust c",  # classes that extend classes
 }
 
 

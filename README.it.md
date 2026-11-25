@@ -117,7 +117,7 @@ pseudoscope test --to=rust system.pscope           # le prove, tradotte
 
 Ciò che un linguaggio non sa dire viene rifiutato spiegando perché, non scritto
 sbagliato. Si traducono anche componenti e prove, simulazione compresa: una prova dà lo
-stesso esito in ogni linguaggio. `make targets` lo verifica, programma per programma.
+stesso esito in tutti e sette. `make targets` lo verifica, programma per programma.
 Vedi [docs/translation.md](docs/translation.md).
 
 ## Riga di comando
@@ -149,7 +149,7 @@ funziona ancora.
 
 ## Limiti
 
-Componenti e prove non si traducono in C. File, disegni e le altre funzioni di libreria
+File, disegni e le altre funzioni di libreria
 degli pseudocodici si eseguono qui e non si traducono. I puntatori a valori semplici
 esistono solo in C, C++ e Rust. Non si leggono `algorithm2e` né tastiera, mouse e rete di
 Portugol Studio. Ogni documento dice che cos'altro manca.

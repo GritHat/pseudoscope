@@ -179,8 +179,6 @@ const char *const ITALIAN_MESSAGES[][2] = {
      "il C non ha classi astratte né interfacce: '%s' si può tradurre in C++, Java, TypeScript o Python"},
     {"this expects a call between objects, which only the program run here keeps track of (exec, test, ui)",
      "questo aspetta una chiamata tra oggetti, di cui tiene traccia solo l'esecuzione fatta qui (exec, test, ui)"},
-    {"components and tests are not translated to C yet: choose another language with --to",
-     "componenti e prove non si traducono ancora in C: scegli un altro linguaggio con --to"},
     /* libraries */
     {"the library '%s' has no '%s' here", "qui la libreria '%s' non ha '%s'"},
     {"'%s' comes from a library that only works when the program is run here (exec, ui): it is not translated",

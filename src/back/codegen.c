@@ -1,4 +1,5 @@
 #include "plike/codegen.h"
+#include "plike/vm.h"
 
 #include <string.h>
 
@@ -15,6 +16,8 @@ typedef struct {
     bool uses_random;
     bool uses_text;
     LineMap *map;
+    bool systems;   /* components or tests: the simulation is written too */
+    bool acting;    /* a method of a component that sends: it says who is acting */
 } Gen;
 
 /* C operator precedence; higher binds tighter. */
@@ -466,6 +469,8 @@ static void gen_expr(Gen *g, const Expr *expr, int min) {
         case EX_NAME:
             if (expr->is_call) gen_call(g, expr);
             else if (expr->symbol->kind == SYM_STATE) strbuf_printf(g->out, "%lld", expr->symbol->value);
+            else if (expr->symbol->kind == SYM_NOW) put(g, "plike_sim.now");
+            else if (expr->symbol->kind == SYM_SENDER) put(g, "plike_who(plike_sim.sender)");
             else strbuf_printf(g->out, "%s%s", is_by_reference(expr) ? "*" : "",
                                expr->symbol->c_name);
             break;
@@ -653,6 +658,26 @@ static void gen_read(Gen *g, const Stmt *stmt) {
 static bool is_main(const Symbol *sym) { return strcmp(sym->c_name, "main") == 0; }
 
 static void gen_return(Gen *g, const Stmt *stmt) {
+    if (g->acting) { /* whoever was acting before is acting again */
+        put(g, "{\n");
+        g->indent++;
+        indent(g);
+        if (stmt->value) {
+            gen_declarator(g, base_type(g, g->function->type), "", "plike_value = ");
+            gen_expr(g, stmt->value, P_LOWEST);
+            put(g, ";\n");
+            indent(g);
+        }
+        put(g, "plike_sim.current = plike_before;\n");
+        indent(g);
+        if (stmt->value) put(g, "return plike_value;\n");
+        else if (g->function->result) strbuf_printf(g->out, "return %s;\n", g->function->result->c_name);
+        else put(g, "return;\n");
+        g->indent--;
+        indent(g);
+        put(g, "}\n");
+        return;
+    }
     if (stmt->value) {
         put(g, "return ");
         gen_expr(g, stmt->value, P_LOWEST);
@@ -663,6 +688,8 @@ static void gen_return(Gen *g, const Stmt *stmt) {
         put(g, is_main(g->function) ? "return 0;\n" : "return;\n");
     }
 }
+
+#include "codegen_sim.inc"
 
 static int line_count(const Gen *g) {
     int count = 0;
@@ -732,7 +759,7 @@ static void gen_one_statement(Gen *g, const Stmt *stmt) {
             put(g, "\n");
             break;
         case ST_TODO: put(g, "/* ... */\n"); break;
-        default: break; /* systems are not translated */
+        default: gen_system_statement(g, stmt); break;
     }
 }
 
@@ -779,7 +806,7 @@ static void gen_param(Gen *g, const Symbol *param) {
 
 static void gen_signature(Gen *g, const Symbol *sym) {
     const char *type = is_main(sym) ? "int" : base_type(g, sym->type);
-    gen_declarator(g, type, "", sym->c_name);
+    gen_declarator(g, type, "", is_main(sym) && g->systems ? "program_main" : sym->c_name);
     put(g, "(");
     for (int i = 0; i < sym->param_count; i++) {
         if (i > 0) put(g, ", ");
@@ -835,11 +862,15 @@ static void gen_function(Gen *g, const Function *function) {
         gen_saved_bounds(g, param);
     }
     for (const VarDecl *v = function->locals; v; v = v->next) gen_variable(g, v, "");
+    g->acting = g->systems && function->owner && function->owner->is_component && !function->is_handler && sim_sends(function->body, 0);
+    if (g->acting) put(g, "    int plike_before = plike_sim.current;\n    plike_sim.current = plike_id(self);\n");
     gen_statements(g, function->body);
     if (!ends_with_return(function->body)) {
+        if (g->acting) put(g, "    plike_sim.current = plike_before;\n");
         if (sym->result) strbuf_printf(g->out, "    return %s;\n", sym->result->c_name);
         else if (is_main(sym)) put(g, "    return 0;\n");
     }
+    g->acting = false;
     put(g, "}\n");
     g->indent = 0;
 }
@@ -914,6 +945,8 @@ void generate(const Program *program, const Config *config, Arena *arena, StrBuf
     Gen gen = {.program = program, .config = config, .arena = arena, .out = &body};
     Gen *g = &gen;
     strbuf_puts(&body, "");
+    g->systems = has_components(program) || has_tests(program);
+    if (g->systems) g->uses_random = true;
 
     for (const Record *r = program->records; r; r = r->next) gen_record(g, r);
     for (const VarDecl *v = program->globals; v; v = v->next) gen_variable(g, v, "");
@@ -922,21 +955,21 @@ void generate(const Program *program, const Config *config, Arena *arena, StrBuf
     for (const Symbol *e = program->externals; e; e = e->next) gen_external(g, e);
     if (program->externals) put(g, "\n");
     for (const Function *f = program->functions; f; f = f->next) {
-        if (f->is_test) continue;
         gen_signature(g, f->symbol);
         put(g, ";\n");
     }
+    if (g->systems) gen_components(g);
     for (const Function *f = program->functions; f; f = f->next) {
-        if (f->is_test) continue;
         put(g, "\n");
         gen_function(g, f);
     }
+    if (g->systems) gen_system_main(g);
 
     if (config->bounds_check && g->uses_fail) strbuf_puts(out, "#include <limits.h>\n");
     if (g->uses_math) strbuf_puts(out, "#include <math.h>\n");
     strbuf_puts(out, "#include <stdbool.h>\n#include <stdio.h>\n");
-    if (g->uses_fail || g->uses_abs || g->uses_text) strbuf_puts(out, "#include <stdlib.h>\n");
-    if (g->uses_text) strbuf_puts(out, "#include <string.h>\n");
+    if (g->uses_fail || g->uses_abs || g->uses_text || g->systems) strbuf_puts(out, "#include <stdlib.h>\n");
+    if (g->uses_text || g->systems) strbuf_puts(out, "#include <string.h>\n");
     strbuf_puts(out, "\n");
     bool indexes = config->bounds_check && strstr(body.data, "plike_index(");
     if (strstr(body.data, "plike_fail(") || indexes) {
@@ -980,6 +1013,7 @@ void generate(const Program *program, const Config *config, Arena *arena, StrBuf
             "    return index - lo;\n"
             "}\n\n");
     }
+    for (int i = 0; g->systems && SIMULATION[i]; i++) strbuf_puts(out, SIMULATION[i]);
     strbuf_append(out, body.data, body.length);
     strbuf_free(&body);
 }

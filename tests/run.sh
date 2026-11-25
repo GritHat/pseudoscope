@@ -71,6 +71,13 @@ for file in examples/systems/*.pscope examples/advanced/*.pscope; do
     if "$plike" test "$file" > "$tmp/out" 2>&1; then pass; else fail "$file" "$tmp/out"; fi
 done
 
+# the same tests, translated to C: they must say the same
+for file in examples/systems/*.pscope examples/exercises/*.pscope examples/advanced/dijkstra.pscope; do
+    "$plike" test "$file" > "$tmp/here" 2>&1
+    "$plike" test --to=c --cc="$here/ccheck" "$file" > "$tmp/out" 2>&1
+    compare "$file (tests in C)" "$tmp/here" "$tmp/out"
+done
+
 cd "$here/accept" || exit 1
 for file in *.plike; do
     name=${file%.plike}
