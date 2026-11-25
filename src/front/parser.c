@@ -50,6 +50,7 @@ static bool is_case_label(const Parser *p);
 static Stmt *parse_statement(Parser *p);
 static Stmt *parse_simple(Parser *p);
 static Stmt *parse_return(Parser *p);
+static Stmt *return_of(Parser *p, const char *name, Loc loc);
 static Stmt *parse_io(Parser *p, StmtKind kind);
 static bool parse_dims(Parser *p, DimList *dims);
 
@@ -1018,6 +1019,8 @@ static Stmt *parse_return(Parser *p) {
         default:
             break;
     }
+    /* the other pseudocodes keep the result in a variable of their own */
+    if (!stmt->value && p->function && p->function->result_name) return return_of(p, p->function->result_name, stmt->loc);
     return stmt;
 }
 

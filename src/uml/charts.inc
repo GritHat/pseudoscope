@@ -236,7 +236,10 @@ static void resolve_plan(Uml *u) {
         for (int i = 0; i < u->task_count; i++) {
             UmlTask *t = &u->tasks[i];
             long start = t->start;
-            if (t->after >= 0 && t->after != i) start = u->tasks[t->after].end; /* -1 until that one is known */
+            if (t->after >= 0 && t->after != i) { /* -1 until that one is known; never before its own day, if it has one */
+                start = u->tasks[t->after].end;
+                if (start >= 0 && t->start > start) start = t->start;
+            }
             else if (t->start <= -2) start = u->tasks[-2 - t->start].start >= 0 ? u->tasks[-2 - t->start].start : -1;
             else if (t->start < 0 && t->follows && t->previous >= 0) start = u->tasks[t->previous].end;
             else if (t->start < 0) start = base;

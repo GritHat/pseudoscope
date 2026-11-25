@@ -2,6 +2,7 @@
  * and the one of the Cambridge exams (English). Their words become the tokens
  * of the language, so that most of the parser is the same for all. */
 
+#include "plike/blocks.h"
 #include "plike/lexer.h"
 
 #include <stdlib.h>
@@ -27,6 +28,7 @@ static const Word PSEINT[] = {
     {"caracter", TOK_STRINGTYPE}, {"caracteres", TOK_STRINGTYPE}, {"texto", TOK_STRINGTYPE}, {"cadena", TOK_STRINGTYPE},
     {"si no", TOK_ELSE}, {"sino", TOK_ELSE}, {"si", TOK_IF}, {"entonces", TOK_THEN},
     {"finsi", TOK_ENDIF}, {"fin si", TOK_ENDIF},
+    {"sinosi", TOK_ELSEIF}, {"retornar", TOK_RETURN}, {"devolver", TOK_RETURN}, /* not PSeInt's: for what is turned into it */
     {"mientras que", TOK_UNTIL_WHILE}, {"mientras", TOK_WHILE}, {"hacer", TOK_DO},
     {"finmientras", TOK_ENDWHILE}, {"fin mientras", TOK_ENDWHILE},
     {"para", TOK_FOR}, {"hasta que", TOK_UNTIL}, {"hasta", TOK_TO}, {"con paso", TOK_STEP},
@@ -392,6 +394,14 @@ TokenList lex_dialect(const Source *source, const Config *config, Arena *arena, 
 static bool ends_with(const char *path, const char *suffix) {
     size_t a = strlen(path), b = strlen(suffix);
     return a >= b && equals_ignore_case(path + a - b, suffix);
+}
+
+Config config_for_text(Config config, const char *path, const char *text) {
+    if (!config.dialect_given && text && !is_program_path(path)) {
+        config.dialect = guess_dialect(text);
+        config.dialect_given = true;
+    }
+    return config_for(config, path);
 }
 
 Config config_for(Config config, const char *path) {

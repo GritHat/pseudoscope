@@ -276,32 +276,62 @@ static void list_items(Document *doc) {
 }
 
 Document *document_load(const char *path, const Config *config) {
-    FILE *file = fopen(path, "rb");
-    if (!file) return NULL;
+    char file[1024];
+    int number = block_number(path, file, sizeof file);
+    size_t length = strlen(path);
+    if (length > 8 && strcmp(path + length - 8, "#outline") == 0) snprintf(file, sizeof file, "%.*s", (int)(length - 8), path);
+    FILE *in = fopen(file, "rb");
+    if (!in) return NULL;
     Document *doc = calloc(1, sizeof *doc);
     if (!doc) abort();
     char chunk[8192];
     size_t n;
     strbuf_puts(&doc->text, "");
-    while ((n = fread(chunk, 1, sizeof chunk, file)) > 0 && doc->text.length < (8u << 20))
+    while ((n = fread(chunk, 1, sizeof chunk, in)) > 0 && doc->text.length < (8u << 20))
         strbuf_append(&doc->text, chunk, n);
-    bool failed = ferror(file) != 0;
-    fclose(file);
+    bool failed = ferror(in) != 0;
+    fclose(in);
     if (failed) { /* a directory, for instance */
         strbuf_free(&doc->text);
         free(doc);
         return NULL;
     }
     struct stat st;
-    if (stat(path, &st) == 0) doc->modified = st.st_mtime;
+    if (stat(file, &st) == 0) doc->modified = st.st_mtime;
     doc->path = strdup(path);
-    doc->config = config_for(*config, path);
+    doc->file = strdup(file);
+    doc->top_line = 1;
     doc->main_item = -1;
+    Config wanted = *config;
+    FileKind kind = file_kind(file, doc->text.data);
+    bool diagram = kind == FILE_DIAGRAM;
+    Diag diag = {.source = &doc->source, .out = stderr, .sink = add_message, .italian = ui_italian, .sink_context = doc};
+    if (kind == FILE_DOCUMENT) { /* one of the things it holds, or its outline */
+        Source whole = {doc->file, doc->text.data, doc->text.length};
+        Blocks *blocks = blocks_read(&whole, &doc->arena);
+        if (number < 1 || number > blocks->count) {
+            doc->source = whole;
+            split_lines(doc);
+            doc->kinds = calloc(doc->text.length + 1, 1);
+            if (!doc->kinds) abort();
+            doc->uml = blocks->outline;
+            doc->ok = doc->uml != NULL;
+            return doc;
+        }
+        const DocBlock *block = &blocks->items[number - 1];
+        doc->text.length = 0;
+        doc->text.data[0] = '\0';
+        strbuf_puts(&doc->text, block->text);
+        doc->top_line = block->line;
+        diagram = block->diagram;
+        wanted.dialect = block->dialect;
+        wanted.dialect_given = true;
+    }
+    doc->config = config_for_text(wanted, file, doc->text.data);
     doc->source = (Source){doc->path, doc->text.data, doc->text.length};
     split_lines(doc);
 
-    Diag diag = {.source = &doc->source, .out = stderr, .sink = add_message, .italian = ui_italian, .sink_context = doc};
-    if (is_uml_path(path)) {
+    if (diagram) {
         doc->kinds = calloc(doc->text.length + 1, 1);
         if (!doc->kinds) abort();
         doc->uml = uml_parse(&doc->source, &doc->arena, &diag);
@@ -319,6 +349,7 @@ Document *document_load(const char *path, const Config *config) {
 void document_free(Document *doc) {
     if (!doc) return;
     free(doc->path);
+    free(doc->file);
     free(doc->lines);
     free(doc->kinds);
     free(doc->items);
@@ -329,7 +360,7 @@ void document_free(Document *doc) {
 
 bool document_changed(const Document *doc) {
     struct stat st;
-    return stat(doc->path, &st) == 0 && st.st_mtime != doc->modified;
+    return stat(doc->file, &st) == 0 && st.st_mtime != doc->modified;
 }
 
 const Item *document_function(const Document *doc, const Function *function) {

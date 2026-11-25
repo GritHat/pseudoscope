@@ -3,6 +3,7 @@
 
 #include "plike/codegen.h"
 #include "plike/uml.h"
+#include "plike/blocks.h"
 #include "plike/vm.h"
 #include "screen.h"
 
@@ -38,7 +39,9 @@ typedef struct {
 } Item;
 
 typedef struct {
-    char *path;
+    char *path;              /* as asked: "notes.md#2" is the second block of a document */
+    char *file;              /* the file itself */
+    int top_line;            /* where what matters begins */
     StrBuf text;
     Source source;
     Config config;
@@ -161,6 +164,7 @@ typedef enum { OVERLAY_NONE, OVERLAY_HELP, OVERLAY_OUTPUT, OVERLAY_LOG } Overlay
 typedef struct {
     char *name;
     bool directory;
+    char *target;            /* what it opens, when it is not a file of the folder */
 } Entry;
 
 typedef struct {
@@ -257,6 +261,8 @@ typedef struct {
 } App;
 
 void files_open(App *app, const char *directory);
+/* Back to where a document was chosen from. */
+void files_back(App *app, const char *path);
 void files_draw(App *app);
 void files_key(App *app, int key);
 void files_close(App *app);

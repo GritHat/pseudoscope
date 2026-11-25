@@ -1,3 +1,4 @@
+#include "plike/blocks.h"
 #include "plike/cli.h"
 
 #include "plike/codegen.h"
@@ -261,14 +262,14 @@ static bool italian(const Options *options, bool otherwise) {
     return lang && *lang ? strcmp(lang, "it") == 0 : otherwise;
 }
 
-static int translate(const Options *options, const Source *source, Arena *arena, StrBuf *out) {
+static int translate(const Options *options, const Source *source, Arena *arena, StrBuf *out, bool diagram) {
     bool tty = isatty(STDERR_FILENO) && !getenv("NO_COLOR");
     Diag diag = {.source = source, .out = stderr, .silent_warnings = options->quiet,
                  .italian = italian(options, false),
                  .color = options->color == COLOR_ALWAYS ||
                           (options->color == COLOR_AUTO && tty)};
 
-    if (is_uml_path(source->name)) { /* a diagram: it can be checked and listed */
+    if (diagram) { /* it can be checked and listed */
         Uml *uml = uml_parse(source, arena, &diag);
         if (!uml || diag.errors) return EXIT_PROBLEMS;
         if (options->command == CMD_CHECK) return options->werror && diag.warnings ? EXIT_PROBLEMS : EXIT_OK;
@@ -352,22 +353,90 @@ static int start_ui(const Options *options) {
     return run_ui(&ui);
 }
 
+/* Markdown and LaTeX: the programs and the diagrams they hold. */
+static int run_document(const Options *given, const char *file, int number, const StrBuf *text) {
+    Arena arena = {0};
+    Source whole = {file, text->data, text->length};
+    Blocks *blocks = blocks_read(&whole, &arena);
+    int status = EXIT_OK;
+    if (number > blocks->count) {
+        fprintf(stderr, "pseudoscope: '%s' holds %d programs and diagrams, not %d\n", file, blocks->count, number);
+        arena_free(&arena);
+        return EXIT_USAGE;
+    }
+    if (number == 0 && given->command == CMD_AST) { /* what there is */
+        StrBuf out = {0};
+        strbuf_puts(&out, "");
+        if (blocks->outline) uml_dump(blocks->outline, &out);
+        for (int i = 0; i < blocks->count; i++) {
+            const DocBlock *b = &blocks->items[i];
+            strbuf_printf(&out, "#%d  line %d  %s  %s%s%s\n", i + 1, b->line, b->diagram ? "diagram" : "program", b->language,
+                          b->title ? "  " : "", b->title ? b->title : "");
+        }
+        status = write_file(given->output, &out) ? EXIT_OK : EXIT_IO;
+        strbuf_free(&out);
+        arena_free(&arena);
+        return status;
+    }
+    int first = number ? number - 1 : 0, last = number ? number - 1 : blocks->count - 1;
+    if (number == 0 && given->command != CMD_CHECK) { /* the only program, if there is only one */
+        int programs = 0;
+        for (int i = 0; i < blocks->count; i++) {
+            if (blocks->items[i].diagram) continue;
+            programs++;
+            first = last = i;
+        }
+        if (programs != 1) {
+            fprintf(stderr, "pseudoscope: '%s' holds %d programs: say which with %s#N (ast lists them)\n", file, programs, file);
+            arena_free(&arena);
+            return EXIT_USAGE;
+        }
+    }
+    for (int i = first; i <= last; i++) {
+        const DocBlock *b = &blocks->items[i];
+        Options adjusted = *given;
+        adjusted.config.dialect = b->dialect;
+        adjusted.config.dialect_given = true;
+        adjusted.config = config_for(adjusted.config, file);
+        Source source = {arena_printf(&arena, "%s#%d", file, i + 1), b->text, strlen(b->text)};
+        StrBuf out = {0};
+        strbuf_puts(&out, "");
+        int result = translate(&adjusted, &source, &arena, &out, b->diagram);
+        if (result > status) status = result;
+        strbuf_free(&out);
+    }
+    if (number == 0 && given->command == CMD_CHECK && !given->quiet)
+        fprintf(stderr, "pseudoscope: %s: %d programs and diagrams checked\n", file, blocks->count);
+    arena_free(&arena);
+    return status;
+}
+
 int run_command(const Options *given) {
     if (given->command == CMD_UI) return start_ui(given);
     Options adjusted = *given;
     const Options *options = &adjusted;
-    adjusted.config = config_for(given->config, given->input);
+    char file[1024];
+    int number = block_number(given->input, file, sizeof file);
     StrBuf text = {0};
-    if (!read_file(options->input, &text)) {
+    if (!read_file(file, &text)) {
         strbuf_free(&text);
         return EXIT_IO;
     }
-    const char *name = strcmp(options->input, "-") == 0 ? "<stdin>" : options->input;
+    /* what it is: by its name, or by how it begins */
+    bool standard = strcmp(file, "-") == 0;
+    FileKind kind = standard ? (looks_like_uml(text.data) ? FILE_DIAGRAM : FILE_PROGRAM) : file_kind(file, text.data);
+    if (kind == FILE_DOCUMENT) {
+        int result = run_document(given, file, number, &text);
+        strbuf_free(&text);
+        return result;
+    }
+    adjusted.config = config_for_text(given->config, standard ? "" : file, standard ? NULL : text.data);
+    const char *name = standard ? "<stdin>" : options->input;
     Source source = {name, text.data, text.length};
     Arena arena = {0};
     StrBuf out = {0};
     strbuf_puts(&out, "");
-    int status = translate(options, &source, &arena, &out);
+    int status = translate(options, &source, &arena, &out, kind == FILE_DIAGRAM);
     strbuf_free(&out);
     arena_free(&arena);
     strbuf_free(&text);

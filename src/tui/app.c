@@ -199,7 +199,7 @@ static int next_key(const char **text) {
 
 static void open_path(App *app, const char *path) {
     struct stat st;
-    if (stat(path, &st) == 0 && S_ISDIR(st.st_mode)) files_open(app, path);
+    if (stat(path, &st) == 0 && (S_ISDIR(st.st_mode) || is_document_path(path))) files_open(app, path);
     else explore_open(app, path);
 }
 

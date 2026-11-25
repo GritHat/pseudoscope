@@ -333,11 +333,9 @@ void uml_key(App *app, int key) {
     int alternative;
     switch (key) {
         case K_ESC: case K_BACKSPACE: {
-            char *directory = strdup(app->doc->path);
-            char *slash = strrchr(directory, '/');
-            if (slash) *(slash == directory ? slash + 1 : slash) = '\0';
-            files_open(app, slash ? directory : ".");
-            free(directory);
+            char *path = strdup(app->doc->path);
+            files_back(app, path);
+            free(path);
             return;
         }
         case 'q': app->quit = true; return;
