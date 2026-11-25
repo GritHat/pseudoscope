@@ -67,7 +67,7 @@ end Client
 var server: Server
 var client: Client
 link client <-> server delay 2..5 loss 10     // 10 messages in 100 get lost
-seed 7                                        // the same run every time
+seed 1                                        // the same run every time
 ```
 
 | | |
