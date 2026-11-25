@@ -1,0 +1,20 @@
+@startuml
+title Guess the number
+start
+:choose a secret number;
+repeat
+  :ask for a number;
+  if (is it the secret?) then (yes)
+    :you win;
+    stop
+  else (no)
+    if (is it smaller?) then (yes)
+      :say "higher";
+    else (no)
+      :say "lower";
+    endif
+  endif
+repeat while (tries left?)
+:you lose;
+stop
+@enduml

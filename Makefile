@@ -9,7 +9,7 @@ PREFIX   ?= /usr/local
 BUILD    ?= build
 PLIKE    ?= bin/plike
 
-LIB       = $(wildcard src/util/*.c src/front/*.c src/sema/*.c src/back/*.c src/vm/*.c)
+LIB       = $(wildcard src/util/*.c src/front/*.c src/sema/*.c src/back/*.c src/vm/*.c src/uml/*.c)
 CLI       = $(wildcard src/cli/*.c src/tui/*.c)
 UNIT      = $(wildcard tests/unit/*.c)
 

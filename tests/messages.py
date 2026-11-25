@@ -6,7 +6,7 @@ import sys
 
 table = set(re.findall(r'^    \{"((?:[^"\\]|\\.)*)",', open("src/util/italian.c").read(), re.M))
 missing = []
-for path in glob.glob("src/front/*.c") + glob.glob("src/sema/*.c"):
+for path in glob.glob("src/front/*.c") + glob.glob("src/sema/*.c") + glob.glob("src/uml/*.c") + glob.glob("src/front/*.inc"):
     text = open(path).read()
     for call in re.finditer(r"diag_(?:error|warning)\(", text):
         rest = text[call.end():]

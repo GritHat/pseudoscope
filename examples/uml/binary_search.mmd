@@ -1,0 +1,11 @@
+flowchart TD
+    A([start]) --> B{lo <= hi ?}
+    B -->|no| Z([not found])
+    B -->|yes| C[mid = half way]
+    C --> D{a of mid = x ?}
+    D -->|yes| F([found])
+    D -->|no| E{a of mid < x ?}
+    E -->|yes| G[lo = mid + 1]
+    E -->|no| H[hi = mid - 1]
+    G --> B
+    H --> B

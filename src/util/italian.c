@@ -54,6 +54,11 @@ const char *const ITALIAN_MESSAGES[][2] = {
     {"the message 'start' has no parameters", "il messaggio 'start' non ha parametri"},
     {"a link joins components, not %s", "un collegamento unisce componenti, non %s"},
 
+    /* diagrams */
+    {"this line of the diagram is not understood: %.60s", "questa riga del diagramma non è comprensibile: %.60s"},
+    {"this kind of diagram is not known: %.40s", "questo tipo di diagramma non è noto: %.40s"},
+    {"there is no diagram in this file", "in questo file non c'è un diagramma"},
+
     /* writing */
     {"unknown escape sequence", "dopo '\\' c'è un carattere non previsto"},
     {"unexpected byte 0x%02x", "carattere non previsto (0x%02x)"},

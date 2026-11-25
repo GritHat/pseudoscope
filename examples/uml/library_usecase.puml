@@ -1,0 +1,16 @@
+@startuml
+title Library
+left to right direction
+actor Reader
+actor Librarian
+rectangle Library {
+  (Search a book) as Search
+  (Borrow a book) as Borrow
+  (Check the card) as Check
+  (Register a book) as Register
+}
+Reader --> Search
+Reader --> Borrow
+Borrow ..> Check : include
+Librarian --> Register
+@enduml

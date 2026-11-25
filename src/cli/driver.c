@@ -4,6 +4,7 @@
 #include "plike/dump.h"
 #include "plike/parser.h"
 #include "plike/ui.h"
+#include "plike/uml.h"
 #include "plike/vm.h"
 
 #include <errno.h>
@@ -212,6 +213,17 @@ static int translate(const Options *options, const Source *source, Arena *arena,
                  .color = options->color == COLOR_ALWAYS ||
                           (options->color == COLOR_AUTO && tty)};
 
+    if (is_uml_path(source->name)) { /* a diagram: it can be checked and listed */
+        Uml *uml = uml_parse(source, arena, &diag);
+        if (!uml || diag.errors) return EXIT_PROBLEMS;
+        if (options->command == CMD_CHECK) return options->werror && diag.warnings ? EXIT_PROBLEMS : EXIT_OK;
+        if (options->command != CMD_AST) {
+            fputs("plike: a diagram can be opened with ui, check and ast\n", stderr);
+            return EXIT_PROBLEMS;
+        }
+        uml_dump(uml, out);
+        return write_file(options->output, out) ? EXIT_OK : EXIT_IO;
+    }
     step(options, "reading tokens");
     TokenList tokens = lex(source, &options->config, arena, &diag);
     if (options->command == CMD_TOKENS) {

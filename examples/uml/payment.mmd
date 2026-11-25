@@ -1,0 +1,13 @@
+sequenceDiagram
+    participant C as Client
+    participant S as Shop
+    participant B as Bank
+    C->>S: buy
+    S->>B: charge(30)
+    alt enough money
+        B-->>S: ok
+        S-->>C: receipt
+    else no money
+        B-->>S: refused
+        S-->>C: sorry
+    end
