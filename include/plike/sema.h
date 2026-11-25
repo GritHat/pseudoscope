@@ -3,7 +3,12 @@
 
 #include "plike/ast.h"
 
-typedef enum { SYM_VAR, SYM_PARAM, SYM_RESULT, SYM_FUNCTION } SymbolKind;
+typedef enum { SYM_VAR, SYM_PARAM, SYM_RESULT, SYM_FUNCTION,
+    SYM_FIELD,   /* of the class: stands for self.field */
+    SYM_STATE,   /* of the component: a constant */
+    SYM_NOW,     /* the time of the simulation */
+    SYM_SENDER   /* who sent the message being handled */
+} SymbolKind;
 
 struct Symbol {
     SymbolKind kind;
@@ -15,6 +20,9 @@ struct Symbol {
 
     int slot;             /* for the virtual machine: place in the frame, or in
                              the record for a field */
+    const Symbol *field;  /* SYM_FIELD */
+    long long value;      /* SYM_STATE */
+
     bool is_global;
     bool indexed;         /* some array access goes through it */
 
@@ -33,6 +41,14 @@ struct Symbol {
 /* Resolves names and types. Problems go to diag. Returns whether the program
  * can be translated. */
 bool analyze(Program *program, const Config *config, Arena *arena, Diag *diag);
+
+/* Components and tests only run on the virtual machine. */
+bool has_components(const Program *program);
+bool has_tests(const Program *program);
+
+/* The class of a type, also through a pointer; NULL if none. */
+const Class *class_of(const Type *type);
+const Function *find_method(const Program *program, const Class *klass, const char *name, bool handler);
 
 /* Value of a constant integer expression. */
 bool const_int(const Expr *expr, long long *value);

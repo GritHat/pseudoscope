@@ -12,6 +12,7 @@ typedef struct {
     bool uses_fail;
     bool uses_math;
     bool uses_abs;
+    bool uses_random;
     LineMap *map;
 } Gen;
 
@@ -229,7 +230,10 @@ static void gen_address(Gen *g, const Expr *expr, int min) {
 static void gen_call(Gen *g, const Expr *expr) {
     const Symbol *callee = expr->symbol;
     const char *name = callee->c_name;
-    if (callee->builtin && expr->type->kind == TY_INT) {
+    if (callee->builtin && strcmp(name, "random") == 0) {
+        g->uses_random = true;
+        name = "plike_random";
+    } else if (callee->builtin && expr->type->kind == TY_INT) {
         g->uses_abs = true;
     } else if (callee->builtin) {
         g->uses_math = true;
@@ -382,6 +386,7 @@ static void gen_expr(Gen *g, const Expr *expr, int min) {
         case EX_CHAR: strbuf_printf(g->out, "'%s'", expr->text); break;
         case EX_NAME:
             if (expr->is_call) gen_call(g, expr);
+            else if (expr->symbol->kind == SYM_STATE) strbuf_printf(g->out, "%lld", expr->symbol->value);
             else strbuf_printf(g->out, "%s%s", is_by_reference(expr) ? "*" : "",
                                expr->symbol->c_name);
             break;
@@ -612,7 +617,8 @@ static void gen_one_statement(Gen *g, const Stmt *stmt) {
             gen_body(g, stmt->body);
             put(g, "\n");
             break;
-        case ST_VAR: break;
+        case ST_TODO: put(g, "/* ... */\n"); break;
+        default: break; /* systems are not translated */
     }
 }
 
@@ -747,10 +753,12 @@ void generate(const Program *program, const Config *config, Arena *arena, StrBuf
     for (const Symbol *e = program->externals; e; e = e->next) gen_external(g, e);
     if (program->externals) put(g, "\n");
     for (const Function *f = program->functions; f; f = f->next) {
+        if (f->is_test) continue;
         gen_signature(g, f->symbol);
         put(g, ";\n");
     }
     for (const Function *f = program->functions; f; f = f->next) {
+        if (f->is_test) continue;
         put(g, "\n");
         gen_function(g, f);
     }
@@ -766,6 +774,21 @@ void generate(const Program *program, const Config *config, Arena *arena, StrBuf
             "    fflush(stdout);\n"
             "    fprintf(stderr, \"runtime error at line %d: %s\\n\", line, message);\n"
             "    exit(1);\n"
+            "}\n\n");
+    }
+    if (g->uses_random) {
+        long long seed = 1;
+        if (program->seed) const_int(program->seed, &seed);
+        strbuf_printf(out, "static unsigned plike_seed = %uu;\n\n", (unsigned)seed);
+        strbuf_puts(out,
+            "static inline int plike_random(int lo, int hi) {\n"
+            "    unsigned n = 0;\n"
+            "    if (hi <= lo) return lo;\n"
+            "    for (int i = 0; i < 2; i++) {\n"
+            "        plike_seed = plike_seed * 1103515245u + 12345u;\n"
+            "        n = n << 15 | (plike_seed >> 16 & 0x7fff);\n"
+            "    }\n"
+            "    return (int)(lo + (long long)(n % (unsigned)((long long)hi - lo + 1)));\n"
             "}\n\n");
     }
     if (config->bounds_check && g->uses_fail) {

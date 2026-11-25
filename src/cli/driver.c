@@ -166,6 +166,36 @@ static int interpret(const Program *program, const Options *options) {
     return status;
 }
 
+static const char *says(bool it, const char *italian_text, const char *english) { return it ? italian_text : english; }
+
+/* Runs every "test ... end test", and reports what they checked. */
+static int run_tests(const Program *program, const Options *options, bool it) {
+    Vm *vm = vm_create(program, &options->config);
+    int failed = 0, total = 0;
+    long limit = options->max_steps ? options->max_steps : 20000000;
+    for (const Function *f = program->functions; f; f = f->next) {
+        if (!f->is_test) continue;
+        total++;
+        vm_start_test(vm, f);
+        vm_run(vm, LEVEL_NONE, limit);
+        bool ok = vm_status(vm) == VM_FINISHED;
+        for (int i = 0; i < vm_check_count(vm); i++) ok &= vm_check(vm, i)->ok;
+        printf("%s %s\n", ok ? "✓" : "✗", f->name);
+        failed += !ok;
+        for (int i = 0; i < vm_check_count(vm); i++) {
+            const Check *c = vm_check(vm, i);
+            if (!c->ok || options->verbose)
+                printf("    %s %s %d: %s\n", c->ok ? "✓" : "✗", says(it, "riga", "line"), c->stmt->loc.line, c->text);
+        }
+        if (vm_status(vm) == VM_FAILED) printf("    ✗ %s\n", vm_message(vm));
+        else if (vm_status(vm) == VM_NEEDS_INPUT) printf("    ✗ %s\n", says(it, "un test non può leggere dati", "a test cannot read input"));
+        else if (vm_status(vm) == VM_READY) printf("    ✗ %s\n", says(it, "troppi passi, fermato", "too many steps, stopped"));
+    }
+    printf(says(it, "%d test, %d falliti\n", "%d tests, %d failed\n"), total, failed);
+    vm_destroy(vm);
+    return failed ? EXIT_PROBLEMS : EXIT_OK;
+}
+
 static void step(const Options *options, const char *text) {
     if (options->verbose) fprintf(stderr, "plike: %s\n", text);
 }
@@ -207,9 +237,14 @@ static int translate(const Options *options, const Source *source, Arena *arena,
     }
     if (options->command == CMD_CHECK) return EXIT_OK;
 
+    if (options->command == CMD_TEST) return run_tests(program, options, diag.italian);
+    if (has_components(program) && options->command != CMD_EXEC) {
+        fputs("plike: components live only in exec, test and ui: they are not translated to C\n", stderr);
+        return EXIT_PROBLEMS;
+    }
     if (options->command == CMD_EXEC) {
         step(options, "executing");
-        return has_main(program) ? interpret(program, options) : no_main();
+        return has_main(program) || has_components(program) ? interpret(program, options) : no_main();
     }
 
     step(options, "generating C");

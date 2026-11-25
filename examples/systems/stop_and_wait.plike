@@ -1,0 +1,78 @@
+// Reliable transfer over a channel that loses packets (rdt 3.0): the sender
+// repeats until it gets the acknowledgement it waits for.
+
+component Sender
+    states Ready, WaitAck
+    var bit: integer
+    var next, total: integer
+    var resent: integer
+
+    on start
+    begin
+        total := 5
+        next := 1
+        send Transmit to self
+    end start
+
+    on Transmit when Ready
+    begin
+        if next <= total then
+            send Data(bit, next * 10) to receiver
+            send Timeout(next) to self after 8
+            become WaitAck
+        endif
+    end Transmit
+
+    on Ack(in b: integer) when WaitAck
+    begin
+        if b = bit then
+            cancel Timeout
+            bit := 1 - bit
+            next := next + 1
+            become Ready
+            send Transmit to self
+        endif
+    end Ack
+
+    on Timeout(in packet: integer) when WaitAck
+    begin
+        resent := resent + 1
+        send Data(bit, next * 10) to receiver
+        send Timeout(next) to self after 8
+    end Timeout
+end Sender
+
+component Receiver
+    var expected: integer
+    var count: integer
+    var data: array [1..5] of integer
+
+    on Data(in b: integer, in value: integer)
+    begin
+        if b = expected then
+            count := count + 1
+            data[count] := value
+            expected := 1 - expected
+        endif
+        send Ack(b) to sender
+    end Data
+end Receiver
+
+var alice: Sender
+var receiver: Receiver
+
+link alice <-> receiver delay 2..3 loss 25
+seed 7
+
+test "everything arrives, once and in order, even if packets are lost"
+var i: integer
+begin
+    step "the channel loses a packet in four"
+    run
+    step "all the packets have arrived"
+    check receiver.count = 5
+    for i := 1 to 5 do
+        check receiver.data[i] = i * 10
+    endfor
+    check alice.resent > 0, "something was sent again"
+end test

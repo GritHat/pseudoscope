@@ -30,6 +30,7 @@ typedef struct {
     Diag *diag;
     Scope *scope;
     Symbol *function; /* being analysed; NULL at top level */
+    Scope **class_scopes; /* as program->classes */
     NamedRecord *records;
     Record **records_tail;
     UsedName *used[NAME_BUCKETS];
@@ -38,7 +39,8 @@ typedef struct {
 static Type T_ERROR = {.kind = TY_ERROR}, T_VOID = {.kind = TY_VOID},
             T_INT = {.kind = TY_INT}, T_REAL = {.kind = TY_REAL},
             T_BOOL = {.kind = TY_BOOL}, T_CHAR = {.kind = TY_CHAR},
-            T_STRING = {.kind = TY_STRING};
+            T_STRING = {.kind = TY_STRING},
+            T_SOMEONE = {.kind = TY_POINTER, .base = &T_VOID};
 
 static Type *check_expr(Sema *s, Expr *expr);
 static void check_statements(Sema *s, Stmt *stmt);
@@ -104,9 +106,37 @@ static bool assignable(const Type *to, const Type *from, const Expr *value) {
         if (from->kind == TY_STRING) return to->base->kind == TY_CHAR;
         if (from->kind == TY_ARRAY)
             return from->dims.count == 1 && same_type(to->base, from->base);
+        if (from->kind == TY_POINTER && from->base->kind == TY_VOID) /* the sender */
+            return to->base->kind == TY_RECORD && to->base->record->klass;
         return same_type(to, from);
     }
     return to->kind == TY_RECORD && same_type(to, from);
+}
+
+/* ---- classes ---- */
+
+const Class *class_of(const Type *type) {
+    if (type && type->kind == TY_POINTER) type = type->base;
+    return type && type->kind == TY_RECORD ? type->record->klass : NULL;
+}
+
+bool has_components(const Program *program) {
+    for (const Class *c = program->classes; c; c = c->next)
+        if (c->is_component) return true;
+    return false;
+}
+
+bool has_tests(const Program *program) {
+    for (const Function *f = program->functions; f; f = f->next)
+        if (f->is_test) return true;
+    return false;
+}
+
+const Function *find_method(const Program *program, const Class *klass, const char *name, bool handler) {
+    for (const Function *f = program->functions; f; f = f->next)
+        if (f->owner && (!klass || f->owner == klass) && f->is_handler == handler && strcmp(f->name, name) == 0)
+            return f;
+    return NULL;
 }
 
 /* ---- constants ---- */
@@ -127,6 +157,10 @@ bool const_int(const Expr *expr, long long *value) {
     switch (expr->kind) {
         case EX_INT:
             return parse_int(expr->text, value);
+        case EX_NAME:
+            if (!expr->symbol || expr->symbol->kind != SYM_STATE) return false;
+            *value = expr->symbol->value;
+            return true;
         case EX_UNARY:
             if (!const_int(expr->base, &a)) return false;
             if (expr->op == TOK_PLUS) { *value = a; return true; }
@@ -459,7 +493,7 @@ static const struct {
     int arity;
 } BUILTINS[] = {
     {"sqrt", 1}, {"sin", 1}, {"cos", 1}, {"tan", 1}, {"exp", 1}, {"log", 1},
-    {"floor", 1}, {"ceil", 1}, {"fabs", 1}, {"pow", 2}, {"abs", 1},
+    {"floor", 1}, {"ceil", 1}, {"fabs", 1}, {"pow", 2}, {"abs", 1}, {"random", 2},
 };
 
 static Symbol *find_builtin(Sema *s, const char *name) {
@@ -479,7 +513,8 @@ static Symbol *find_builtin(Sema *s, const char *name) {
 static bool is_lvalue(const Expr *expr) {
     switch (expr->kind) {
         case EX_NAME:
-            return expr->symbol && expr->symbol->kind != SYM_FUNCTION && !expr->is_call;
+            return expr->symbol && !expr->is_call &&
+                   (expr->symbol->kind == SYM_VAR || expr->symbol->kind == SYM_PARAM || expr->symbol->kind == SYM_RESULT);
         case EX_APPLY:
         case EX_INDEX: return !expr->is_call;
         case EX_FIELD: return expr->base->type->kind == TY_POINTER || is_lvalue(expr->base);
@@ -553,6 +588,7 @@ static Type *check_call(Sema *s, Expr *expr, Symbol *callee) {
         return callee->type;
     }
     for (int i = 0; i < expr->args.count; i++) check_argument(s, callee, i, expr->args.items[i]);
+    if (callee->builtin && strcmp(callee->builtin, "random") == 0) return &T_INT;
     if (callee->builtin && strcmp(callee->builtin, "abs") == 0 &&
         is_integral(expr->args.items[0]->type))
         return &T_INT;
@@ -635,6 +671,43 @@ static Type *check_index(Sema *s, Expr *expr) {
     return rest;
 }
 
+static Expr *new_expr(Sema *s, ExprKind kind, Loc loc) {
+    Expr *e = ARENA_NEW(s->arena, Expr);
+    e->kind = kind;
+    e->loc = loc;
+    e->depth = 1;
+    return e;
+}
+
+static Expr *self_expr(Sema *s, Loc loc) {
+    Expr *self = new_expr(s, EX_NAME, loc);
+    self->text = "self";
+    return self;
+}
+
+/* receiver.method(args): the receiver becomes the first argument. */
+static Type *check_method(Sema *s, Expr *expr, Expr *receiver, const Function *method) {
+    if (!method->symbol) return &T_ERROR;
+    if (receiver->type && receiver->type->kind == TY_POINTER) {
+        Expr *star = new_expr(s, EX_UNARY, receiver->loc);
+        star->op = TOK_STAR;
+        star->base = receiver;
+        receiver = star;
+    }
+    ExprList args = {arena_alloc(s->arena, (size_t)(expr->args.count + 1) * sizeof(Expr *)),
+                     expr->args.count + 1, expr->args.count + 1};
+    args.items[0] = receiver;
+    for (int i = 0; i < expr->args.count; i++) args.items[i + 1] = expr->args.items[i];
+    expr->kind = EX_APPLY;
+    expr->args = args;
+    expr->is_method = true;
+    if (!expr->base) {
+        expr->base = new_expr(s, EX_NAME, expr->loc);
+        expr->base->text = method->name;
+    }
+    return check_call(s, expr, method->symbol);
+}
+
 static Type *check_field(Sema *s, Expr *expr) {
     Type *type = check_value(s, expr->base);
     if (is_error(type)) return type;
@@ -648,6 +721,12 @@ static Type *check_field(Sema *s, Expr *expr) {
             expr->symbol = field->symbol;
             return field->symbol ? field->symbol->type : &T_ERROR;
         }
+    }
+    const Function *method = type->record->klass ? find_method(s->program, type->record->klass, expr->text, false) : NULL;
+    if (method) { /* a call without parentheses */
+        Expr *receiver = expr->base;
+        expr->base = NULL;
+        return check_method(s, expr, receiver, method);
     }
     diag_error(s->diag, expr->loc, "there is no field '%s' in %s", expr->text,
                type_name(s->arena, type));
@@ -688,7 +767,33 @@ static Type *check_unary(Sema *s, Expr *expr) {
     return &T_ERROR;
 }
 
+/* "server.state = Busy": the states of a component have a meaning next to its
+ * state, also from outside. */
+static void resolve_state(Sema *s, Expr *known, Expr *name) {
+    if (name->kind != EX_NAME || name->symbol) return;
+    if (known->kind != EX_FIELD && known->kind != EX_NAME) return;
+    for (Scope *scope = s->scope; scope; scope = scope->parent)
+        if (find_local(scope, name->text)) return;
+    Type *type = check_expr(s, known);
+    if (!type->states) return;
+    int value = 0;
+    for (const StateName *state = type->states->states; state; state = state->next, value++) {
+        if (strcmp(state->name, name->text) != 0) continue;
+        Symbol *sym = ARENA_NEW(s->arena, Symbol);
+        sym->kind = SYM_STATE;
+        sym->name = sym->c_name = state->name;
+        sym->value = value;
+        sym->type = type;
+        name->symbol = sym;
+        return;
+    }
+}
+
 static Type *check_binary(Sema *s, Expr *expr) {
+    if (expr->op == TOK_EQ || expr->op == TOK_NE) {
+        resolve_state(s, expr->base, expr->right);
+        resolve_state(s, expr->right, expr->base);
+    }
     Type *left = check_value(s, expr->base);
     Type *right = check_value(s, expr->right);
     if (is_error(left) || is_error(right)) return &T_ERROR;
@@ -711,6 +816,9 @@ static Type *check_binary(Sema *s, Expr *expr) {
             break;
         default: /* comparisons */
             if (numbers) return &T_BOOL;
+            if (left->kind == TY_POINTER && right->kind == TY_POINTER &&
+                (left->base->kind == TY_VOID || right->base->kind == TY_VOID))
+                return &T_BOOL;
             if (left->kind == TY_POINTER && (same_type(left, right) || is_zero(expr->right))) return &T_BOOL;
             if (right->kind == TY_POINTER && is_zero(expr->base)) return &T_BOOL;
             break;
@@ -722,28 +830,66 @@ static Type *check_binary(Sema *s, Expr *expr) {
 
 /* A function's name inside its own body is the value it will return. */
 static Symbol *result_of(Sema *s, Symbol *sym) {
-    if (sym == s->function && sym->result) return sym->result;
+    if (s->function && sym->function && sym->function == s->function->function && s->function->result)
+        return s->function->result;
+    return sym;
+}
+
+static Symbol *special(Sema *s, SymbolKind kind, const char *name, Type *type) {
+    Symbol *sym = ARENA_NEW(s->arena, Symbol);
+    sym->kind = kind;
+    sym->name = sym->c_name = name;
+    sym->type = type;
     return sym;
 }
 
 static Type *check_name(Sema *s, Expr *expr) {
+    if (expr->symbol && expr->symbol->kind == SYM_STATE) return expr->symbol->type;
     Symbol *sym = lookup(s, expr->text, expr->loc);
+    if (!sym && strcmp(expr->text, "now") == 0 && has_components(s->program))
+        sym = special(s, SYM_NOW, "now", &T_INT);
+    if (!sym && strcmp(expr->text, "sender") == 0 && s->function && s->function->function->owner)
+        sym = special(s, SYM_SENDER, "sender", &T_SOMEONE);
+    if (sym && sym->kind == SYM_FIELD) { /* a variable of the class */
+        expr->kind = EX_FIELD;
+        expr->base = self_expr(s, expr->loc);
+        expr->op = TOK_DOT;
+        return check_field(s, expr);
+    }
     if (!sym) {
         diag_error(s->diag, expr->loc, "'%s' is not declared", expr->text);
         return &T_ERROR;
     }
     sym = result_of(s, sym);
     expr->symbol = sym;
+    if (sym->kind == SYM_FUNCTION && sym->function && sym->function->owner) {
+        expr->base = NULL;
+        Expr *self = self_expr(s, expr->loc);
+        check_expr(s, self);
+        return check_method(s, expr, self, sym->function);
+    }
     if (sym->kind == SYM_FUNCTION) return check_call(s, expr, sym); /* call without () */
     return sym->type;
 }
 
 static Type *check_apply(Sema *s, Expr *expr, bool needs_value) {
+    if (expr->is_method) return check_call(s, expr, expr->symbol); /* seen before */
+    if (expr->base->kind == EX_FIELD) {
+        Type *type = check_value(s, expr->base->base);
+        const Class *klass = class_of(type);
+        const Function *method = klass ? find_method(s->program, klass, expr->base->text, false) : NULL;
+        if (method) return check_method(s, expr, expr->base->base, method);
+    }
     if (expr->base->kind == EX_NAME) {
         const char *name = expr->base->text;
         Symbol *sym = lookup(s, name, expr->base->loc);
         if (!sym) sym = find_builtin(s, name);
         if (!sym) return check_external_call(s, expr, name, needs_value);
+        if (sym->kind == SYM_FUNCTION && sym->function && sym->function->owner) {
+            Expr *self = self_expr(s, expr->loc);
+            check_expr(s, self);
+            return check_method(s, expr, self, sym->function);
+        }
         if (sym->kind == SYM_FUNCTION) return check_call(s, expr, sym);
     }
     if (expr->args.count == 0) {
@@ -787,6 +933,10 @@ static void declare_variables(Sema *s, VarDecl *decl) {
     for (; decl; decl = decl->next) {
         Type *type = resolve_decl_type(s, decl, decl->spec, false);
         decl->symbol = declare(s, SYM_VAR, decl->name, decl->loc, type);
+        const Type *base = type;
+        while (base->kind == TY_ARRAY) base = base->base;
+        if (s->scope->parent && base->kind == TY_RECORD && base->record->klass && base->record->klass->is_component)
+            diag_error(s->diag, decl->loc, "'%s' is a component: it must be a global variable", decl->name);
     }
 }
 
@@ -863,14 +1013,117 @@ static void check_io(Sema *s, Stmt *stmt) {
     }
 }
 
+static Class *find_class(Sema *s, const char *name, Loc loc) {
+    for (Class *c = s->program->classes; c; c = c->next)
+        if (c->is_component && strcmp(c->name, name) == 0) return c;
+    diag_error(s->diag, loc, "'%s' is not a component", name);
+    return NULL;
+}
+
+static void check_send(Sema *s, Stmt *stmt) {
+    const Class *klass = NULL;
+    if (stmt->to_all_name) {
+        stmt->to_all = klass = find_class(s, stmt->to_all_name, stmt->loc);
+        if (!klass) return;
+    } else {
+        Type *type = check_value(s, stmt->target);
+        if (is_error(type)) return;
+        klass = class_of(type);
+        bool someone = type->kind == TY_POINTER && type->base->kind == TY_VOID;
+        if (!someone && (!klass || !klass->is_component)) {
+            diag_error(s->diag, stmt->target->loc, "messages are sent to components, not to %s",
+                       type_name(s->arena, type));
+            return;
+        }
+        if (type->kind != TY_POINTER && !is_lvalue(stmt->target))
+            diag_error(s->diag, stmt->target->loc, "only a variable has an address");
+    }
+    if (stmt->limit) {
+        Type *after = check_value(s, stmt->limit);
+        if (!is_error(after) && !is_integral(after))
+            diag_error(s->diag, stmt->limit->loc, "a time must be an integer, not %s", type_name(s->arena, after));
+    }
+    const Function *handler = find_method(s->program, klass, stmt->name, true);
+    ExprList *args = &stmt->value->args;
+    for (int i = 0; i < args->count; i++) check_value(s, args->items[i]);
+    if (!handler || !handler->symbol) {
+        if (klass) diag_error(s->diag, stmt->value->loc, "'%s' does not handle the message '%s'", klass->name, stmt->name);
+        else diag_error(s->diag, stmt->value->loc, "no component handles the message '%s'", stmt->name);
+        return;
+    }
+    stmt->value->symbol = handler->symbol;
+    if (args->count != handler->symbol->param_count - 1) {
+        int n = handler->symbol->param_count - 1;
+        diag_error(s->diag, stmt->value->loc, "'%s' takes %d argument%s, not %d", stmt->name, n, n == 1 ? "" : "s",
+                   args->count);
+        return;
+    }
+    for (int i = 0; i < args->count; i++) {
+        Type *want = handler->symbol->params[i + 1]->type;
+        if (!assignable(want, args->items[i]->type, args->items[i]))
+            diag_error(s->diag, args->items[i]->loc, "parameter '%s' of '%s' is %s, not %s",
+                       handler->symbol->params[i + 1]->name, stmt->name, type_name(s->arena, want),
+                       type_name(s->arena, args->items[i]->type));
+    }
+}
+
+/* Who sends or gets a message in "expect a -> b: M". The word "test" stands
+ * for what is outside of the system. */
+static void check_lifeline(Sema *s, Expr *expr) {
+    if (expr->kind == EX_NAME && strcmp(expr->text, "test") == 0) {
+        bool declared = false;
+        for (Scope *scope = s->scope; scope; scope = scope->parent) declared |= find_local(scope, "test") != NULL;
+        if (!declared) {
+            expr->type = &T_VOID;
+            return;
+        }
+    }
+    Type *type = check_value(s, expr);
+    if (!is_error(type) && (!class_of(type) || (type->kind != TY_POINTER && !is_lvalue(expr))))
+        diag_error(s->diag, expr->loc, "%s is not a component or an object", type_name(s->arena, type));
+}
+
 static void check_statement(Sema *s, Stmt *stmt) {
     switch (stmt->kind) {
+        case ST_SEND: check_send(s, stmt); break;
+        case ST_STOP: case ST_STEP: case ST_TODO: break;
+        case ST_CANCEL:
+            if (!s->function->function->owner || !find_method(s->program, s->function->function->owner, stmt->name, true))
+                diag_error(s->diag, stmt->loc, "no component handles the message '%s'", stmt->name);
+            break;
+        case ST_CHECK: check_scalar(s, stmt->value, "a condition"); break;
+        case ST_RUN:
+            if (stmt->value) {
+                Type *type = check_value(s, stmt->value);
+                if (!is_error(type) && !is_integral(type))
+                    diag_error(s->diag, stmt->value->loc, "a time must be an integer, not %s", type_name(s->arena, type));
+            }
+            break;
+        case ST_EXPECT: {
+            check_lifeline(s, stmt->target);
+            check_lifeline(s, stmt->limit);
+            bool known = false;
+            for (const Function *f = s->program->functions; f; f = f->next)
+                known |= f->owner && strcmp(f->name, stmt->name) == 0;
+            if (!known) diag_error(s->diag, stmt->loc, "no component handles the message '%s'", stmt->name);
+            break;
+        }
         case ST_ASSIGN: check_assignment(s, stmt); break;
         case ST_CALL:
             if (stmt->value->kind == EX_APPLY) {
                 stmt->value->type = check_apply(s, stmt->value, false);
             } else {
+                if (stmt->value->kind == EX_FIELD) { /* object.method */
+                    check_expr(s, stmt->value);
+                    if (!is_error(stmt->value->type) && !stmt->value->is_call)
+                        diag_error(s->diag, stmt->loc, "this value is not used");
+                    break;
+                }
                 Symbol *sym = lookup(s, stmt->value->text, stmt->value->loc);
+                if (!sym && strcmp(stmt->value->text, "stop") == 0 && has_components(s->program)) {
+                    stmt->kind = ST_STOP;
+                    break;
+                }
                 if (!sym && !find_builtin(s, stmt->value->text)) {
                     stmt->value->type =
                         check_external_call(s, stmt->value, stmt->value->text, false);
@@ -964,18 +1217,32 @@ static void take_types_from_body(Sema *s, Function *function) {
 }
 
 static void declare_function(Sema *s, Function *function) {
-    Symbol *sym = declare(s, SYM_FUNCTION, function->name, function->loc, &T_VOID);
-    if (sym->function || sym->kind != SYM_FUNCTION) return; /* a duplicate */
+    Symbol *sym;
+    if (function->owner || function->is_test) { /* not visible by its name alone */
+        for (const Function *f = s->program->functions; f != function && !function->is_handler; f = f->next)
+            if (f->owner && f->owner == function->owner && f->is_handler == function->is_handler &&
+                strcmp(f->name, function->name) == 0)
+                diag_error(s->diag, function->loc, "'%s' is already declared at line %d", function->name, f->loc.line);
+        sym = ARENA_NEW(s->arena, Symbol);
+        sym->kind = SYM_FUNCTION;
+        sym->name = function->name;
+        sym->loc = function->loc;
+        sym->type = &T_VOID;
+        sym->c_name = fresh_name(s, function->is_test ? "test" : arena_printf(s->arena, "%s_%s", function->owner->name, function->name));
+    } else {
+        sym = declare(s, SYM_FUNCTION, function->name, function->loc, &T_VOID);
+        if (sym->function || sym->kind != SYM_FUNCTION) return; /* a duplicate */
+    }
     function->symbol = sym;
     sym->function = function;
     if (s->config->params == PARAMS_BODY) {
         for (VarDecl *param = function->params; param; param = param->next)
-            if (param->spec)
+            if (param->spec && !(function->owner && param == function->params))
                 diag_error(s->diag, param->loc, "the type of '%s' belongs in the body (see --params)",
                            param->name);
     }
     take_types_from_body(s, function);
-    bool has_main_shape = strcmp(function->name, "main") == 0 && !function->params;
+    bool has_main_shape = !function->is_test && strcmp(function->name, "main") == 0 && !function->params;
     if (has_main_shape) sym->c_name = "main";
 
     for (VarDecl *param = function->params; param; param = param->next) sym->param_count++;
@@ -1075,6 +1342,98 @@ static void resolve_signature(Sema *s, Function *function, Scope *scope) {
     s->scope = scope->parent;
 }
 
+static Scope *class_scope(Sema *s, const Class *klass) {
+    int i = 0;
+    for (const Class *c = s->program->classes; c && c != klass; c = c->next) i++;
+    return s->class_scopes[i];
+}
+
+/* Fields, states and methods, as seen from inside the class. */
+static void fill_class_scope(Sema *s, Class *klass, Scope *scope) {
+    for (const VarDecl *f = klass->record->fields; f; f = f->next) {
+        Symbol *sym = ARENA_NEW(s->arena, Symbol);
+        sym->kind = SYM_FIELD;
+        sym->name = sym->c_name = f->name;
+        sym->loc = f->loc;
+        sym->field = f->symbol;
+        sym->type = f->symbol ? f->symbol->type : &T_ERROR;
+        sym->next = scope->symbols;
+        scope->symbols = sym;
+    }
+    int value = 0;
+    for (const StateName *state = klass->states; state; state = state->next, value++) {
+        if (find_local(scope, state->name))
+            diag_error(s->diag, state->loc, "'%s' is already declared at line %d", state->name,
+                       find_local(scope, state->name)->loc.line);
+        Symbol *sym = ARENA_NEW(s->arena, Symbol);
+        sym->kind = SYM_STATE;
+        sym->name = sym->c_name = state->name;
+        sym->loc = state->loc;
+        sym->value = value;
+        Type *type = ARENA_NEW(s->arena, Type);
+        type->kind = TY_INT;
+        type->states = klass;
+        sym->type = type;
+        sym->next = scope->symbols;
+        scope->symbols = sym;
+    }
+    for (Function *f = s->program->functions; f; f = f->next) {
+        if (f->owner != klass || f->is_handler || !f->symbol) continue;
+        Symbol *copy = ARENA_NEW(s->arena, Symbol);
+        *copy = *f->symbol;
+        if (find_local(scope, f->name)) continue;
+        /* the scope links symbols through `next`: a stand-in that leads to the method */
+        copy->next = scope->symbols;
+        scope->symbols = copy;
+    }
+}
+
+static void check_handlers(Sema *s, Class *klass) {
+    for (Function *f = s->program->functions; f; f = f->next) {
+        if (f->owner != klass || !f->is_handler || !f->symbol) continue;
+        for (const StateName *g = f->guards; g; g = g->next) {
+            bool known = false;
+            for (const StateName *state = klass->states; state; state = state->next)
+                known |= strcmp(state->name, g->name) == 0;
+            if (!known) diag_error(s->diag, g->loc, "'%s' has no state '%s'", klass->name, g->name);
+        }
+        for (int i = 1; i < f->symbol->param_count; i++) {
+            Symbol *p = f->symbol->params[i];
+            if (p->mode != MODE_IN || !is_scalar(p->type))
+                if (!is_error(p->type))
+                    diag_error(s->diag, p->loc, "a message carries simple values: '%s' cannot be one", p->name);
+        }
+        /* a message means the same for everybody */
+        const Function *first = find_method(s->program, NULL, f->name, true);
+        bool same = first->symbol && first->symbol->param_count == f->symbol->param_count;
+        for (int i = 1; same && i < f->symbol->param_count; i++)
+            same = same_type(first->symbol->params[i]->type, f->symbol->params[i]->type);
+        if (!same)
+            diag_error(s->diag, f->loc, "the message '%s' has other parameters at line %d", f->name, first->loc.line);
+        if (strcmp(f->name, "start") == 0 && f->symbol->param_count > 1)
+            diag_error(s->diag, f->loc, "the message 'start' has no parameters");
+    }
+}
+
+static void check_links(Sema *s) {
+    for (Link *link = s->program->links; link; link = link->next) {
+        Expr *ends[] = {link->from, link->to}, *numbers[] = {link->delay, link->delay_max, link->loss};
+        for (int i = 0; i < 2; i++) {
+            Type *type = check_value(s, ends[i]), *base = type;
+            while (base->kind == TY_ARRAY) base = base->base;
+            const Class *klass = class_of(base);
+            if (!is_error(type) && (base->kind == TY_POINTER || !klass || !klass->is_component || !is_lvalue(ends[i])))
+                diag_error(s->diag, ends[i]->loc, "a link joins components, not %s", type_name(s->arena, type));
+        }
+        for (int i = 0; i < 3; i++) {
+            if (!numbers[i]) continue;
+            Type *type = check_value(s, numbers[i]);
+            if (!is_error(type) && !is_integral(type))
+                diag_error(s->diag, numbers[i]->loc, "a time must be an integer, not %s", type_name(s->arena, type));
+        }
+    }
+}
+
 bool analyze(Program *program, const Config *config, Arena *arena, Diag *diag) {
     Scope global = {0};
     Sema sema = {.program = program, .config = config, .arena = arena, .diag = diag,
@@ -1094,6 +1453,16 @@ bool analyze(Program *program, const Config *config, Arena *arena, Diag *diag) {
         collect_statement_names(s, f->body);
     }
 
+    for (Class *c = program->classes; c; c = c->next) {
+        if (!c->is_component || !c->states) continue;
+        VarDecl *state = ARENA_NEW(arena, VarDecl); /* its current state */
+        state->loc = c->states->loc;
+        state->name = "state";
+        state->spec = ARENA_NEW(arena, TypeSpec);
+        state->spec->base = TOK_INTEGER;
+        state->next = c->record->fields;
+        c->record->fields = state;
+    }
     for (TypeDecl *t = program->types; t; t = t->next) add_record(s, t->name, t->record, t->loc);
     /* "var origin: record ... end" also names the type of other variables */
     for (VarDecl *g = program->globals; g; g = g->next) {
@@ -1106,6 +1475,13 @@ bool analyze(Program *program, const Config *config, Arena *arena, Diag *diag) {
         }
     }
     for (TypeDecl *t = program->types; t; t = t->next) resolve_record(s, t->record);
+    for (Class *c = program->classes; c; c = c->next) {
+        if (!c->is_component || !c->states || !c->record->fields->symbol) continue;
+        Type *type = ARENA_NEW(arena, Type);
+        type->kind = TY_INT;
+        type->states = c;
+        c->record->fields->symbol->type = type;
+    }
 
     declare_variables(s, program->globals);
     for (VarDecl *g = program->globals; g; g = g->next)
@@ -1113,11 +1489,29 @@ bool analyze(Program *program, const Config *config, Arena *arena, Diag *diag) {
 
     for (Function *f = program->functions; f; f = f->next) declare_function(s, f);
     Scope *scopes = arena_alloc(arena, (size_t)(functions + 1) * sizeof(Scope));
+    int classes = 0;
+    for (Class *c = program->classes; c; c = c->next) classes++;
+    s->class_scopes = arena_alloc(arena, (size_t)(classes + 1) * sizeof(Scope *));
+    for (int k = 0; k < classes; k++) {
+        s->class_scopes[k] = ARENA_NEW(arena, Scope);
+        s->class_scopes[k]->parent = &global;
+    }
     int i = 0;
     for (Function *f = program->functions; f; f = f->next, i++) {
         scopes[i].parent = &global;
+        if (f->owner) { /* through the class */
+            Class *c = f->owner;
+            for (Class *k = program->classes; k; k = k->next)
+                if (k == c) scopes[i].parent = class_scope(s, c);
+        }
         if (f->symbol) resolve_signature(s, f, &scopes[i]);
     }
+    for (Class *c = program->classes; c; c = c->next) {
+        fill_class_scope(s, c, class_scope(s, c));
+        check_handlers(s, c);
+    }
+    check_links(s);
+    if (program->seed) check_expr(s, program->seed);
     i = 0;
     for (Function *f = program->functions; f; f = f->next, i++) {
         if (!f->symbol) continue;

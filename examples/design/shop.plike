@@ -1,0 +1,52 @@
+// Only designed: "..." stands for what is still to be written. The program
+// runs anyway, and shows who calls whom.
+class Cart
+    var total: real
+    procedure add(in price: real)
+    begin
+        ...
+    end add
+    function cost(): real
+    begin
+        ...
+    end cost
+end Cart
+
+class Warehouse
+    function reserve(in product: integer): logical
+    begin
+        reserve := true
+        ...
+    end reserve
+    procedure ship(in product: integer)
+    begin
+        ...
+    end ship
+end Warehouse
+
+class Payments
+    function charge(in amount: real): logical
+    begin
+        charge := true
+        ...
+    end charge
+end Payments
+
+var cart: Cart
+var warehouse: Warehouse
+var payments: Payments
+
+procedure checkout(in product: integer)
+begin
+    if warehouse.reserve(product) then
+        cart.add(9.9)
+        if payments.charge(cart.cost()) then
+            warehouse.ship(product)
+        endif
+    endif
+end checkout
+
+procedure main()
+begin
+    checkout(7)
+end main

@@ -222,6 +222,19 @@ static void value(Compiler *c, const Expr *expr) {
             return;
         }
         case EX_NAME: case EX_APPLY: case EX_INDEX: case EX_FIELD:
+            if (expr->kind == EX_NAME && expr->symbol && expr->symbol->kind == SYM_STATE) {
+                constant(c, (Value){.kind = V_INT, .as.i = (int32_t)expr->symbol->value});
+                return;
+            }
+            if (expr->kind == EX_NAME && expr->symbol && expr->symbol->kind == SYM_NOW) {
+                emit(c, OP_NOW);
+                note(c, expr);
+                return;
+            }
+            if (expr->kind == EX_NAME && expr->symbol && expr->symbol->kind == SYM_SENDER) {
+                emit(c, OP_SENDER);
+                return;
+            }
             if (expr->is_call) {
                 call(c, expr);
                 if (expr->type->kind != TY_VOID) note(c, expr);
@@ -264,6 +277,13 @@ static void value(Compiler *c, const Expr *expr) {
             note(c, expr);
             return;
     }
+}
+
+/* Where a component is, given the component or a pointer to it. */
+static void place(Compiler *c, const Expr *expr) {
+    if (expr->type->kind == TY_VOID) constant(c, (Value){.kind = V_POINTER}); /* "test" */
+    else if (expr->type->kind == TY_POINTER) value(c, expr);
+    else address(c, expr);
 }
 
 /* ---- statements ---- */
@@ -480,6 +500,45 @@ static void statement(Compiler *c, const Stmt *stmt) {
         case ST_VAR:
             allocate(c, stmt->vars);
             break;
+        case ST_SEND: {
+            const Symbol *handler = stmt->value->symbol;
+            for (int i = 0; i < stmt->value->args.count; i++) {
+                value(c, stmt->value->args.items[i]);
+                convert(c, handler->params[i + 1]->type);
+            }
+            if (!stmt->to_all) place(c, stmt->target);
+            if (stmt->limit) value(c, stmt->limit);
+            else constant(c, (Value){.kind = V_INT});
+            in = emit(c, OP_SEND);
+            in->a = stmt->value->args.count;
+            in->stmt = stmt;
+            in->symbol = handler;
+            break;
+        }
+        case ST_STOP: emit(c, OP_STOP)->stmt = stmt; break;
+        case ST_CANCEL: emit(c, OP_CANCEL)->stmt = stmt; break;
+        case ST_CHECK:
+            value(c, stmt->value);
+            emit(c, OP_TRUTH);
+            in = emit(c, OP_CHECK);
+            in->stmt = stmt;
+            in->expr = stmt->value;
+            break;
+        case ST_RUN:
+            if (stmt->value) value(c, stmt->value);
+            else constant(c, (Value){.kind = V_INT, .as.i = -1});
+            emit(c, OP_RUN)->stmt = stmt;
+            in = emit(c, OP_LOOP);
+            in->a = 1;
+            in->stmt = stmt;
+            break;
+        case ST_EXPECT:
+            place(c, stmt->target);
+            place(c, stmt->limit);
+            emit(c, OP_EXPECT)->stmt = stmt;
+            break;
+        case ST_STEP: emit(c, OP_STEP)->stmt = stmt; break;
+        case ST_TODO: emit(c, OP_TODO)->stmt = stmt; break;
         default:
             break;
     }
@@ -565,13 +624,34 @@ void compile(const Program *program, const Config *config, Code *code) {
     c->function = NULL;
     code->start = here(c);
     allocate(c, program->globals);
+    for (const Link *link = program->links; link; link = link->next) {
+        value(c, link->from); /* a component, or an array of them */
+        value(c, link->to);
+        if (link->delay) value(c, link->delay);
+        else constant(c, (Value){.kind = V_INT, .as.i = 1});
+        if (link->delay_max) value(c, link->delay_max);
+        else constant(c, (Value){.kind = V_INT, .as.i = -1});
+        if (link->loss) value(c, link->loss);
+        else constant(c, (Value){.kind = V_INT});
+        Instr *in = emit(c, OP_LINK);
+        in->a = vm_slots(config, link->from->type);
+        in->b = vm_slots(config, link->to->type);
+        in->value.as.i = link->both_ways;
+    }
+    if (program->seed) {
+        value(c, program->seed);
+        emit(c, OP_SEED);
+    }
+    code->ready = here(c);
+    emit(c, OP_READY);
     const Function *main_function = NULL;
     for (const Function *f = program->functions; f; f = f->next)
-        if (strcmp(f->symbol->c_name, "main") == 0) main_function = f;
+        if (!f->is_test && !f->owner && strcmp(f->symbol->c_name, "main") == 0) main_function = f;
     if (main_function) {
         Instr *in = emit(c, OP_CALL);
         in->symbol = main_function->symbol;
     }
+    if (has_components(program)) emit(c, OP_LOOP);
     emit(c, OP_END);
 }
 

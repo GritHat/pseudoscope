@@ -10,6 +10,7 @@ typedef struct Symbol Symbol;
 typedef struct Record Record;
 typedef struct VarDecl VarDecl;
 typedef struct Function Function;
+typedef struct Class Class;
 
 typedef struct {
     Expr **items;
@@ -51,6 +52,7 @@ struct Type {
     Type *base;      /* pointer, array */
     DimList dims;    /* array */
     Record *record;  /* record */
+    const Class *states; /* integer holding one of the states of a component */
 };
 
 struct Record {
@@ -59,6 +61,7 @@ struct Record {
     const char *c_name; /* struct tag, set by the analysis */
     VarDecl *fields;
     Record *next;       /* in definition order, set by the analysis */
+    Class *klass;       /* when it holds the variables of a class */
     int state;
 };
 
@@ -88,6 +91,7 @@ struct Expr {
     Type *type;
     Symbol *symbol;     /* EX_NAME; the callee of a call */
     bool is_call;       /* EX_APPLY, or EX_NAME calling without parentheses */
+    bool is_method;     /* the receiver is the first argument */
 };
 
 /* ---- declarations ---- */
@@ -107,10 +111,24 @@ struct VarDecl {
     VarDecl *next;
 };
 
-struct Function {
+/* What a component does when a message arrives; "when" limits it to some
+ * states. */
+typedef struct StateName {
     Loc loc;
     const char *name;
+    struct StateName *next;
+} StateName;
+
+struct Function {
+    Loc loc;
+    int last_line;
+    const char *name;
+    const char *full_name;  /* "Stack.push" */
     bool is_procedure;
+    bool is_handler;
+    bool is_test;
+    StateName *guards;
+    Class *owner;
     TypeSpec *result;   /* NULL for procedures or when declared in the body */
     VarDecl *params;
     VarDecl *locals;
@@ -118,6 +136,27 @@ struct Function {
     Symbol *symbol;
     Function *next;
 };
+
+/* A class, or a component: a class that also has states and gets messages. */
+struct Class {
+    Loc loc;
+    int last_line;
+    const char *name;
+    bool is_component;
+    Record *record;
+    StateName *states;
+    Function *methods;      /* handlers too */
+    Class *next;
+};
+
+/* "link a <-> b delay 1..3 loss 10" */
+typedef struct Link {
+    Loc loc;
+    Expr *from, *to;
+    bool both_ways;
+    Expr *delay, *delay_max, *loss;
+    struct Link *next;
+} Link;
 
 typedef struct TypeDecl {
     Loc loc;
@@ -130,7 +169,15 @@ typedef struct TypeDecl {
 
 typedef enum {
     ST_ASSIGN, ST_CALL, ST_IF, ST_WHILE, ST_FOR, ST_REPEAT, ST_RETURN,
-    ST_PRINT, ST_READ, ST_BLOCK, ST_VAR
+    ST_PRINT, ST_READ, ST_BLOCK, ST_VAR,
+    ST_SEND,    /* send value to target [after limit] */
+    ST_STOP,    /* the simulation ends */
+    ST_CANCEL,  /* forget the messages `name` sent to oneself */
+    ST_CHECK,   /* check value [, text] */
+    ST_RUN,     /* let time pass: until nothing is left, or for value */
+    ST_EXPECT,  /* expect target -> limit : name */
+    ST_STEP,    /* step text */
+    ST_TODO     /* ... */
 } StmtKind;
 
 struct Stmt {
@@ -142,6 +189,10 @@ struct Stmt {
     Expr *step;     /* for; may be NULL */
     ExprList args;  /* print, read */
     VarDecl *vars;  /* var */
+    const char *name;
+    const char *text;
+    const Class *to_all; /* send ... to all C */
+    const char *to_all_name;
     Stmt *body;
     Stmt *otherwise;/* if: an ST_IF (elseif) or an ST_BLOCK (else) */
     Stmt *next;
@@ -150,7 +201,10 @@ struct Stmt {
 typedef struct {
     TypeDecl *types;
     VarDecl *globals;
-    Function *functions;
+    Function *functions;    /* methods, handlers and tests are here too */
+    Class *classes;
+    Link *links;
+    Expr *seed;
     Record *records;        /* filled in by the analysis */
     Symbol *externals;      /* undeclared functions that get called */
 } Program;

@@ -31,6 +31,27 @@ const char *const ITALIAN_MESSAGES[][2] = {
     {"'end' after the record fields", "'end' dopo i campi del record"},
     {"'%s' or 'end %s'", "'%s' oppure 'end %s'"},
 
+    {"the name of a state", "il nome di uno stato"},
+    {"the name of a message", "il nome di un messaggio"},
+    {"a text between quotes", "un testo tra virgolette"},
+    {"'end %s'", "'end %s'"},
+    {"'delay' or 'loss'", "'delay' o 'loss'"},
+    {"a variable, a procedure or a function of the class", "una variabile, una procedura o una funzione della classe"},
+
+    /* systems */
+    {"'%s' is not a component", "'%s' non è un componente"},
+    {"messages are sent to components, not to %s", "i messaggi si mandano ai componenti, non a %s"},
+    {"a time must be an integer, not %s", "un tempo deve essere un integer, non %s"},
+    {"'%s' does not handle the message '%s'", "'%s' non gestisce il messaggio '%s'"},
+    {"no component handles the message '%s'", "nessun componente gestisce il messaggio '%s'"},
+    {"%s is not a component or an object", "%s non è un componente né un oggetto"},
+    {"'%s' is a component: it must be a global variable", "'%s' è un componente: deve essere una variabile globale"},
+    {"'%s' has no state '%s'", "'%s' non ha lo stato '%s'"},
+    {"a message carries simple values: '%s' cannot be one", "un messaggio porta valori semplici: '%s' non può esserlo"},
+    {"the message '%s' has other parameters at line %d", "il messaggio '%s' ha altri parametri alla riga %d"},
+    {"the message 'start' has no parameters", "il messaggio 'start' non ha parametri"},
+    {"a link joins components, not %s", "un collegamento unisce componenti, non %s"},
+
     /* writing */
     {"unknown escape sequence", "dopo '\\' c'è un carattere non previsto"},
     {"unexpected byte 0x%02x", "carattere non previsto (0x%02x)"},

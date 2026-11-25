@@ -66,6 +66,9 @@ typedef struct {
     const Stmt *stmt;
     int phase;
     uint32_t address;
+    int life;                 /* who is acting: see Life */
+    int message;              /* the one that got us here, or -1 */
+    Pointer sender;
 } Frame;
 
 /* What an expression of the current statement turned out to be. */
@@ -78,7 +81,8 @@ typedef struct {
 
 typedef enum {
     LOG_ASSIGN, LOG_CONDITION, LOG_LOOP, LOG_CALL, LOG_RETURN, LOG_PRINT, LOG_READ,
-    LOG_WARNING, LOG_ERROR, LOG_END
+    LOG_WARNING, LOG_ERROR, LOG_END,
+    LOG_SEND, LOG_DELIVER, LOG_LOST, LOG_IGNORED, LOG_CHECK, LOG_STEP, LOG_TODO, LOG_STATE
 } LogKind;
 
 typedef struct {
@@ -109,10 +113,65 @@ typedef struct {
     bool write;
 } Touch;
 
+/* ---- systems ---- */
+
+/* Somebody who takes part: a component, an object, a subprogram, or (always
+ * the first) the program itself. A column of a sequence diagram. */
+typedef struct {
+    char name[40];
+    Pointer at;               /* components and objects */
+    const Class *klass;
+    const Function *function;
+} Life;
+
+typedef enum {
+    MSG_CALL, MSG_RETURN, MSG_DELIVER, MSG_LOST, MSG_IGNORED, MSG_STATE, MSG_STEP, MSG_CHECK
+} MessageKind;
+
+/* A row of a sequence diagram. */
+typedef struct {
+    MessageKind kind;
+    int from, to;             /* lives */
+    const char *name;
+    char args[56];
+    long sent, time;
+    long long step;
+    int end;                  /* row at which the activation ends; INT_MAX while active */
+    bool ok;                  /* checks */
+    const Stmt *stmt;
+} SequenceRow;
+
+/* A message on its way. */
+typedef struct {
+    long time, sent, seq;
+    Pointer from, to;
+    int from_life, to_life;
+    const char *name;
+    const Function *handler;  /* tells the types of the arguments */
+    Value args[8];
+    int arg_count;
+    bool lost;                /* will vanish on the way */
+    const Stmt *stmt;
+} Event;
+
+typedef struct {
+    Pointer from, to;
+    int from_count, to_count; /* slots */
+    bool both_ways;
+    long delay, delay_max, loss;
+} LinkRule;
+
+typedef struct {
+    const Stmt *stmt;
+    bool ok;
+    char text[80];
+    int step_row;             /* of the MSG_STEP before, or -1 */
+} Check;
+
 typedef enum { VM_READY, VM_NEEDS_INPUT, VM_FINISHED, VM_FAILED } VmStatus;
 
 /* Detail levels. A stop at some level is also one at the deeper ones. */
-typedef enum { LEVEL_NONE, LEVEL_CALL, LEVEL_STATEMENT, LEVEL_EXPRESSION, LEVEL_MEMORY } Level;
+typedef enum { LEVEL_NONE, LEVEL_SYSTEM, LEVEL_CALL, LEVEL_STATEMENT, LEVEL_EXPRESSION, LEVEL_MEMORY } Level;
 
 enum { PHASE_WHOLE, PHASE_CONDITION, PHASE_STEP };
 
@@ -133,6 +192,8 @@ bool vm_start_trial(Vm *vm, const Function *function, const TrialArgument *args)
  * computed. When `open`, any multiple will do. */
 int vm_trial_size(const Config *config, const Function *function, const TrialArgument *args,
                   int index, bool *open);
+/* Runs a test: "test ... end test". */
+void vm_start_test(Vm *vm, const Function *test);
 void vm_destroy(Vm *vm);
 
 /* Executes up to `limit` instructions; stops early at a stop of this level.
@@ -174,6 +235,23 @@ long vm_log_count(const Vm *vm);
 const LogEntry *vm_log(const Vm *vm, long number);  /* NULL when forgotten */
 int vm_node_count(const Vm *vm);
 const CallNode *vm_node(const Vm *vm, int index);
+long vm_time(const Vm *vm);
+int vm_life_count(const Vm *vm);
+const Life *vm_life(const Vm *vm, int index);
+int vm_message_count(const Vm *vm);
+const SequenceRow *vm_message_at(const Vm *vm, int index);
+int vm_queue_count(const Vm *vm);
+const Event *vm_queued(const Vm *vm, int index);
+int vm_check_count(const Vm *vm);
+const Check *vm_check(const Vm *vm, int index);
+int vm_link_count(const Vm *vm);
+const LinkRule *vm_link(const Vm *vm, int index);
+int vm_current_life(const Vm *vm);
+/* The state a component is in; NULL if it has none. */
+const char *vm_state_name(const Vm *vm, const Life *life);
+/* The components of the program, in order. */
+int vm_instance_count(const Vm *vm);
+Pointer vm_instance(const Vm *vm, int index, const Class **klass);
 int vm_trial_count(const Vm *vm);
 const Var *vm_trial_var(const Vm *vm, int index);
 
@@ -208,7 +286,9 @@ typedef enum {
     OP_JUMP, OP_JUMP_IF_FALSE, OP_JUMP_IF_TRUE, OP_AND, OP_OR, OP_POP,
     OP_CALL, OP_RETURN, OP_ENTER, OP_PARAM_BOUNDS, OP_ALLOC,
     OP_BLOCK, OP_BLOCK_END, OP_STMT, OP_EVAL, OP_CONDITION, OP_PRINT, OP_READ,
-    OP_EXTERNAL, OP_UNSUPPORTED, OP_END
+    OP_EXTERNAL, OP_UNSUPPORTED, OP_END,
+    OP_NOW, OP_SENDER, OP_LINK, OP_SEED, OP_READY, OP_LOOP, OP_RUN, OP_SEND, OP_STOP, OP_CANCEL,
+    OP_CHECK, OP_EXPECT, OP_STEP, OP_TODO
 } Op;
 
 typedef struct {
@@ -227,6 +307,7 @@ typedef struct {
     int count, capacity;
     int global_vars;
     int start;                 /* global set-up, then main */
+    int ready;                 /* where the set-up ends */
     struct {
         const Function *function;
         int entry, vars;

@@ -290,7 +290,7 @@ static void lex_quoted(Lexer *lx, char quote) {
 
 static void lex_symbol(Lexer *lx) {
     static const Keyword SYMBOLS[] = { /* longest first */
-        {":=", TOK_ASSIGN}, {"==", TOK_EQ}, {"!=", TOK_NE}, {"<>", TOK_NE},
+        {"...", TOK_ELLIPSIS}, {":=", TOK_ASSIGN}, {"==", TOK_EQ}, {"!=", TOK_NE}, {"<>", TOK_NE},
         {"<=", TOK_LE}, {">=", TOK_GE}, {"<<", TOK_SHL}, {">>", TOK_SHR},
         {"&&", TOK_AND}, {"||", TOK_OR}, {"->", TOK_ARROW}, {"..", TOK_DOTDOT},
         {"+", TOK_PLUS}, {"-", TOK_MINUS}, {"*", TOK_STAR}, {"/", TOK_SLASH},
@@ -356,7 +356,7 @@ const char *token_kind_name(TokenKind kind) {
         [TOK_OR] = "'or'", [TOK_NOT] = "'not'", [TOK_SHL] = "'<<'",
         [TOK_SHR] = "'>>'", [TOK_AMP] = "'&'", [TOK_PIPE] = "'|'",
         [TOK_CARET] = "'^'", [TOK_TILDE] = "'~'", [TOK_AT] = "'@'",
-        [TOK_ARROW] = "'->'", [TOK_DOT] = "'.'", [TOK_DOTDOT] = "'..'",
+        [TOK_ARROW] = "'->'", [TOK_DOT] = "'.'", [TOK_DOTDOT] = "'..'", [TOK_ELLIPSIS] = "'...'",
         [TOK_LPAREN] = "'('", [TOK_RPAREN] = "')'", [TOK_LBRACKET] = "'['",
         [TOK_RBRACKET] = "']'", [TOK_COMMA] = "','", [TOK_COLON] = "':'",
         [TOK_SEMICOLON] = "';'", [TOK_TRUE] = "'true'", [TOK_FALSE] = "'false'",

@@ -1,0 +1,112 @@
+// Three components and an end-to-end test: from the click of the user to the
+// database and back. Look at it from the System level.
+
+component Client
+    states Idle, Waiting, LoggedIn, Refused
+    var attempts: integer
+
+    on Click(in user: integer, in password: integer) when Idle, Refused
+    begin
+        attempts := attempts + 1
+        send Login(user, password) to server
+        become Waiting
+    end Click
+
+    on Welcome(in session: integer) when Waiting
+    begin
+        become LoggedIn
+    end Welcome
+
+    on Denied when Waiting
+    begin
+        become Refused
+    end Denied
+end Client
+
+component Server
+    var sessions: integer
+    var client: Client*
+
+    on Login(in user: integer, in password: integer)
+    begin
+        client := sender
+        send Find(user, password) to database
+    end Login
+
+    on Found(in ok: logical)
+    begin
+        if ok then
+            sessions := sessions + 1
+            send Welcome(sessions) to client
+        else
+            send Denied to client
+        endif
+    end Found
+end Server
+
+component Database
+    var passwords: array [1..3] of integer
+
+    on start
+    begin
+        passwords[1] := 1111
+        passwords[2] := 2222
+        passwords[3] := 3333
+    end start
+
+    on Find(in user: integer, in password: integer)
+    begin
+        send Found(matches(user, password)) to sender
+    end Find
+
+    function matches(in user: integer, in password: integer): logical
+    begin
+        matches := false
+        if user >= 1 and user <= 3 then
+            matches := passwords[user] = password
+        endif
+    end matches
+end Database
+
+var client: Client
+var server: Server
+var database: Database
+
+link client <-> server delay 3
+link server <-> database delay 1
+
+test "the right password logs in"
+begin
+    step "the user types the password"
+    send Click(2, 2222) to client
+    run
+    step "the request goes through the whole system"
+    expect test -> client: Click
+    expect client -> server: Login
+    expect server -> database: Find
+    expect database -> server: Found
+    expect server -> client: Welcome
+    step "and the client is in"
+    check client.state = LoggedIn
+    check server.sessions = 1
+end test
+
+test "a wrong password is refused, then one can retry"
+begin
+    step "first attempt: wrong"
+    send Click(1, 9999) to client
+    run
+    check client.state = Refused
+    check server.sessions = 0, "no session is opened"
+    step "second attempt: right"
+    send Click(1, 1111) to client
+    run
+    check client.state = LoggedIn
+    check client.attempts = 2
+end test
+
+procedure main()
+begin
+    send Click(3, 1234) to client
+    send Click(3, 3333) to client after 20
+end main

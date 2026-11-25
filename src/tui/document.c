@@ -137,7 +137,7 @@ static void list_items(Document *doc) {
         item->first = f->loc.line;
         item->calls = arena_alloc(&doc->arena, 64 * sizeof(Function *));
         if (doc->ok) visit_statements(f->body, note_call, item);
-        if (strcmp(f->name, "main") == 0 && !f->params) doc->main_item = doc->item_count;
+        if (!f->is_test && strcmp(f->name, "main") == 0 && !f->params) doc->main_item = doc->item_count;
         doc->item_count++;
     }
     for (const TypeDecl *t = doc->program->types; t; t = t->next) {

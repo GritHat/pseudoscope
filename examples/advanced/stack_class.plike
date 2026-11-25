@@ -1,0 +1,68 @@
+// A class, and an algorithm that uses it: are the brackets balanced?
+class Stack
+    var items: array [1..20] of integer
+    var size: integer
+
+    procedure clear()
+    begin
+        size := 0
+    end clear
+
+    procedure push(in x: integer)
+    begin
+        size := size + 1
+        items[size] := x
+    end push
+
+    function pop(): integer
+    begin
+        pop := items[size]
+        size := size - 1
+    end pop
+
+    function empty(): logical
+    begin
+        empty := size = 0
+    end empty
+end Stack
+
+// 1 2 3 are ( [ {, and -1 -2 -3 close them
+function balanced(in n: integer, in a[n]: array of integer): logical
+    var s: Stack
+    var i: integer
+begin
+    s.clear()
+    balanced := true
+    i := 1
+    while i <= n and balanced do
+        if a[i] > 0 then
+            s.push(a[i])
+        elseif s.empty() then
+            balanced := false
+        elseif s.pop() != -a[i] then
+            balanced := false
+        endif
+        i := i + 1
+    endwhile
+    if not s.empty() then
+        balanced := false
+    endif
+end balanced
+
+test "balanced brackets"
+var a: array [1..6] of integer
+begin
+    step "( [ ] { } )"
+    a[1] := 1; a[2] := 2; a[3] := -2; a[4] := 3; a[5] := -3; a[6] := -1
+    check balanced(6, a)
+    step "( [ ) ]"
+    a[3] := -1; a[4] := -2
+    check not balanced(4, a)
+end test
+
+procedure main()
+var a: array [1..4] of integer
+begin
+    a[1] := 1; a[2] := 2; a[3] := -2; a[4] := -1
+    print(balanced(4, a))
+end main

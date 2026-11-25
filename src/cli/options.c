@@ -12,7 +12,7 @@ static const struct {
 } COMMANDS[] = {
     {"translate", CMD_TRANSLATE}, {"check", CMD_CHECK}, {"build", CMD_BUILD},
     {"run", CMD_RUN}, {"exec", CMD_EXEC}, {"tokens", CMD_TOKENS}, {"ast", CMD_AST},
-    {"ui", CMD_UI},
+    {"ui", CMD_UI}, {"test", CMD_TEST},
 };
 
 static void print_help(FILE *out) {
@@ -29,6 +29,7 @@ static void print_help(FILE *out) {
         "  build       translate and compile to an executable\n"
         "  run         build in a temporary directory and execute\n"
         "  exec        execute without a C compiler, checking every access\n"
+        "  test        run the tests of the program\n"
         "  tokens      list the tokens\n"
         "  ast         print the syntax tree\n"
         "\n"

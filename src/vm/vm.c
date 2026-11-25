@@ -10,6 +10,7 @@
 #define MAX_RANK 16
 #define LOG_SIZE 8192
 #define MAX_NODES 100000
+#define MAX_MESSAGES 20000
 #define MAX_SNAPSHOT_BYTES (64u << 20)
 
 /* A growable array that lives in the state, so that snapshots can copy it. */
@@ -33,6 +34,12 @@ typedef struct {
     int node_count, node;
     long long steps;
     uint32_t serial;
+    ARRAY(Event) queue;
+    ARRAY(LinkRule) links;
+    long time, seq;
+    uint32_t random;
+    int life_count, message_count, check_count, expect_row, step_row;
+    bool stopped;
 } State;
 
 typedef struct {
@@ -55,6 +62,13 @@ struct Vm {
     LogEntry *log;
     CallNode *nodes;
     int node_capacity;
+    Life *lives;
+    int life_capacity;
+    SequenceRow *messages;
+    int message_capacity;
+    Check *checks;
+    int check_capacity;
+    bool has_classes;
 
     ARRAY(Touch) touched;
     Level event;      /* of the instruction just executed */
@@ -194,7 +208,7 @@ static void fail(Vm *vm, const char *message) {
     vm->s.status = VM_FAILED;
     vm->s.message = message;
     vm->s.exit_status = 1;
-    vm->event = LEVEL_CALL;
+    vm->event = LEVEL_SYSTEM;
     add_log(vm, (LogEntry){.kind = LOG_ERROR, .text = message, .stmt = current_stmt(vm)});
 }
 
@@ -417,7 +431,10 @@ static Value unary(Vm *vm, TokenKind op, Value v) {
     }
 }
 
+static int32_t random_between(Vm *vm, int32_t lo, int32_t hi);
+
 static Value builtin(Vm *vm, const char *name, Value *args, const Expr *expr) {
+    if (strcmp(name, "random") == 0) return make_int(random_between(vm, as_int(vm, args[0]), as_int(vm, args[1])));
     if (strcmp(name, "abs") == 0 && expr->type->kind == TY_INT) {
         int32_t i = as_int(vm, args[0]);
         return make_int(i < 0 ? (int32_t)(0u - (uint32_t)i) : i);
@@ -523,6 +540,84 @@ static void param_bounds(Vm *vm, const Symbol *symbol) {
 
 static void format_call(Vm *vm, const Function *function, char *out, size_t size);
 
+/* ---- who talks to whom ---- */
+
+static int add_life(Vm *vm, Life life) {
+    vm->lives = grow(vm->lives, &vm->life_capacity, vm->s.life_count + 1, sizeof *vm->lives);
+    vm->lives[vm->s.life_count] = life;
+    return vm->s.life_count++;
+}
+
+static const Class *class_at(const Vm *vm, Pointer p) {
+    const Object *object = object_of(vm, p);
+    if (!object || !object->type) return NULL;
+    const Type *type = object->type;
+    int offset = p.offset;
+    while (type) {
+        if (type->kind == TY_ARRAY) {
+            int per = vm_slots(vm->config, type->base);
+            if (per <= 0) return NULL;
+            offset %= per;
+            type = type->base;
+        } else if (type->kind == TY_RECORD) {
+            if (offset == 0 && type->record->klass) return type->record->klass;
+            const VarDecl *f = type->record->fields;
+            while (f && offset >= vm_slots(vm->config, f->symbol->type)) {
+                offset -= vm_slots(vm->config, f->symbol->type);
+                f = f->next;
+            }
+            type = f ? f->symbol->type : NULL;
+        } else {
+            return NULL;
+        }
+    }
+    return NULL;
+}
+
+/* klass tells apart an object from its own first field. */
+static int life_of(Vm *vm, Pointer at, const Class *klass) {
+    if (!object_of(vm, at)) return 0;
+    if (!klass) klass = class_at(vm, at);
+    for (int i = 1; i < vm->s.life_count; i++) {
+        const Life *l = &vm->lives[i];
+        if (l->klass == klass && l->at.object == at.object && l->at.offset == at.offset && l->at.serial == at.serial)
+            return i;
+    }
+    Life life = {.at = at, .klass = klass};
+    vm_place_name(vm, at, life.name, sizeof life.name);
+    return add_life(vm, life);
+}
+
+static int function_life(Vm *vm, const Function *function) {
+    for (int i = 1; i < vm->s.life_count; i++)
+        if (vm->lives[i].function == function) return i;
+    Life life = {.function = function};
+    snprintf(life.name, sizeof life.name, "%s", function->name);
+    return add_life(vm, life);
+}
+
+static int add_message(Vm *vm, SequenceRow message) {
+    if (vm->s.message_count >= MAX_MESSAGES) return -1;
+    vm->messages = grow(vm->messages, &vm->message_capacity, vm->s.message_count + 1, sizeof *vm->messages);
+    message.step = vm->s.steps;
+    message.time = vm->s.time;
+    if (!message.end) message.end = INT_MAX;
+    vm->messages[vm->s.message_count] = message;
+    return vm->s.message_count++;
+}
+
+static uint32_t next_random(Vm *vm) {
+    vm->s.random = vm->s.random * 1103515245u + 12345u;
+    return (vm->s.random >> 16) & 0x7fff;
+}
+
+static int32_t random_between(Vm *vm, int32_t lo, int32_t hi) {
+    if (hi <= lo) return lo;
+    uint32_t high = next_random(vm), low = next_random(vm);
+    uint32_t n = high << 15 | low;
+    return (int32_t)(lo + (int64_t)(n % (uint32_t)((int64_t)hi - lo + 1)));
+}
+
 static void enter_function(Vm *vm, const Function *function, const Expr *expr, int return_pc) {
     State *s = &vm->s;
     const Symbol *symbol = function->symbol;
@@ -535,7 +630,10 @@ static void enter_function(Vm *vm, const Function *function, const Expr *expr, i
     int first_arg = s->stack.count - symbol->param_count;
     Frame frame = {.function = function, .call = expr, .vars = s->vars.count, .var_count = vars,
                    .objects = s->objects.count, .bounds = s->bounds.count, .stack = first_arg,
-                   .evals = s->evals.count, .return_pc = return_pc, .node = s->node};
+                   .evals = s->evals.count, .return_pc = return_pc, .node = s->node,
+                   .life = s->frames.items[s->frames.count - 1].life, .message = -1};
+    if (function->owner) frame.life = life_of(vm, s->stack.items[first_arg].as.p, function->owner);
+    else if (!vm->has_classes && strcmp(function->name, "main") != 0) frame.life = function_life(vm, function);
     PUSH(s->frames, frame);
     RESERVE(s->vars, vars + 1);
     memset(&s->vars.items[s->vars.count], 0, (size_t)vars * sizeof(Var));
@@ -588,6 +686,14 @@ static void announce_call(Vm *vm) {
     if (frame->node >= 0)
         format_call(vm, frame->function, vm->nodes[frame->node].args, sizeof vm->nodes[0].args);
     vm->event = LEVEL_CALL;
+    const Frame *caller = vm->s.frames.count > 1 ? &vm->s.frames.items[vm->s.frames.count - 2] : NULL;
+    bool shown = frame->function->owner || (!vm->has_classes && strcmp(frame->function->name, "main") != 0);
+    if (shown && !frame->function->is_handler && !frame->function->is_test && caller) {
+        SequenceRow m = {.kind = MSG_CALL, .from = caller->life, .to = frame->life, .name = frame->function->name};
+        format_call(vm, frame->function, m.args, sizeof m.args);
+        frame->message = add_message(vm, m);
+        vm->event = LEVEL_SYSTEM;
+    }
 }
 
 static void leave_function(Vm *vm, const Type *type) {
@@ -616,6 +722,17 @@ static void leave_function(Vm *vm, const Type *type) {
         snprintf(node->result, sizeof node->result, "%.31s", entry.value);
         s->node = node->parent;
     }
+    vm->event = LEVEL_CALL;
+    if (frame.message >= 0) {
+        vm->messages[frame.message].end = s->message_count;
+        if (has_value && !frame.function->is_handler) {
+            SequenceRow m = {.kind = MSG_RETURN, .from = frame.life, .to = vm->messages[frame.message].from,
+                          .name = frame.function->name};
+            snprintf(m.args, sizeof m.args, "%s", entry.value);
+            add_message(vm, m);
+            vm->event = LEVEL_SYSTEM;
+        }
+    }
     drop_objects(vm, frame.objects);
     s->bounds.count = frame.bounds;
     s->vars.count = frame.vars;
@@ -636,7 +753,6 @@ static void leave_function(Vm *vm, const Type *type) {
     } else if (s->frames.count == 1 && vm->code.items[s->pc].op == OP_END) {
         push(vm, make_int(0));
     }
-    vm->event = LEVEL_CALL;
 }
 
 /* ---- indexing ---- */
@@ -815,7 +931,7 @@ static void read_statement(Vm *vm, const Instr *in) {
         vm->s.status = VM_NEEDS_INPUT;
         vm->s.pc--; /* try again, as if this had not been a step */
         vm->s.steps--;
-        vm->event = LEVEL_CALL;
+        vm->event = LEVEL_SYSTEM;
         return;
     }
     if (got == 0) {
@@ -832,6 +948,321 @@ static void read_statement(Vm *vm, const Instr *in) {
     place_text(vm, in->expr, entry.target, sizeof entry.target);
     vm_format(vm, &v, in->type, entry.value, sizeof entry.value);
     add_log(vm, entry);
+}
+
+/* ---- systems ---- */
+
+static Pointer current_self(const Vm *vm) {
+    int life = vm->s.frames.items[vm->s.frames.count - 1].life;
+    return life > 0 ? vm->lives[life].at : (Pointer){0, 0, 0};
+}
+
+static bool inside(Pointer p, Pointer base, int count) {
+    return p.object == base.object && p.serial == base.serial && p.offset >= base.offset && p.offset < base.offset + count;
+}
+
+static void enqueue(Vm *vm, Event event) {
+    State *s = &vm->s;
+    event.sent = s->time;
+    event.seq = s->seq++;
+    event.from_life = object_of(vm, event.from) ? life_of(vm, event.from, NULL) : 0;
+    event.to_life = life_of(vm, event.to, NULL);
+    PUSH(s->queue, event);
+}
+
+int vm_instance_count(const Vm *vm) {
+    int count = 0;
+    for (const VarDecl *g = vm->program->globals; g; g = g->next) {
+        const Type *type = g->symbol ? g->symbol->type : NULL;
+        if (!type) continue;
+        int slots = vm_slots(vm->config, type);
+        while (type->kind == TY_ARRAY) type = type->base;
+        const Class *klass = type->kind == TY_RECORD ? type->record->klass : NULL;
+        int per = vm_slots(vm->config, type);
+        if (klass && klass->is_component && per > 0) count += slots / per;
+    }
+    return count;
+}
+
+Pointer vm_instance(const Vm *vm, int index, const Class **klass) {
+    for (const VarDecl *g = vm->program->globals; g; g = g->next) {
+        const Type *type = g->symbol ? g->symbol->type : NULL;
+        if (!type) continue;
+        int slots = vm_slots(vm->config, type);
+        while (type->kind == TY_ARRAY) type = type->base;
+        const Class *k = type->kind == TY_RECORD ? type->record->klass : NULL;
+        int per = vm_slots(vm->config, type);
+        if (!k || !k->is_component || per <= 0) continue;
+        if (index < slots / per) {
+            Pointer at = vm->s.vars.items[vm->s.frames.items[0].vars + g->symbol->slot].at;
+            at.offset += index * per;
+            *klass = k;
+            return at;
+        }
+        index -= slots / per;
+    }
+    *klass = NULL;
+    return (Pointer){0, 0, 0};
+}
+
+static void send_start(Vm *vm) {
+    int n = vm_instance_count(vm);
+    for (int i = 0; i < n; i++) {
+        const Class *klass;
+        Pointer at = vm_instance(vm, i, &klass);
+        life_of(vm, at, klass);
+        const Function *handler = find_method(vm->program, klass, "start", true);
+        if (handler) enqueue(vm, (Event){.time = 0, .to = at, .name = "start", .handler = handler});
+    }
+}
+
+static void send_one(Vm *vm, const Instr *in, Pointer to, const Value *args, long after) {
+    State *s = &vm->s;
+    Event event = {.from = current_self(vm), .to = to, .name = in->stmt->name, .handler = in->symbol->function,
+                   .arg_count = in->a, .stmt = in->stmt};
+    for (int i = 0; i < in->a && i < 8; i++) event.args[i] = args[i];
+    bool to_self = event.from.object == to.object && event.from.offset == to.offset && event.from.serial == to.serial;
+    long delay = to_self ? 0 : 1, loss = 0;
+    for (int i = 0; i < s->links.count && !to_self; i++) {
+        const LinkRule *l = &s->links.items[i];
+        bool there = inside(event.from, l->from, l->from_count) && inside(to, l->to, l->to_count);
+        bool back = l->both_ways && inside(event.from, l->to, l->to_count) && inside(to, l->from, l->from_count);
+        if (!there && !back) continue;
+        delay = l->delay_max > l->delay ? random_between(vm, (int32_t)l->delay, (int32_t)l->delay_max) : l->delay;
+        loss = l->loss;
+    }
+    if (delay < 0) delay = 0;
+    if (after < 0) after = 0;
+    event.lost = loss > 0 && random_between(vm, 0, 99) < loss;
+    event.time = s->time + after + (event.lost ? (delay + 1) / 2 : delay);
+    enqueue(vm, event);
+    LogEntry entry = {.kind = LOG_SEND, .stmt = in->stmt, .text = in->stmt->name};
+    snprintf(entry.target, sizeof entry.target, "%s", vm->lives[life_of(vm, to, NULL)].name);
+    snprintf(entry.old, sizeof entry.old, "%s", vm->lives[top_frame(vm)->life].name);
+    add_log(vm, entry);
+}
+
+static void send(Vm *vm, const Instr *in) {
+    long after = as_int(vm, pop(vm));
+    Pointer to = {0, 0, 0};
+    if (!in->stmt->to_all) to = pop(vm).as.p;
+    Value args[8];
+    if (in->a > 8) {
+        fail(vm, "too many values in a message");
+        return;
+    }
+    for (int i = in->a - 1; i >= 0; i--) args[i] = pop(vm);
+    if (in->stmt->to_all) {
+        Pointer self = current_self(vm);
+        int n = vm_instance_count(vm);
+        for (int i = 0; i < n; i++) {
+            const Class *klass;
+            Pointer at = vm_instance(vm, i, &klass);
+            if (klass != in->stmt->to_all) continue;
+            if (at.object == self.object && at.offset == self.offset) continue;
+            send_one(vm, in, at, args, after);
+        }
+    } else if (to.object == 0) {
+        fail(vm, "the message has nobody to go to");
+        return;
+    } else if (!object_of(vm, to)) {
+        fail(vm, "the variable pointed to no longer exists");
+        return;
+    } else {
+        send_one(vm, in, to, args, after);
+    }
+    vm->event = LEVEL_SYSTEM;
+}
+
+static bool guarded(const Vm *vm, const Function *handler, Pointer at) {
+    if (!handler->guards) return true;
+    const Value *state = cell_of(vm, at); /* the first field */
+    int value = 0;
+    for (const StateName *name = handler->owner->states; name; name = name->next, value++)
+        for (const StateName *g = handler->guards; g; g = g->next)
+            if (strcmp(g->name, name->name) == 0 && state && state->as.i == value) return true;
+    return false;
+}
+
+static void format_event(const Vm *vm, const Event *e, char *out, size_t size) {
+    out[0] = '\0';
+    for (int i = 0; i < e->arg_count && i < 8; i++) {
+        char text[40];
+        size_t n = strlen(out);
+        vm_format(vm, &e->args[i], e->handler->symbol->params[i + 1]->type, text, sizeof text);
+        snprintf(out + n, size - n, "%s%s", i ? ", " : "", text);
+    }
+}
+
+/* Delivers the next message, if it comes before `deadline` (-1: no limit). The
+ * instruction stays the same until there is nothing left to do. */
+static void loop(Vm *vm, const Instr *in) {
+    State *s = &vm->s;
+    long deadline = in->a ? s->stack.items[s->stack.count - 1].as.i : -1;
+    int best = -1;
+    for (int i = 0; i < s->queue.count; i++) {
+        const Event *e = &s->queue.items[i], *b = best >= 0 ? &s->queue.items[best] : NULL;
+        if (!b || e->time < b->time || (e->time == b->time && e->seq < b->seq)) best = i;
+    }
+    if (s->stopped || best < 0 || (deadline >= 0 && s->queue.items[best].time > deadline)) {
+        if (deadline >= 0 && deadline > s->time && !s->stopped) s->time = deadline;
+        if (in->a) pop(vm);
+        return;
+    }
+    Event e = s->queue.items[best];
+    s->queue.count--;
+    for (int i = best; i < s->queue.count; i++) s->queue.items[i] = s->queue.items[i + 1];
+    if (e.time > s->time) s->time = e.time;
+    s->pc--;
+    vm->event = LEVEL_SYSTEM;
+
+    const Class *klass = class_at(vm, e.to);
+    const Function *handler = NULL;
+    for (const Function *f = vm->program->functions; f && !handler && !e.lost; f = f->next)
+        if (f->owner == klass && f->is_handler && strcmp(f->name, e.name) == 0 && guarded(vm, f, e.to)) handler = f;
+    SequenceRow m = {.kind = e.lost ? MSG_LOST : handler ? MSG_DELIVER : MSG_IGNORED, .from = e.from_life, .to = e.to_life,
+                  .name = e.name, .sent = e.sent, .stmt = e.stmt};
+    if (e.from.object == 0 && strcmp(e.name, "start") == 0) m.from = m.to;
+    format_event(vm, &e, m.args, sizeof m.args);
+    if (!handler) m.end = -1;
+    int row = add_message(vm, m);
+    LogEntry entry = {.kind = e.lost ? LOG_LOST : handler ? LOG_DELIVER : LOG_IGNORED, .stmt = e.stmt, .text = e.name};
+    snprintf(entry.target, sizeof entry.target, "%s", vm->lives[e.to_life].name);
+    snprintf(entry.old, sizeof entry.old, "%s", vm->lives[e.from_life].name);
+    snprintf(entry.value, sizeof entry.value, "%s", m.args);
+    if (!handler && !e.lost) {
+        const char *state = vm_state_name(vm, &vm->lives[e.to_life]);
+        snprintf(entry.value, sizeof entry.value, "%s", state ? state : "");
+    }
+    add_log(vm, entry);
+    if (!handler) return;
+    push(vm, make_pointer(e.to));
+    for (int i = 0; i < e.arg_count; i++) push(vm, e.args[i]);
+    enter_function(vm, handler, NULL, s->pc);
+    if (s->status != VM_READY) return;
+    top_frame(vm)->message = row;
+    top_frame(vm)->sender = e.from;
+}
+
+static void add_check(Vm *vm, const Stmt *stmt, bool ok, const char *text) {
+    State *s = &vm->s;
+    vm->checks = grow(vm->checks, &vm->check_capacity, s->check_count + 1, sizeof *vm->checks);
+    Check *check = &vm->checks[s->check_count++];
+    *check = (Check){.stmt = stmt, .ok = ok, .step_row = s->step_row};
+    snprintf(check->text, sizeof check->text, "%s", text);
+    SequenceRow m = {.kind = MSG_CHECK, .name = "check", .ok = ok, .stmt = stmt, .end = -1};
+    snprintf(m.args, sizeof m.args, "%s", text);
+    add_message(vm, m);
+    LogEntry entry = {.kind = LOG_CHECK, .stmt = stmt, .truth = ok};
+    snprintf(entry.value, sizeof entry.value, "%s", text);
+    add_log(vm, entry);
+    if (!ok) s->exit_status = 1;
+    vm->event = LEVEL_SYSTEM;
+}
+
+static void operand_text(const Vm *vm, const Expr *expr, char *text, size_t size);
+
+static void check(Vm *vm, const Instr *in) {
+    bool ok = truth(pop(vm));
+    char text[160];
+    if (in->stmt->text) {
+        snprintf(text, sizeof text, "%s", in->stmt->text);
+    } else {
+        StrBuf buffer = {0};
+        strbuf_puts(&buffer, "");
+        print_expr(vm, in->expr, NULL, 0, "", "", "", "", &buffer);
+        snprintf(text, sizeof text, "%s", buffer.data);
+        strbuf_free(&buffer);
+    }
+    if (!ok && in->expr->kind == EX_BINARY && in->expr->op != TOK_AND && in->expr->op != TOK_OR) {
+        char left[40];
+        size_t n = strlen(text);
+        operand_text(vm, in->expr->base, left, sizeof left);
+        snprintf(text + n, sizeof text - n, " (= %s)", left);
+    }
+    add_check(vm, in->stmt, ok, text);
+}
+
+/* Looks for the message after the last one expected. */
+static void expect(Vm *vm, const Instr *in) {
+    State *s = &vm->s;
+    Pointer to = pop(vm).as.p, from = pop(vm).as.p;
+    int a = from.object ? life_of(vm, from, NULL) : 0, b = to.object ? life_of(vm, to, NULL) : 0;
+    int found = -1;
+    for (int i = s->expect_row; i < s->message_count && found < 0; i++) {
+        const SequenceRow *m = &vm->messages[i];
+        if ((m->kind == MSG_DELIVER || m->kind == MSG_CALL) && m->from == a && m->to == b &&
+            strcmp(m->name, in->stmt->name) == 0)
+            found = i;
+    }
+    char text[160];
+    snprintf(text, sizeof text, "%s -> %s: %s", vm->lives[a].name, vm->lives[b].name, in->stmt->name);
+    if (found >= 0) s->expect_row = found + 1;
+    add_check(vm, in->stmt, found >= 0, text);
+}
+
+static void system_op(Vm *vm, const Instr *in) {
+    State *s = &vm->s;
+    switch (in->op) {
+        case OP_NOW: push(vm, make_int((int32_t)s->time)); break;
+        case OP_SENDER: {
+            Pointer p = {0, 0, 0};
+            for (int i = s->frames.count - 1; i > 0; i--) {
+                if (!s->frames.items[i].function->is_handler) continue;
+                p = s->frames.items[i].sender;
+                break;
+            }
+            push(vm, make_pointer(p));
+            break;
+        }
+        case OP_LINK: {
+            LinkRule l = {.from_count = in->a, .to_count = in->b, .both_ways = in->value.as.i != 0};
+            l.loss = as_int(vm, pop(vm));
+            l.delay_max = as_int(vm, pop(vm));
+            l.delay = as_int(vm, pop(vm));
+            l.to = pop(vm).as.p;
+            l.from = pop(vm).as.p;
+            PUSH(s->links, l);
+            break;
+        }
+        case OP_SEED: s->random = (uint32_t)as_int(vm, pop(vm)); break;
+        case OP_READY: send_start(vm); break;
+        case OP_LOOP: loop(vm, in); break;
+        case OP_RUN: { /* the deadline goes on the stack, for OP_LOOP */
+            int32_t n = as_int(vm, pop(vm));
+            push(vm, make_int(n < 0 ? -1 : (int32_t)s->time + n));
+            break;
+        }
+        case OP_SEND: send(vm, in); break;
+        case OP_STOP:
+            s->stopped = true;
+            s->queue.count = 0;
+            break;
+        case OP_CANCEL: {
+            Pointer self = current_self(vm);
+            int kept = 0;
+            for (int i = 0; i < s->queue.count; i++) {
+                const Event *e = &s->queue.items[i];
+                bool mine = e->to.object == self.object && e->to.offset == self.offset && e->from.object == self.object &&
+                            e->from.offset == self.offset;
+                if (!mine || strcmp(e->name, in->stmt->name) != 0) s->queue.items[kept++] = *e;
+            }
+            s->queue.count = kept;
+            break;
+        }
+        case OP_CHECK: check(vm, in); break;
+        case OP_EXPECT: expect(vm, in); break;
+        case OP_STEP: {
+            SequenceRow m = {.kind = MSG_STEP, .name = in->stmt->text, .stmt = in->stmt, .end = -1};
+            s->step_row = add_message(vm, m);
+            add_log(vm, (LogEntry){.kind = LOG_STEP, .stmt = in->stmt, .text = in->stmt->text});
+            vm->event = LEVEL_SYSTEM;
+            break;
+        }
+        default:
+            add_log(vm, (LogEntry){.kind = LOG_TODO, .stmt = in->stmt, .function = top_frame(vm)->function});
+            break;
+    }
 }
 
 /* ---- one instruction ---- */
@@ -859,9 +1290,23 @@ static void store(Vm *vm, const Instr *in) {
     place_text(vm, in->expr, entry.target, sizeof entry.target);
     vm_format(vm, cell, in->type, entry.old, sizeof entry.old);
     v.known = true;
+    bool changed = !cell->known || cell->as.i != v.as.i;
     *cell = v;
     vm_format(vm, cell, in->type, entry.value, sizeof entry.value);
     touch(vm, p, true);
+    if (in->type->states) {
+        entry.kind = LOG_STATE;
+        int life = life_of(vm, (Pointer){p.object, p.offset, p.serial}, in->type->states);
+        snprintf(entry.target, sizeof entry.target, "%.40s", vm->lives[life].name);
+        if (changed) {
+            SequenceRow m = {.kind = MSG_STATE, .from = life, .to = life, .end = -1};
+            const StateName *state = in->type->states->states;
+            for (int i = 0; state && i < v.as.i; i++) state = state->next;
+            m.name = state ? state->name : "?";
+            snprintf(m.args, sizeof m.args, "%s", entry.old);
+            add_message(vm, m);
+        }
+    }
     add_log(vm, entry);
 }
 
@@ -1022,8 +1467,9 @@ static void step(Vm *vm) {
             s->status = VM_FINISHED;
             if (s->stack.count > 0) s->exit_status = as_int(vm, s->stack.items[s->stack.count - 1]) & 0xFF;
             add_log(vm, (LogEntry){.kind = LOG_END});
-            vm->event = LEVEL_CALL;
+            vm->event = LEVEL_SYSTEM;
             break;
+        default: system_op(vm, in); break;
     }
 }
 
@@ -1055,7 +1501,9 @@ static void step(Vm *vm) {
     X((a).vars, (b).vars);                                                                         \
     X((a).frames, (b).frames);                                                                     \
     X((a).stack, (b).stack);                                                                       \
-    X((a).evals, (b).evals)
+    X((a).evals, (b).evals);                                                                       \
+    X((a).queue, (b).queue);                                                                       \
+    X((a).links, (b).links)
 
 #define FREE_ARRAY(a, b) free((a).items)
 
@@ -1076,6 +1524,8 @@ static void restore_state(State *to, const State *from) {
     to->frames = keep.frames;
     to->stack = keep.stack;
     to->evals = keep.evals;
+    to->queue = keep.queue;
+    to->links = keep.links;
     EACH_ARRAY(RESTORE_ARRAY, *to, *from);
 }
 
@@ -1211,9 +1661,12 @@ static void reset(Vm *vm) {
     vm->touched.count = 0;
     vm->event = vm->last_stop = LEVEL_NONE;
     vm->trial_base = vm->trial_count = 0;
+    vm->has_classes = vm->program->classes != NULL;
 
     State *s = &vm->s;
     s->node = -1;
+    s->random = 1;
+    s->step_row = -1;
     PUSH(s->objects, (Object){.address = 0x7ffff000u}); /* the null pointer */
     s->serial = 1;
     for (int i = 0; i < vm->code.string_count; i++) {
@@ -1232,7 +1685,9 @@ static void reset(Vm *vm) {
         }
     }
     Frame globals = {.vars = 0, .var_count = vm->code.global_vars, .objects = s->objects.count, .node = -1};
+    globals.message = -1;
     PUSH(s->frames, globals);
+    add_life(vm, (Life){.name = "main"});
     RESERVE(s->vars, vm->code.global_vars + 1);
     memset(s->vars.items, 0, (size_t)(vm->code.global_vars + 1) * sizeof(Var));
     s->vars.count = vm->code.global_vars;
@@ -1240,13 +1695,23 @@ static void reset(Vm *vm) {
 }
 
 static void set_up_globals(Vm *vm) {
-    while (vm->code.items[vm->s.pc].op != OP_CALL && vm->code.items[vm->s.pc].op != OP_END) step(vm);
+    while (vm->s.pc != vm->code.ready && vm->s.status == VM_READY) step(vm);
     vm->s.steps = 0;
 }
 
 void vm_start(Vm *vm) {
     reset(vm);
     set_up_globals(vm);
+    take_snapshot(vm);
+}
+
+void vm_start_test(Vm *vm, const Function *test) {
+    reset(vm);
+    snprintf(vm->lives[0].name, sizeof vm->lives[0].name, "test");
+    set_up_globals(vm);
+    step(vm); /* OP_READY */
+    vm->s.steps = 0;
+    enter_function(vm, test, NULL, vm->code.count - 1);
     take_snapshot(vm);
 }
 
@@ -1377,6 +1842,9 @@ void vm_destroy(Vm *vm) {
     free(vm->input);
     free(vm->log);
     free(vm->nodes);
+    free(vm->lives);
+    free(vm->messages);
+    free(vm->checks);
     free(vm);
 }
 
@@ -1407,7 +1875,8 @@ uint64_t vm_fingerprint(const Vm *vm) {
     uint64_t h = 14695981039346656037u;
     long long numbers[] = {s->pc, s->status, s->steps, s->log_count, s->node_count, s->node,
                            s->objects.count, s->cells.count, s->frames.count, s->stack.count,
-                           s->evals.count, s->bounds.count, s->vars.count, s->serial,
+                           s->evals.count, s->bounds.count, s->vars.count, s->serial, s->time, s->seq, s->random,
+                           s->queue.count, s->message_count, s->life_count, s->check_count,
                            (long long)s->output_length, (long long)s->input_pos};
     h = mix(h, numbers, sizeof numbers);
     for (int i = 0; i < s->cells.count; i++) {
@@ -1485,6 +1954,27 @@ const LogEntry *vm_log(const Vm *vm, long number) {
 
 int vm_node_count(const Vm *vm) { return vm->s.node_count; }
 const CallNode *vm_node(const Vm *vm, int index) { return &vm->nodes[index]; }
+long vm_time(const Vm *vm) { return vm->s.time; }
+int vm_life_count(const Vm *vm) { return vm->s.life_count; }
+const Life *vm_life(const Vm *vm, int index) { return &vm->lives[index]; }
+int vm_message_count(const Vm *vm) { return vm->s.message_count; }
+const SequenceRow *vm_message_at(const Vm *vm, int index) { return &vm->messages[index]; }
+int vm_queue_count(const Vm *vm) { return vm->s.queue.count; }
+const Event *vm_queued(const Vm *vm, int index) { return &vm->s.queue.items[index]; }
+int vm_check_count(const Vm *vm) { return vm->s.check_count; }
+const Check *vm_check(const Vm *vm, int index) { return &vm->checks[index]; }
+int vm_link_count(const Vm *vm) { return vm->s.links.count; }
+const LinkRule *vm_link(const Vm *vm, int index) { return &vm->s.links.items[index]; }
+int vm_current_life(const Vm *vm) { return vm->s.frames.items[vm->s.frames.count - 1].life; }
+
+const char *vm_state_name(const Vm *vm, const Life *life) {
+    if (!life->klass || !life->klass->is_component || !life->klass->states) return NULL;
+    const Value *v = cell_of(vm, life->at);
+    const StateName *state = life->klass->states;
+    for (int i = 0; state && v && i < v->as.i; i++) state = state->next;
+    return state ? state->name : NULL;
+}
+
 int vm_trial_count(const Vm *vm) { return vm->trial_count; }
 const Var *vm_trial_var(const Vm *vm, int index) { return &vm->s.vars.items[vm->trial_base + index]; }
 
@@ -1510,7 +2000,11 @@ void vm_format(const Vm *vm, const Value *v, const Type *type, char *out, size_t
         if (!strpbrk(out, ".en") && strlen(out) + 2 < size) strcat(out, ".0");
         return;
     }
-    if (type && type->kind == TY_BOOL) {
+    if (type && type->states) {
+        const StateName *state = type->states->states;
+        for (int i = 0; state && i < v->as.i; i++) state = state->next;
+        snprintf(out, size, "%s", state ? state->name : "?");
+    } else if (type && type->kind == TY_BOOL) {
         snprintf(out, size, "%s", v->as.i ? "true" : "false");
     } else if (type && type->kind == TY_CHAR) {
         if (v->as.i >= 32 && v->as.i < 127) snprintf(out, size, "'%c'", v->as.i);
@@ -1680,6 +2174,19 @@ static void show(Printer *p, const Expr *e, int min) {
         case EX_STRING: strbuf_printf(p->out, "\"%s\"", e->text); break;
         case EX_CHAR: strbuf_printf(p->out, "'%s'", e->text); break;
         case EX_APPLY:
+            if (e->is_method) { /* receiver.method(rest) */
+                const Expr *receiver = e->args.items[0];
+                if (receiver->kind == EX_UNARY && receiver->op == TOK_STAR) receiver = receiver->base;
+                bool self = receiver->kind == EX_NAME && strcmp(receiver->text, "self") == 0;
+                if (!self) show(p, receiver, 12);
+                strbuf_printf(p->out, "%s%s(", self ? "" : ".", e->symbol->function ? e->symbol->function->name : "?");
+                for (int i = 1; i < e->args.count; i++) {
+                    if (i > 1) strbuf_puts(p->out, ", ");
+                    show(p, e->args.items[i], 0);
+                }
+                strbuf_puts(p->out, ")");
+                break;
+            }
             show(p, e->base, 12);
             show_args(p, e, e->is_call ? "(" : "[", e->is_call ? ")" : "]");
             break;
@@ -1688,6 +2195,10 @@ static void show(Printer *p, const Expr *e, int min) {
             show_args(p, e, "[", "]");
             break;
         case EX_FIELD:
+            if (e->base->kind == EX_NAME && strcmp(e->base->text, "self") == 0) { /* as it was written */
+                strbuf_puts(p->out, e->text);
+                break;
+            }
             show(p, e->base, 12);
             strbuf_printf(p->out, "%s%s", e->op == TOK_ARROW ? "->" : ".", e->text);
             break;
@@ -1730,9 +2241,13 @@ static void place_text(const Vm *vm, const Expr *e, char *out, size_t size) {
         chain[n++] = x;
         if (x->kind == EX_NAME || x->is_call) break;
     }
+    bool skipped = n > 1 && chain[n - 1]->kind == EX_NAME && strcmp(chain[n - 1]->text, "self") == 0 &&
+                   chain[n - 2]->kind == EX_FIELD;
+    if (skipped) n--;
     for (int i = n - 1; i >= 0; i--) {
         const Expr *x = chain[i];
-        if (x->kind == EX_NAME) strbuf_puts(&text, x->text);
+        if (skipped && i == n - 1) strbuf_puts(&text, x->text);
+        else if (x->kind == EX_NAME) strbuf_puts(&text, x->text);
         else if (x->is_call) show(&printer, x, 0);
         else if (x->kind == EX_INDEX || x->kind == EX_APPLY) show_args(&printer, x, "[", "]");
         else if (x->kind == EX_FIELD) strbuf_printf(&text, "%s%s", x->op == TOK_ARROW ? "->" : ".", x->text);
@@ -1751,12 +2266,12 @@ static void place_text(const Vm *vm, const Expr *e, char *out, size_t size) {
 
 static void format_call(Vm *vm, const Function *function, char *out, size_t size) {
     out[0] = '\0';
-    int frame = frame_index(vm);
-    for (int i = 0; i < function->symbol->param_count; i++) {
+    int frame = frame_index(vm), first = function->owner ? 1 : 0;
+    for (int i = first; i < function->symbol->param_count; i++) {
         const Symbol *param = function->symbol->params[i];
         const Var *var = vm_find_var(vm, frame, param);
         char text[64] = "";
-        if (i) append(out, size, ", ");
+        if (i > first) append(out, size, ", ");
         if (param->type->kind == TY_ARRAY || param->type->kind == TY_RECORD) {
             snprintf(text, sizeof text, "%.60s", param->name);
         } else if (var) {

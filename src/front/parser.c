@@ -18,15 +18,27 @@ typedef struct {
     TypeDecl **types_tail;
     VarDecl **globals_tail;
     Function **functions_tail;
+    Class **classes_tail;
+    Link **links_tail;
+    Class *klass;   /* being parsed */
+    bool in_test;
 } Parser;
 
 static Expr *parse_expr(Parser *p);
 static Expr *parse_postfix(Parser *p);
+static Expr *parse_unary(Parser *p);
+static bool starts_type(const Parser *p);
 static Stmt *parse_statements(Parser *p);
 static VarDecl **parse_var_group(Parser *p, VarDecl **tail);
 static VarDecl **parse_var_section(Parser *p, VarDecl **tail, bool bare_names);
 static TypeSpec *parse_type(Parser *p);
 static void parse_type_decl(Parser *p);
+
+/* Words that mean something only in some places, so that programs can go on
+ * using them as names. */
+static bool is_word(const Token *token, const char *word) {
+    return token->kind == TOK_IDENT && equals_ignore_case(token->text, word);
+}
 
 /* ---- tokens ---- */
 
@@ -479,6 +491,7 @@ static bool parse_mode(Parser *p, ParamMode *mode, bool *group) {
  * parameter, and for those that share its type. */
 static void parse_params(Parser *p, Function *function) {
     VarDecl **tail = &function->params;
+    while (*tail) tail = &(*tail)->next; /* self */
     VarDecl *untyped = NULL; /* run of plain names waiting for a shared type */
     ParamMode mode = MODE_IN;
     bool group = false;
@@ -561,16 +574,46 @@ static void parse_function_end(Parser *p, Function *function) {
     match(p, TOK_SEMICOLON);
 }
 
-static void parse_function(Parser *p, bool is_procedure, TypeSpec *result) {
+static void parse_when(Parser *p, Function *function) {
+    if (!is_word(cur(p), "when")) return;
+    advance(p);
+    StateName **tail = &function->guards;
+    do {
+        if (!check(p, TOK_IDENT)) {
+            syntax_error(p, "the name of a state");
+            return;
+        }
+        StateName *state = ARENA_NEW(p->arena, StateName);
+        state->loc = cur(p)->loc;
+        state->name = advance(p)->text;
+        *tail = state;
+        tail = &state->next;
+    } while (match(p, TOK_COMMA) || match(p, TOK_OR));
+}
+
+static Function *parse_function(Parser *p, bool is_procedure, TypeSpec *result) {
     Function *function = ARENA_NEW(p->arena, Function);
     function->is_procedure = is_procedure;
     function->result = result;
     function->loc = cur(p)->loc;
     if (!check(p, TOK_IDENT)) {
         syntax_error(p, is_procedure ? "a procedure name" : "a function name");
-        return;
+        return NULL;
     }
-    function->name = advance(p)->text;
+    function->name = function->full_name = advance(p)->text;
+    function->owner = p->klass;
+    if (p->klass) {
+        function->full_name = arena_printf(p->arena, "%s.%s", p->klass->name, function->name);
+        VarDecl *self = ARENA_NEW(p->arena, VarDecl);
+        self->loc = function->loc;
+        self->name = "self";
+        self->mode = MODE_INOUT;
+        self->spec = ARENA_NEW(p->arena, TypeSpec);
+        self->spec->loc = function->loc;
+        self->spec->base = TOK_IDENT;
+        self->spec->name = p->klass->name;
+        function->params = self;
+    }
     *p->functions_tail = function;
     p->functions_tail = &function->next;
 
@@ -578,12 +621,13 @@ static void parse_function(Parser *p, bool is_procedure, TypeSpec *result) {
         p->brackets++;
         parse_params(p, function);
         p->brackets--;
-        if (p->panic) return;
+        if (p->panic) return function;
     }
+    parse_when(p, function);
     if (check(p, TOK_COLON) && !is_procedure && !result) {
         advance(p);
         function->result = parse_type(p);
-        if (!function->result) return;
+        if (!function->result) return function;
     }
     match(p, TOK_SEMICOLON);
 
@@ -596,9 +640,143 @@ static void parse_function(Parser *p, bool is_procedure, TypeSpec *result) {
         else
             break;
     }
-    if (p->panic || !expect(p, TOK_BEGIN, "'begin'")) return;
+    if (p->panic || !expect(p, TOK_BEGIN, "'begin'")) return function;
     function->body = parse_statements(p);
     if (!p->panic) parse_function_end(p, function);
+    function->last_line = p->tokens[p->pos > 0 ? p->pos - 1 : 0].loc.line;
+    return function;
+}
+
+/* ---- classes, components, tests ---- */
+
+static void parse_states(Parser *p, Class *klass) {
+    StateName **tail = &klass->states;
+    while (*tail) tail = &(*tail)->next;
+    do {
+        if (!check(p, TOK_IDENT)) {
+            syntax_error(p, "the name of a state");
+            return;
+        }
+        StateName *state = ARENA_NEW(p->arena, StateName);
+        state->loc = cur(p)->loc;
+        state->name = advance(p)->text;
+        *tail = state;
+        tail = &state->next;
+    } while (match(p, TOK_COMMA));
+    match(p, TOK_SEMICOLON);
+}
+
+/* class Name / component Name ... end Name */
+static void parse_class(Parser *p) {
+    Class *klass = ARENA_NEW(p->arena, Class);
+    klass->is_component = is_word(advance(p), "component");
+    klass->loc = cur(p)->loc;
+    klass->name = advance(p)->text;
+    klass->record = ARENA_NEW(p->arena, Record);
+    klass->record->loc = klass->loc;
+    klass->record->name = klass->name;
+    klass->record->klass = klass;
+    *p->classes_tail = klass;
+    p->classes_tail = &klass->next;
+    TypeDecl *decl = ARENA_NEW(p->arena, TypeDecl);
+    decl->loc = klass->loc;
+    decl->name = klass->name;
+    decl->record = klass->record;
+    *p->types_tail = decl;
+    p->types_tail = &decl->next;
+
+    p->klass = klass;
+    VarDecl **fields = &klass->record->fields;
+    while (!p->panic && !check(p, TOK_END) && !check(p, TOK_EOF)) {
+        if (match(p, TOK_SEMICOLON)) continue;
+        if (klass->is_component && is_word(cur(p), "states") && peek(p, 1)->kind == TOK_IDENT) {
+            advance(p);
+            parse_states(p, klass);
+        } else if (klass->is_component && is_word(cur(p), "on") && peek(p, 1)->kind == TOK_IDENT) {
+            advance(p);
+            Function *handler = parse_function(p, true, NULL);
+            if (handler) handler->is_handler = true;
+        } else if (check(p, TOK_VAR) || (check(p, TOK_IDENT) && peek(p, 1)->kind != TOK_FUNCTION) ||
+                   check(p, TOK_STAR)) {
+            fields = parse_var_section(p, fields, false);
+            if (!p->panic && check(p, TOK_IDENT) && !is_word(cur(p), "on") && !is_word(cur(p), "states") &&
+                peek(p, 1)->kind != TOK_FUNCTION)
+                fields = parse_var_group(p, fields);
+        } else if (check(p, TOK_FUNCTION) || check(p, TOK_PROCEDURE)) {
+            bool is_procedure = advance(p)->kind == TOK_PROCEDURE;
+            parse_function(p, is_procedure, NULL);
+        } else if (starts_type(p) && !check(p, TOK_RECORD)) {
+            TypeSpec *result = parse_type(p);
+            if (result && expect(p, TOK_FUNCTION, "'function'")) parse_function(p, false, result);
+        } else {
+            syntax_error(p, "a variable, a procedure or a function of the class");
+        }
+    }
+    p->klass = NULL;
+    if (p->panic || !expect(p, TOK_END, "'end'")) return;
+    if (check(p, TOK_IDENT)) {
+        if (equals_ignore_case(cur(p)->text, klass->name)) advance(p);
+        else syntax_error(p, arena_printf(p->arena, diag_text(p->diag, "'end %s'"), klass->name));
+    }
+    klass->last_line = p->tokens[p->pos - 1].loc.line;
+    match(p, TOK_SEMICOLON);
+}
+
+/* test "what it shows" [var ...] begin ... end test */
+static void parse_test(Parser *p) {
+    Function *test = ARENA_NEW(p->arena, Function);
+    test->loc = cur(p)->loc;
+    advance(p);
+    test->is_procedure = test->is_test = true;
+    test->name = test->full_name = advance(p)->text;
+    *p->functions_tail = test;
+    p->functions_tail = &test->next;
+    VarDecl **tail = &test->locals;
+    while (!p->panic && (check(p, TOK_VAR) || (check(p, TOK_IDENT) && tail != &test->locals)))
+        tail = parse_var_section(p, tail, true);
+    if (p->panic || !expect(p, TOK_BEGIN, "'begin'")) return;
+    p->in_test = true;
+    test->body = parse_statements(p);
+    p->in_test = false;
+    if (p->panic || !expect(p, TOK_END, "'end test'")) return;
+    test->last_line = p->tokens[p->pos - 1].loc.line;
+    if (is_word(cur(p), "test") && peek(p, 1)->kind != TOK_STRING) advance(p);
+    match(p, TOK_SEMICOLON);
+}
+
+static void parse_link(Parser *p) {
+    Link *link = ARENA_NEW(p->arena, Link);
+    link->loc = cur(p)->loc;
+    advance(p);
+    link->from = parse_postfix(p);
+    if (!link->from) return;
+    if (match(p, TOK_LT)) { /* "<->" */
+        link->both_ways = true;
+        if (!expect(p, TOK_ARROW, "'->'")) return;
+    } else if (!expect(p, TOK_ARROW, "'->'")) {
+        return;
+    }
+    link->to = parse_postfix(p);
+    while (link->to && !p->panic && check(p, TOK_IDENT) && !cur(p)->starts_line) {
+        bool delay = is_word(cur(p), "delay");
+        if (!delay && !is_word(cur(p), "loss")) {
+            syntax_error(p, "'delay' or 'loss'");
+            return;
+        }
+        advance(p);
+        Expr *value = parse_expr(p);
+        if (!value) return;
+        if (delay) {
+            link->delay = value;
+            if (match(p, TOK_DOTDOT)) link->delay_max = parse_expr(p);
+        } else {
+            link->loss = value;
+            match(p, TOK_MOD); /* "loss 20%" */
+        }
+    }
+    match(p, TOK_SEMICOLON);
+    *p->links_tail = link;
+    p->links_tail = &link->next;
 }
 
 /* ---- statements ---- */
@@ -617,7 +795,7 @@ static bool ends_statements(TokenKind kind) {
 static bool starts_statement(TokenKind kind) {
     switch (kind) {
         case TOK_IF: case TOK_WHILE: case TOK_FOR: case TOK_REPEAT:
-        case TOK_RETURN: case TOK_PRINT: case TOK_READ: case TOK_BEGIN:
+        case TOK_RETURN: case TOK_PRINT: case TOK_READ: case TOK_BEGIN: case TOK_ELLIPSIS:
         case TOK_VAR: case TOK_IDENT: case TOK_STAR: case TOK_AT: case TOK_LPAREN:
             return true;
         default:
@@ -759,7 +937,7 @@ static Stmt *parse_simple(Parser *p) {
         p->panic = true;
         return NULL;
     }
-    if (expr->kind != EX_APPLY && expr->kind != EX_NAME) {
+    if (expr->kind != EX_APPLY && expr->kind != EX_NAME && expr->kind != EX_FIELD) {
         syntax_error(p, "an assignment");
         return NULL;
     }
@@ -767,9 +945,128 @@ static Stmt *parse_simple(Parser *p) {
     return stmt;
 }
 
+/* send Message(args) to target [after time] */
+static Stmt *parse_send(Parser *p) {
+    Stmt *stmt = new_stmt(p, ST_SEND);
+    advance(p);
+    stmt->value = new_leaf(p, EX_NAME);
+    stmt->name = stmt->value->text;
+    if (check(p, TOK_LPAREN)) {
+        Expr *apply = new_expr(p, EX_APPLY, cur(p)->loc, stmt->value, NULL);
+        advance(p);
+        if (!parse_args(p, &apply->args, TOK_RPAREN, "')'")) return NULL;
+        stmt->value = apply;
+    }
+    if (!expect(p, TOK_TO, "'to'")) return NULL;
+    if (is_word(cur(p), "all") && peek(p, 1)->kind == TOK_IDENT && !peek(p, 1)->starts_line) {
+        advance(p);
+        stmt->to_all_name = advance(p)->text;
+    } else {
+        stmt->target = parse_unary(p);
+        if (!stmt->target) return NULL;
+    }
+    if (is_word(cur(p), "after") && !cur(p)->starts_line) {
+        advance(p);
+        stmt->limit = parse_expr(p);
+        if (!stmt->limit) return NULL;
+    }
+    return stmt;
+}
+
+static bool same_line(const Parser *p, int offset) { return !peek(p, offset)->starts_line; }
+
+/* Statements that begin with a contextual word. Sets *handled. */
+static Stmt *parse_word_statement(Parser *p, bool *handled) {
+    const Token *word = cur(p);
+    Stmt *stmt = NULL;
+    *handled = true;
+    if (is_word(word, "send") && peek(p, 1)->kind == TOK_IDENT && same_line(p, 1)) return parse_send(p);
+    if (is_word(word, "become") && peek(p, 1)->kind == TOK_IDENT && same_line(p, 1)) {
+        stmt = new_stmt(p, ST_ASSIGN); /* state := ... */
+        stmt->target = new_leaf(p, EX_NAME);
+        stmt->target->text = "state";
+        stmt->value = new_leaf(p, EX_NAME);
+        stmt->name = "become";
+        return stmt;
+    }
+    if (is_word(word, "cancel") && peek(p, 1)->kind == TOK_IDENT && same_line(p, 1)) {
+        stmt = new_stmt(p, ST_CANCEL);
+        advance(p);
+        stmt->name = advance(p)->text;
+        return stmt;
+    }
+    if (p->in_test) {
+        TokenKind next = peek(p, 1)->kind;
+        bool plain = next == TOK_ASSIGN || next == TOK_LBRACKET || next == TOK_DOT;
+        if (is_word(word, "check") && !plain) {
+            stmt = new_stmt(p, ST_CHECK);
+            advance(p);
+            stmt->value = parse_expr(p);
+            if (!stmt->value) return NULL;
+            if (match(p, TOK_COMMA)) {
+                if (!check(p, TOK_STRING)) {
+                    syntax_error(p, "a text between quotes");
+                    return NULL;
+                }
+                stmt->text = advance(p)->text;
+            }
+            return stmt;
+        }
+        if (is_word(word, "run") && !plain) {
+            stmt = new_stmt(p, ST_RUN);
+            advance(p);
+            if (!cur(p)->starts_line && (check(p, TOK_INT) || check(p, TOK_IDENT) || check(p, TOK_LPAREN))) {
+                stmt->value = parse_expr(p);
+                if (!stmt->value) return NULL;
+            }
+            return stmt;
+        }
+        if (is_word(word, "step") || (word->kind == TOK_STEP && next == TOK_STRING)) {
+            stmt = new_stmt(p, ST_STEP);
+            advance(p);
+            if (!check(p, TOK_STRING)) {
+                syntax_error(p, "a text between quotes");
+                return NULL;
+            }
+            stmt->text = advance(p)->text;
+            return stmt;
+        }
+        if (is_word(word, "expect") && next == TOK_IDENT && same_line(p, 1)) {
+            stmt = new_stmt(p, ST_EXPECT);
+            advance(p);
+            stmt->target = new_leaf(p, EX_NAME);
+            while (match(p, TOK_LBRACKET)) {
+                Expr *index = new_expr(p, EX_INDEX, cur(p)->loc, stmt->target, NULL);
+                if (!parse_args(p, &index->args, TOK_RBRACKET, "']'")) return NULL;
+                stmt->target = index;
+            }
+            if (!expect(p, TOK_ARROW, "'->'")) return NULL;
+            stmt->limit = parse_postfix(p);
+            if (!stmt->limit || !expect(p, TOK_COLON, "':'")) return NULL;
+            if (!check(p, TOK_IDENT)) {
+                syntax_error(p, "the name of a message");
+                return NULL;
+            }
+            stmt->name = advance(p)->text;
+            return stmt;
+        }
+    }
+    *handled = false;
+    return NULL;
+}
+
 static Stmt *parse_statement(Parser *p) {
     Stmt *stmt;
+    bool handled = false;
+    if (check(p, TOK_IDENT) || (p->in_test && check(p, TOK_STEP))) {
+        stmt = parse_word_statement(p, &handled);
+        if (handled) return stmt;
+    }
     switch (cur(p)->kind) {
+        case TOK_ELLIPSIS:
+            stmt = new_stmt(p, ST_TODO);
+            advance(p);
+            return stmt;
         case TOK_IF: return parse_if(p);
         case TOK_FOR: return parse_for(p);
         case TOK_RETURN: return parse_return(p);
@@ -848,6 +1145,26 @@ static void parse_declaration(Parser *p) {
             parse_type_decl(p);
             return;
         default:
+            if (check(p, TOK_IDENT)) {
+                TokenKind next = peek(p, 1)->kind;
+                if ((is_word(cur(p), "class") || is_word(cur(p), "component")) && next == TOK_IDENT) {
+                    parse_class(p);
+                    return;
+                }
+                if (is_word(cur(p), "test") && next == TOK_STRING) {
+                    parse_test(p);
+                    return;
+                }
+                if (is_word(cur(p), "link") && next == TOK_IDENT) {
+                    parse_link(p);
+                    return;
+                }
+                if (is_word(cur(p), "seed") && next == TOK_INT) {
+                    advance(p);
+                    p->program->seed = parse_expr(p);
+                    return;
+                }
+            }
             if (starts_type(p) && !check(p, TOK_RECORD)) { /* "real function f(...)" */
                 TypeSpec *result = parse_type(p);
                 if (result && expect(p, TOK_FUNCTION, "'function'"))
@@ -863,7 +1180,8 @@ Program *parse(TokenList tokens, const Config *config, Arena *arena, Diag *diag)
     Parser parser = {.tokens = tokens.items, .count = tokens.count, .config = config,
                      .arena = arena, .diag = diag, .program = program,
                      .types_tail = &program->types, .globals_tail = &program->globals,
-                     .functions_tail = &program->functions};
+                     .functions_tail = &program->functions,
+                     .classes_tail = &program->classes, .links_tail = &program->links};
     Parser *p = &parser;
     for (;;) {
         while (match(p, TOK_SEMICOLON)) {}
@@ -873,6 +1191,8 @@ Program *parse(TokenList tokens, const Config *config, Arena *arena, Diag *diag)
         if (p->panic) {
             p->panic = false;
             p->depth = p->brackets = 0;
+            p->klass = NULL;
+            p->in_test = false;
             if (p->pos == before) advance(p);
             while (!check(p, TOK_EOF) && !check(p, TOK_FUNCTION) && !check(p, TOK_PROCEDURE))
                 advance(p);
