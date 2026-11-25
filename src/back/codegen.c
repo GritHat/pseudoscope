@@ -246,11 +246,9 @@ static void gen_call(Gen *g, const Expr *expr) {
             gen_expr(g, arg, P_UNARY);
             continue;
         }
-        if (param && param->by_reference && arg->kind == EX_UNARY && arg->op == TOK_AMP)
+        if (param && param->by_reference && arg->kind == EX_UNARY &&
+            (arg->op == TOK_AMP || arg->op == TOK_AT))
             gen_expr(g, arg, P_LOWEST);
-        else if (param && param->by_reference && arg->kind == EX_UNARY && arg->op == TOK_AT &&
-                 is_by_reference(arg->base))
-            put(g, arg->base->symbol->c_name);
         else if (param && param->by_reference)
             gen_address(g, arg, P_LOWEST);
         else

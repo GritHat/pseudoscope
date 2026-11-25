@@ -1,0 +1,16 @@
+// p is already a pointer: @p passes it as it is
+procedure set(out x: integer)
+begin
+    x := 7
+end set
+procedure through(in p: integer*)
+begin
+    set(@p)
+end through
+procedure main()
+var a: integer
+begin
+    a := 1
+    through(&a)
+    print(a)
+end main
