@@ -1,0 +1,6 @@
+external_conflict.plike:3:8: warning: 'foo' is not defined in this file
+    3 |     foo(1)
+      |        ^
+external_conflict.plike:4:8: error: 'foo' takes 1 argument, not 2
+    4 |     foo(1, 2)
+      |        ^

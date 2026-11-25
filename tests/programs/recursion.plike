@@ -1,0 +1,53 @@
+function pow(in x:real, in n: integer) : real
+    begin
+        if n == 0 then
+            pow := 1
+        else
+            pow := x * pow(x, n-1)
+        endif
+    end
+end pow
+
+function fib(in n: integer): integer
+begin
+    if n < 2 then
+        return n
+    endif
+    return fib(n - 1) + fib(n - 2)
+end fib
+
+// the two functions call each other; one is defined later
+logical function even(n)
+var n: integer
+begin
+    if n = 0 then even := .TRUE. else even := odd(n - 1) endif
+end
+endfunction
+
+function odd(in n: integer)
+var odd: logical
+begin
+    odd := false
+    if n .ne. 0 then
+        odd := even(n-1)
+    endif
+end odd
+
+// the result is used as a variable
+function count(in n: integer): integer
+var i: integer
+begin
+    for i := 1 to n do
+        count := count + 1
+    endfor
+    if count > 100 then return endif
+    count := -count
+end count
+
+procedure main()
+begin
+    print(pow(2, 10))
+    print(fib(20))
+    print(even(10), odd(10))
+    print(count(3), count(101))
+end main

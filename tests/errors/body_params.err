@@ -1,0 +1,3 @@
+body_params.plike:1:16: error: the type of 'x' belongs in the body (see --params)
+    1 | procedure a(in x: integer)
+      |                ^

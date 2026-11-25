@@ -1,0 +1,4 @@
+procedure a(in x: array[3] of integer)
+begin
+    x(1) := x[2]
+end a

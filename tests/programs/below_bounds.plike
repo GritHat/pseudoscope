@@ -1,0 +1,11 @@
+procedure f(in a[]: array of integer, in i: integer)
+begin
+    print(a[i])
+end f
+procedure main()
+var a: array[2] of integer
+begin
+    a[1] := 7
+    f(a, 1)
+    f(a, 0)
+end main

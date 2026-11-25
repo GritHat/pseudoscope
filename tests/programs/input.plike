@@ -1,0 +1,18 @@
+procedure ask(out n: integer, in/out v: array of real)
+var i: integer
+begin
+    read(n)
+    for i := 1 to n do read v[i] endfor
+end ask
+procedure main()
+var n: integer
+var v: array[10] of real
+var c: character
+var b: logical
+begin
+    ask(n, v)
+    read(c, b)
+    print(n, v[1], v[2], c, b)
+    read(n)
+    print("not reached")
+end main

@@ -1,0 +1,33 @@
+names.plike:11:11: error: 'p' is already declared at line 1
+   11 | procedure p()
+      |           ^
+names.plike:1:31: error: 'a' is already declared at line 1
+    1 | procedure p(in a: integer, in a: integer)
+      |                               ^
+names.plike:14:10: error: function 'f' has no result type
+   14 | function f(in x: integer)
+      |          ^
+names.plike:17:13: error: parameter 'x' has no type
+   17 | procedure g(x)
+      |             ^
+names.plike:3:5: error: 'b' is already declared at line 2
+    3 | var b: real
+      |     ^
+names.plike:4:8: error: unknown type 'unknown'
+    4 | var c: unknown
+      |        ^
+names.plike:6:5: error: 'x' is not declared
+    6 |     x := 1
+      |     ^
+names.plike:7:7: error: integer is not a record
+    7 |     a.f := 2
+      |       ^
+names.plike:8:5: error: 'q' is not declared
+    8 |     q := p
+      |     ^
+names.plike:8:10: error: 'p' takes 2 arguments, not 0
+    8 |     q := p
+      |          ^
+names.plike:9:5: error: 'p' takes 2 arguments, not 0
+    9 |     p := 3
+      |     ^

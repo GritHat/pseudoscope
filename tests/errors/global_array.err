@@ -1,0 +1,9 @@
+global_array.plike:3:25: error: 'n' is not declared
+    3 | type t: record v: array[n] of integer end
+      |                         ^
+global_array.plike:3:16: error: the size of an array inside a record must be constant
+    3 | type t: record v: array[n] of integer end
+      |                ^
+global_array.plike:2:5: error: the size of a global array must be constant
+    2 | var a: array[n] of integer
+      |     ^

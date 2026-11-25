@@ -1,0 +1,6 @@
+procedure z(in n: integer, out a[n, n]: array of real, in b[2..n]: array of real)
+var c[n], d[0..n]: array of integer
+begin
+    a[0, n - 1] := b[2]
+    c[0] := d[n]
+end z

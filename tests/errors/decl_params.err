@@ -1,0 +1,3 @@
+decl_params.plike:2:5: error: the type of 'x' belongs in the parameter list (see --params)
+    2 | var x: integer
+      |     ^

@@ -1,0 +1,6 @@
+function f(x,y): real
+    x: integer;
+    y: real;
+begin
+    f := x + y
+end f

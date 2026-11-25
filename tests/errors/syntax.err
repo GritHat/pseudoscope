@@ -1,0 +1,24 @@
+syntax.plike:11:12: error: unexpected character '$'
+   11 |     x := 1 $ 2
+      |            ^
+syntax.plike:19:11: error: unterminated string
+   19 |     print("never closed
+      |           ^
+syntax.plike:4:7: error: '=' compares; to assign use ':=' or --assignment=equals
+    4 |     x = 1
+      |       ^
+syntax.plike:6:5: error: expected an expression, found 'if'
+    6 |     if x then x := 1
+      |     ^
+syntax.plike:9:5: error: expected 'endprocedure' or 'end a', found 'endif'
+    9 |     endif
+      |     ^
+syntax.plike:14:1: error: expected a parameter name, found 'begin'
+   14 | begin
+      | ^
+syntax.plike:20:1: error: expected an expression, found 'end'
+   20 | end wrong
+      | ^
+syntax.plike:20:5: error: expected 'endprocedure' or 'end d', found 'wrong'
+   20 | end wrong
+      |     ^

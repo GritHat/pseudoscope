@@ -1,0 +1,3 @@
+no_paren_arrays.plike:3:6: error: arrays are accessed with [] (see --mixed-arrays)
+    3 |     x(1) := x[2]
+      |      ^

@@ -1,0 +1,25 @@
+type point: record x: integer end
+integer function f1(in a: integer)
+begin f1 := a end
+endfunction
+point function f2()
+begin f2.x := f1(2) end
+endfunction
+real* function f3(in a: real*)
+begin f3 := a end
+endfunction
+function f4(in a: integer*) : integer**
+begin f4 := &a end
+end f4
+FUNCTION f5(a, b)
+VAR a, b, f5: REAL;
+BEGIN
+    f5 := a / b;
+    Return;
+END
+END f5
+function f6(): logical
+begin
+    f6 := f6 or not f6
+    return f5(1, 2) > 0.5
+endfunction

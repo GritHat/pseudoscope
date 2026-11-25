@@ -1,0 +1,6 @@
+#!/bin/sh
+# C compiler used by the tests: warnings are errors, and the compiled programs
+# stop at the first invalid access or undefined behaviour.
+exec "${TEST_CC:-cc}" -Wall -Wextra -Werror -Wno-unused-variable -Wno-unused-parameter \
+    -Wno-unused-but-set-variable -Wno-unused-but-set-parameter \
+    -g -fsanitize=address,undefined -fno-sanitize-recover=all "$@"

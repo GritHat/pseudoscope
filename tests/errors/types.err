@@ -1,0 +1,61 @@
+types.plike:2:19: error: record 'loop' contains itself; use a pointer
+    2 | type loop: record l: loop end
+      |                   ^
+types.plike:11:5: error: the size of 't' is missing
+   11 | var t: array of integer
+      |     ^
+types.plike:12:14: error: the size of an array must be positive
+   12 | var z: array[0] of integer
+      |              ^
+types.plike:13:14: error: an array bound must be an integer, not real
+   13 | var b: array[1.5] of integer
+      |              ^
+types.plike:15:5: error: r cannot be assigned to integer
+   15 |     i := x
+      |     ^
+types.plike:16:5: error: integer cannot be assigned to r
+   16 |     x := 1
+      |     ^
+types.plike:17:5: error: integer cannot be assigned to array of integer
+   17 |     v := 2
+      |     ^
+types.plike:18:6: error: the array has 1 dimension but 2 indices were given
+   18 |     v[1, 2] := 3
+      |      ^
+types.plike:19:5: error: integer cannot be assigned to array of integer
+   19 |     m[1] := 3
+      |     ^
+types.plike:20:6: error: integer is not an array
+   20 |     i[1] := 2
+      |      ^
+types.plike:21:7: error: an array index must be an integer, not real
+   21 |     v[1.5] := 1
+      |       ^
+types.plike:22:7: error: there is no field 'b' in r
+   22 |     x.b := 2
+      |       ^
+types.plike:23:10: error: integer is not a pointer
+   23 |     i := *i
+      |          ^
+types.plike:24:14: error: '%' cannot be applied to real and integer
+   24 |     i := 2.5 % 2
+      |              ^
+types.plike:25:12: error: '&' cannot be applied to real and integer
+   25 |     s := s & 1
+      |            ^
+types.plike:26:8: error: a condition cannot be r
+   26 |     if x then endif
+      |        ^
+types.plike:27:10: error: 'x' is an out parameter: it needs a variable
+   27 |     out1(3)
+      |          ^
+types.plike:28:10: error: parameter 'x' of 'out1' is integer, not real
+   28 |     out1(s)
+      |          ^
+types.plike:29:9: error: 'out1' takes 1 argument, not 2
+   29 |     out1(i, i)
+      |         ^
+types.plike:30:12: error: parameter 'a' of 'f' is array of integer, not 2d array of integer
+   30 |     i := f(m)
+      |            ^
+too many errors, stopping here

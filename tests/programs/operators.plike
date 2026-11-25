@@ -1,0 +1,27 @@
+procedure main()
+var a, b, c: integer
+var t, f: logical
+var ch: character
+begin
+    a := 6; b := 3; c := 2
+    t := .true.; f := FALSE
+    print(a + b * c, (a + b) * c, a - b - c, a - (b - c), a / b / c, a / (b * c))
+    print(a % 4, a mod 4, -a + b, - -a, -(-a))
+    print(a & b, a | b, a ^ b, ~a, a << 2, a >> 1)
+    print(a & b == c, (a & b) == c, 1 << 2 + 1)
+    print(t and f or t, t .AND. (f .or. t), not t, !f, t&&f, t||f)
+    print(a = 6, a == 6, a eq 6, a.eq.6, a != 6, a <> 6, a ne 6, a .notequals. 6)
+    print(1 < 2 == t)
+    print(0xFF, 0o17, 0b101, 017, 1e2, 2.5, 3., 1.5E-1)
+    ch := 'z'
+    print(ch, '\'', "it's")
+    a := a
+      + b
+      - 1
+    print(a)
+    a := (b
+      * c)
+    print(a)
+    a := sqrt(16) + abs(-3)
+    print(a, abs(-2.5), pow(2, 3))
+end main

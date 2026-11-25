@@ -1,0 +1,27 @@
+procedure fill(in lo: integer, in hi: integer, out a[lo..hi]: array of integer)
+var i, first: integer
+begin
+    first := lo
+    for i := lo to hi do a[i] := i * i endfor
+    lo := 1000 // the array keeps its bounds
+    print(a[first], a[hi])
+end fill
+
+procedure main()
+var a: array[-2..2] of integer
+var b: array[0..1, 5..6] of integer
+var n: integer
+begin
+    fill(-2, 2, a)
+    print(a[-2], a[0], a(2))
+    b[0,5] := 1; b[0,6] := 2; b[1,5] := 3; b[1,6] := 4
+    print(b[0,5], b[0][6], b(1,5), b(1)(6))
+    n := 3
+    begin
+        var c: array[n..n*2] of integer
+        n := 50
+        c[3] := 8
+        c[6] := 9
+        print(c[3] + c[6])
+    end
+end main

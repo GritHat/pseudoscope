@@ -1,0 +1,3 @@
+unclosed.plike:5:1: error: expected 'endif', found 'end'
+    5 | end a
+      | ^

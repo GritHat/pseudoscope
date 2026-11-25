@@ -1,0 +1,5 @@
+procedure d(in and: integer, in or: integer)
+var not: logical
+begin
+    not := and.eq.or.and.and.ne.3 .or. .not. not
+end d

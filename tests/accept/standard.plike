@@ -1,0 +1,6 @@
+type r: record and_: integer end
+procedure d(in a: integer, in b: r)
+var c: logical
+begin
+    c := a eq b.and_ and not a notequal c or true
+end d

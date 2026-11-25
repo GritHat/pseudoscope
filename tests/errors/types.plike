@@ -1,0 +1,34 @@
+type r: record a: integer end
+type loop: record l: loop end
+procedure out1(out x: integer)
+begin x := 1 end out1
+function f(in a[]: array of integer): integer
+begin f := a[1] end f
+procedure p(in v: array[3] of integer, in m: array[2,2] of integer)
+var x: r
+var i: integer
+var s: real
+var t: array of integer
+var z: array[0] of integer
+var b: array[1.5] of integer
+begin
+    i := x
+    x := 1
+    v := 2
+    v[1, 2] := 3
+    m[1] := 3
+    i[1] := 2
+    v[1.5] := 1
+    x.b := 2
+    i := *i
+    i := 2.5 % 2
+    s := s & 1
+    if x then endif
+    out1(3)
+    out1(s)
+    out1(i, i)
+    i := f(m)
+    i := f(i)
+    i := out1(i)
+    return 3
+end p

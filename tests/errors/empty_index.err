@@ -1,0 +1,3 @@
+empty_index.plike:1:21: error: expected a size: only the first dimension can be left out, found ']'
+    1 | procedure a(in x[2][]: array of integer)
+      |                     ^

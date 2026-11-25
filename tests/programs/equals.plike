@@ -1,0 +1,12 @@
+procedure main()
+var i, n : integer
+var same : logical
+begin
+    n = 0
+    for i = 1 to 3 do
+        n = n + i
+    endfor
+    if n = 6 then print("six") endif
+    same = n = 6
+    print(same)
+end main

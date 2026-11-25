@@ -11,6 +11,7 @@ typedef struct {
     int indent;
     bool uses_fail;
     bool uses_math;
+    bool uses_abs;
 } Gen;
 
 /* C operator precedence; higher binds tighter. */
@@ -226,9 +227,14 @@ static void gen_address(Gen *g, const Expr *expr, int min) {
 
 static void gen_call(Gen *g, const Expr *expr) {
     const Symbol *callee = expr->symbol;
-    if (callee->builtin) g->uses_math = true;
-    strbuf_printf(g->out, "%s(", callee->builtin && strcmp(callee->builtin, "abs") == 0
-                                     ? "fabs" : callee->c_name);
+    const char *name = callee->c_name;
+    if (callee->builtin && expr->type->kind == TY_INT) {
+        g->uses_abs = true;
+    } else if (callee->builtin) {
+        g->uses_math = true;
+        if (strcmp(name, "abs") == 0) name = "fabs";
+    }
+    strbuf_printf(g->out, "%s(", name);
     for (int i = 0; i < expr->args.count; i++) {
         const Expr *arg = expr->args.items[i];
         const Symbol *param = callee->params ? callee->params[i] : NULL;
@@ -317,6 +323,8 @@ static const char *c_operator(TokenKind op) {
 /* Mixing these families without parentheses is legal C that nobody can read
  * (and that compilers warn about). */
 static bool wants_parens(const Expr *parent, const Expr *child) {
+    if (child->kind == EX_UNARY) /* "(!a) != b" */
+        return child->op == TOK_NOT && precedence(parent) >= P_BITOR;
     if (child->kind != EX_BINARY) return false;
     int outer = precedence(parent), inner = precedence(child);
     if (outer == inner) return outer == P_EQ || outer == P_REL;
@@ -718,7 +726,7 @@ void generate(const Program *program, const Config *config, Arena *arena, StrBuf
     if (config->bounds_check && g->uses_fail) strbuf_puts(out, "#include <limits.h>\n");
     if (g->uses_math) strbuf_puts(out, "#include <math.h>\n");
     strbuf_puts(out, "#include <stdbool.h>\n#include <stdio.h>\n");
-    if (g->uses_fail) strbuf_puts(out, "#include <stdlib.h>\n");
+    if (g->uses_fail || g->uses_abs) strbuf_puts(out, "#include <stdlib.h>\n");
     strbuf_puts(out, "\n");
     if (g->uses_fail) {
         strbuf_puts(out,

@@ -366,6 +366,11 @@ static TypeSpec *parse_type(Parser *p) {
         spec->is_array = true;
         spec->rank += rank ? rank : written ? written : 1;
         if (!expect(p, TOK_OF, "'of'")) return NULL;
+        /* "array of array[n] of t": the unsized level still takes its place */
+        if (!written && (before > 0 || check(p, TOK_ARRAY) || check(p, TOK_DIM))) {
+            for (int i = 0; i < (rank ? rank : 1); i++)
+                dim_add(p, &spec->dims, (Dim){NULL, NULL});
+        }
     }
 
     spec->pointers = parse_stars(p);
@@ -540,10 +545,11 @@ static void parse_function_end(Parser *p, Function *function) {
 
     bool ended = match(p, TOK_END);
     if (match(p, kind) || (ended && match(p, TOK_END)) || ended) {
-        /* "endfunction" may be followed by "point function next(...)" */
-        if (check(p, TOK_IDENT) && peek(p, 1)->kind != TOK_FUNCTION) {
-            if (equals_ignore_case(cur(p)->text, function->name)) advance(p);
-            else syntax_error(p, expected);
+        if (check(p, TOK_IDENT) && equals_ignore_case(cur(p)->text, function->name)) {
+            advance(p);
+        } else if (check(p, TOK_IDENT) && peek(p, 1)->kind != TOK_FUNCTION) {
+            /* not the name, nor the type of "point function next(...)" */
+            syntax_error(p, expected);
         } else if (p->tokens[p->pos - 1].kind == TOK_END &&
                    p->pos >= 2 && p->tokens[p->pos - 2].kind != TOK_END) {
             syntax_error(p, expected); /* a single bare 'end' */

@@ -1,0 +1,29 @@
+// names that mean something in C
+var double: integer
+function printf(in int: integer): integer
+var static, exit, plike_x, __y, _Z: integer
+begin
+    static := int
+    exit := 1
+    plike_x := 2; __y := 0; _Z := 0
+    printf := static + exit + plike_x
+end printf
+function index(in printf_: integer): integer
+var index_result: integer
+begin
+    index_result := printf_
+    index := index_result + 1
+end index
+procedure exit(out struct: integer)
+begin
+    struct := 5
+end exit
+procedure main()
+var index_, void, printf_: integer
+begin
+    double := 2
+    exit(void)
+    index_ := 4
+    printf_ := index(index_)
+    print(printf(double), void, index(3), index_, printf_)
+end main

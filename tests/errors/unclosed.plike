@@ -1,0 +1,5 @@
+procedure a()
+begin
+    if 1 == 1 then
+        print("x")
+end a

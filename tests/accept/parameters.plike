@@ -1,0 +1,39 @@
+procedure p1(in: n: integer; in A[n][n] : array of integer)
+begin end endprocedure
+procedure p2(in n integer, out x real)
+begin x := n end endprocedure
+procedure p3(a, b, c)
+var a, b: integer
+var c: array[a..b] of real
+begin c(a) := c[b] end p3
+procedure p4(in/out: a, b : real, in c : real)
+begin a := b + c end p4
+procedure p5(IN/OUT a: integer, in out b: integer, INOUT c: integer)
+begin a := b + c end p5
+procedure p6(in *p: integer, out *q: integer, in r: integer**, in s: *real)
+begin **r := *p + s[1]
+    *q := 3
+    @q := r
+end p6
+procedure p7(in A(n): array of real, in n: integer)
+begin A(1) := n end p7
+procedure p8(in A: array [1..n, 0..n-1] of real; in n: integer)
+begin A(n, 0) := A[n][n-1] end p8
+procedure p9(in A: 2d array[n,m] of real, in n, m: integer)
+begin A(n, m) := 0 end p9
+procedure p10(in n: integer, in A: array(n)(n) of logical)
+begin A(1,1) := .false. end p10
+procedure p11(in A[n,n]: 2d array of character, in n: integer)
+begin A[1,1] := 'x' end p11
+procedure p12(in n: integer, in A: array of array[n] of real)
+begin A[2][n] := 1 end p12
+procedure p13
+begin end p13
+procedure p14(x, n)
+    x: array[n] of real;
+    n: integer;
+begin
+    x(n) := 1
+    p13()
+    p13
+end p14

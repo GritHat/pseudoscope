@@ -1,0 +1,3 @@
+var n: integer
+var a: array[n] of integer
+type t: record v: array[n] of integer end

@@ -223,7 +223,9 @@ static void use_name(Sema *s, const char *name) {
 
 /* A C identifier no source name maps to, close to the given one. */
 static const char *fresh_name(Sema *s, const char *name) {
-    const char *candidate = name;
+    /* names reserved for how they begin need a different beginning */
+    const char *candidate = strncmp(name, "plike_", 6) == 0 || name[0] == '_'
+                                ? arena_printf(s->arena, "v_%s", name) : name;
     while (is_used(s, candidate) || is_reserved_in_c(candidate) || is_library_name(candidate))
         candidate = arena_printf(s->arena, "%s_", candidate);
     use_name(s, candidate);
@@ -551,6 +553,9 @@ static Type *check_call(Sema *s, Expr *expr, Symbol *callee) {
         return callee->type;
     }
     for (int i = 0; i < expr->args.count; i++) check_argument(s, callee, i, expr->args.items[i]);
+    if (callee->builtin && strcmp(callee->builtin, "abs") == 0 &&
+        is_integral(expr->args.items[0]->type))
+        return &T_INT;
     return callee->type;
 }
 
@@ -962,7 +967,7 @@ static void declare_function(Sema *s, Function *function) {
     if (sym->function || sym->kind != SYM_FUNCTION) return; /* a duplicate */
     function->symbol = sym;
     sym->function = function;
-    if (!function->is_procedure && s->config->params == PARAMS_BODY) {
+    if (s->config->params == PARAMS_BODY) {
         for (VarDecl *param = function->params; param; param = param->next)
             if (param->spec)
                 diag_error(s->diag, param->loc, "the type of '%s' belongs in the body (see --params)",

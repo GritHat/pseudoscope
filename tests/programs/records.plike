@@ -1,0 +1,73 @@
+type complex : record
+    value : record
+        real_p : real
+        imag_p : real
+    end
+end
+
+type Node: record
+    key: integer; next: Node*
+end
+
+type Box = record
+    low, high: integer
+    cells: array[0..3] of integer
+    corner: complex
+end
+
+var origin: record
+    x, y: integer
+end
+var grid : 2d array[2,2] of record
+    v: record
+        inner: record r: real end
+    end
+end
+var counter: integer
+
+function add(in a: complex, in b: complex): complex
+begin
+    add.value.real_p := a.value.real_p + b.value.real_p
+    add.value.imag_p := a.value.imag_p + b.value.imag_p
+end add
+
+procedure move(inout p: origin, in dx: integer)
+begin
+    p.x := p.x + dx
+    p->y := p.x * 2
+    counter := counter + 1
+end move
+
+function length(in n: Node*): integer
+begin
+    while n != 0 do
+        length := length + 1
+        n := n.next
+    endwhile
+end length
+
+procedure main()
+var a, b, c: complex
+var n1, n2: Node
+var box: Box
+var boxes: array[2] of Box
+begin
+    a.value.real_p := 1.5
+    a.value.imag_p := 2
+    b := a
+    c := add(a, b)
+    print(c.value.real_p, c.value.imag_p)
+    n1.key := 1; n1.next := &n2
+    n2.key := 2; n2.next := 0
+    print(length(&n1), n1.next->key, n1.next.key, (*n1.next).key)
+    box.cells[0] := 4
+    box.cells[3] := 5
+    box.corner := c
+    boxes[2] := box
+    print(boxes[2].cells[0] + boxes(2).cells(3), boxes[2].corner.value.imag_p)
+    origin.x := 3
+    move(origin, 4)
+    print(origin.x, origin.y, counter)
+    grid[2,1].v.inner.r := 0.5
+    print(grid(2,1).v.inner.r)
+end main

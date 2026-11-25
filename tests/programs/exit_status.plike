@@ -1,0 +1,4 @@
+function main(): integer
+begin
+    main := 42
+end main

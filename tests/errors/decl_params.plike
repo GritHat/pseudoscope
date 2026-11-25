@@ -1,0 +1,4 @@
+procedure a(x)
+var x: integer
+begin
+end a

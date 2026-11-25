@@ -1,0 +1,13 @@
+function f(): integer
+var x: record a: integer end
+var q: array[2] of integer
+begin
+    f() := 2
+    for x := 1 to 2 do endfor
+    for f := 1 to 2 step 0 do endfor
+    read(3)
+    print(x)
+    q(1)
+    f := 99999999999
+    return x
+end f

@@ -1,0 +1,9 @@
+procedure main()
+var a: array[3] of integer
+var i: integer
+begin
+    for i := 1 to 4 do
+        a[i] := i
+        print(a[i])
+    endfor
+end main

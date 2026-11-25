@@ -1,0 +1,81 @@
+procedure swap(inout x: integer, inout y: integer)
+var temp: integer;
+begin
+    temp := x;
+    x := y;
+    y := temp;
+end swap
+
+procedure twice(in/out x: integer)
+begin
+    swap_with(x, x + x)
+end twice
+
+procedure swap_with(out x: integer, in v: integer)
+begin
+    x := v
+end swap_with
+
+procedure minmax(in n: integer, in a[n]: array of integer, out: lo, hi: integer)
+var i: integer
+begin
+    lo := a[1]
+    hi := a[1]
+    for i := 2 to n do
+        if a[i] < lo then lo := a[i] endif
+        if a[i] > hi then hi := a[i] endif
+    endfor
+end minmax
+
+procedure count_to(out i: integer, in n: integer)
+begin
+    for i := 1 to n do
+        if i == 4 then return endif
+    endfor
+end count_to
+
+procedure set_through(in p: integer*, in v: integer)
+begin
+    *p := v
+    *p := *p * 2
+end set_through
+
+procedure redirect(inout p: *integer, in q: *integer)
+begin
+    p := q
+end redirect
+
+procedure forward(inout x: integer)
+begin
+    set_through(@x, 21)
+    swap(&x, @x)
+end forward
+
+procedure main()
+var a, b, lo, hi: integer
+var p: integer*
+var v: array[4] of integer
+begin
+    a := 1; b := 2
+    swap(a, b)
+    print(a, b)
+    swap(&a, &b)
+    print(a, b)
+    twice(b)
+    print(b)
+    v[1] := 5; v[2] := -3; v[3] := 9; v[4] := 0
+    minmax(4, v, lo, hi)
+    print(lo, hi)
+    swap(v[1], v[3])
+    print(v[1], v[3])
+    count_to(a, 10)
+    print(a)
+    set_through(&b, 10)
+    print(b)
+    p := &a
+    redirect(p, &b)
+    *p := 7
+    print(*p, b)
+    forward(b)
+    print(b)
+end main

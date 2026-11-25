@@ -1,0 +1,19 @@
+procedure p(in a: integer, in a: integer)
+var b: integer
+var b: real
+var c: unknown
+begin
+    x := 1
+    a.f := 2
+    q := p
+    p := 3
+end p
+procedure p()
+begin
+end p
+function f(in x: integer)
+begin
+end f
+procedure g(x)
+begin
+end g
