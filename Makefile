@@ -1,39 +1,40 @@
-CC = gcc
-CFLAGS = -Wall -Wextra -std=c23 -pedantic
-INCLUDES = -Iinclude
-SRCDIR = src
-OBJDIR = obj
-BINDIR = bin
+CC       ?= cc
+CFLAGS   ?= -O2 -g
+WARN      = -Wall -Wextra -Wpedantic -Wshadow -Wstrict-prototypes -Wmissing-prototypes
+STD       = -std=c11 -D_POSIX_C_SOURCE=200809L
+PREFIX   ?= /usr/local
 
-# Source files
-SOURCES = $(wildcard $(SRCDIR)/core/*.c) \
-          $(wildcard $(SRCDIR)/util/*.c) \
-          $(SRCDIR)/main.c
+BUILD    ?= build
+LEGACY    = $(wildcard src/core/*.c) src/util/utils.c src/main.c
+LIB       = $(wildcard src/util/*.c src/front/*.c src/sema/*.c src/back/*.c)
+LIB      := $(filter-out src/util/utils.c,$(LIB))
+UNIT      = $(wildcard tests/unit/*.c)
 
-# Object files
-OBJECTS = $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+LIB_OBJ   = $(LIB:%.c=$(BUILD)/%.o)
+UNIT_OBJ  = $(UNIT:%.c=$(BUILD)/%.o)
 
-# Make sure the object files are in the correct directories
-$(shell mkdir -p $(OBJDIR)/core $(OBJDIR)/util $(BINDIR))
+.PHONY: all test unit clean
 
-# Main target
-TARGET = $(BINDIR)/plike
+all: bin/plike
 
-.PHONY: all clean
-
-all: $(TARGET)
-
-$(TARGET): $(OBJECTS)
-	$(CC) $(OBJECTS) -o $(TARGET)
-
-# Pattern rule for object files
-$(OBJDIR)/%.o: $(SRCDIR)/%.c
+# The original sources, until the new pipeline replaces them.
+bin/plike: $(LEGACY)
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(CC) -std=gnu2x -Iinclude -w $(CFLAGS) $(LEGACY) -o $@
+
+$(BUILD)/%.o: %.c
+	@mkdir -p $(@D)
+	$(CC) $(STD) $(WARN) -Iinclude $(CFLAGS) -MMD -MP -c $< -o $@
+
+$(BUILD)/unit: $(LIB_OBJ) $(UNIT_OBJ)
+	$(CC) $(CFLAGS) $^ -o $@
+
+unit: $(BUILD)/unit
+	$(BUILD)/unit
+
+test: unit
 
 clean:
-	rm -rf $(OBJDIR) $(BINDIR)
+	rm -rf $(BUILD) bin
 
-# Debug builds
-debug: CFLAGS += -g -DDEBUG
-debug: all
+-include $(LIB_OBJ:.o=.d) $(UNIT_OBJ:.o=.d)
