@@ -11,6 +11,21 @@ Rust, TypeScript, JavaScript or Python.
 
 ![Pseudoscope in forty-five seconds](docs/demo/preview.gif)
 
+**[The whole tour, on YouTube](https://youtu.be/h44POh3ymnc)** (9:50, in English), chapter by chapter:
+[0:00 The first algorithm](https://youtu.be/h44POh3ymnc?t=0) ·
+[1:55 Recursion and data structures](https://youtu.be/h44POh3ymnc?t=115) ·
+[2:34 Your own pseudocode](https://youtu.be/h44POh3ymnc?t=154) ·
+[3:13 Classes and inheritance](https://youtu.be/h44POh3ymnc?t=193) ·
+[4:05 Designing](https://youtu.be/h44POh3ymnc?t=245) ·
+[5:18 Lecture notes and papers](https://youtu.be/h44POh3ymnc?t=318) ·
+[5:53 A whole system](https://youtu.be/h44POh3ymnc?t=353) ·
+[6:52 When things go wrong](https://youtu.be/h44POh3ymnc?t=412) ·
+[7:36 Advanced algorithms](https://youtu.be/h44POh3ymnc?t=456) ·
+[7:57 Distributed systems](https://youtu.be/h44POh3ymnc?t=477) ·
+[8:34 What if it were wrong?](https://youtu.be/h44POh3ymnc?t=514) ·
+[9:08 Seven languages](https://youtu.be/h44POh3ymnc?t=548) ·
+[9:39 Getting started](https://youtu.be/h44POh3ymnc?t=579)
+
 ## What it does
 
 - **Runs pseudocode step by step**, forwards and backwards, at five levels: from the
@@ -198,7 +213,9 @@ make fuzz       # mutated programs and diagrams, random keys
 `tools/demo/make.py` films the real interface, driven by the keys in
 `tools/demo/story.py`, and the real commands: `--preview` makes the short one above.
 The music is written note by note by `tools/demo/music.py`, so it is nobody else's, and
-`tools/demo/logo.py` draws the mark. The full tour is not kept in the repository.
+`tools/demo/logo.py` draws the mark. The full tour is not kept in the repository: it is
+[on YouTube](https://youtu.be/h44POh3ymnc). `--card` makes `docs/social-card.png`, the picture that stands for the
+repository where its link is shared.
 
 ## License
 

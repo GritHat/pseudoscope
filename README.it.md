@@ -11,6 +11,21 @@ in C, C++, Java, Rust, TypeScript, JavaScript o Python.
 
 ![Pseudoscope in quarantacinque secondi](docs/demo/preview.gif)
 
+**[Il video intero, su YouTube](https://youtu.be/h44POh3ymnc)** (9:50, in inglese), capitolo per capitolo:
+[0:00 Il primo algoritmo](https://youtu.be/h44POh3ymnc?t=0) ·
+[1:55 Ricorsione e strutture](https://youtu.be/h44POh3ymnc?t=115) ·
+[2:34 Il tuo pseudocodice](https://youtu.be/h44POh3ymnc?t=154) ·
+[3:13 Classi ed ereditarietà](https://youtu.be/h44POh3ymnc?t=193) ·
+[4:05 Progettare](https://youtu.be/h44POh3ymnc?t=245) ·
+[5:18 Appunti e articoli](https://youtu.be/h44POh3ymnc?t=318) ·
+[5:53 Un sistema intero](https://youtu.be/h44POh3ymnc?t=353) ·
+[6:52 Quando le cose vanno storte](https://youtu.be/h44POh3ymnc?t=412) ·
+[7:36 Algoritmi avanzati](https://youtu.be/h44POh3ymnc?t=456) ·
+[7:57 Sistemi distribuiti](https://youtu.be/h44POh3ymnc?t=477) ·
+[8:34 E se fosse sbagliato?](https://youtu.be/h44POh3ymnc?t=514) ·
+[9:08 Sette linguaggi](https://youtu.be/h44POh3ymnc?t=548) ·
+[9:39 Per cominciare](https://youtu.be/h44POh3ymnc?t=579)
+
 ## Che cosa fa
 
 - **Esegue lo pseudocodice passo per passo**, avanti e indietro, a cinque livelli: dal
@@ -202,7 +217,9 @@ make fuzz       # programmi e diagrammi alterati, tasti a caso
 `tools/demo/make.py` riprende la vera interfaccia, guidata dai tasti scritti in
 `tools/demo/story.py`, e i veri comandi: `--preview` fa quello breve qui sopra. La musica
 la scrive nota per nota `tools/demo/music.py`, quindi non è di nessun altro, e
-`tools/demo/logo.py` disegna il simbolo. Il video intero non sta nel repository.
+`tools/demo/logo.py` disegna il simbolo. Il video intero non sta nel repository: è
+[su YouTube](https://youtu.be/h44POh3ymnc). `--card` fa `docs/social-card.png`, l'immagine che rappresenta il
+repository dove se ne condivide il link.
 
 ## Licenza
 

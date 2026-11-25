@@ -11,6 +11,21 @@ TypeScript, JavaScript o Python.
 
 ![Pseudoscope en cuarenta y cinco segundos](docs/demo/preview.gif)
 
+**[El vídeo completo, en YouTube](https://youtu.be/h44POh3ymnc)** (9:50, en inglés), capítulo a capítulo:
+[0:00 El primer algoritmo](https://youtu.be/h44POh3ymnc?t=0) ·
+[1:55 Recursión y estructuras](https://youtu.be/h44POh3ymnc?t=115) ·
+[2:34 Tu propio pseudocódigo](https://youtu.be/h44POh3ymnc?t=154) ·
+[3:13 Clases y herencia](https://youtu.be/h44POh3ymnc?t=193) ·
+[4:05 Diseñar](https://youtu.be/h44POh3ymnc?t=245) ·
+[5:18 Apuntes y artículos](https://youtu.be/h44POh3ymnc?t=318) ·
+[5:53 Un sistema entero](https://youtu.be/h44POh3ymnc?t=353) ·
+[6:52 Cuando las cosas van mal](https://youtu.be/h44POh3ymnc?t=412) ·
+[7:36 Algoritmos avanzados](https://youtu.be/h44POh3ymnc?t=456) ·
+[7:57 Sistemas distribuidos](https://youtu.be/h44POh3ymnc?t=477) ·
+[8:34 ¿Y si estuviera mal?](https://youtu.be/h44POh3ymnc?t=514) ·
+[9:08 Siete lenguajes](https://youtu.be/h44POh3ymnc?t=548) ·
+[9:39 Para empezar](https://youtu.be/h44POh3ymnc?t=579)
+
 ## Qué hace
 
 - **Ejecuta el pseudocódigo paso a paso**, hacia delante y hacia atrás, en cinco
@@ -202,7 +217,9 @@ make fuzz       # programas y diagramas alterados, teclas al azar
 `tools/demo/make.py` graba la interfaz real, guiada por las teclas escritas en
 `tools/demo/story.py`, y las órdenes reales: `--preview` hace el breve de arriba. La
 música la escribe nota a nota `tools/demo/music.py`, así que no es de nadie más, y
-`tools/demo/logo.py` dibuja el símbolo. El vídeo completo no está en el repositorio.
+`tools/demo/logo.py` dibuja el símbolo. El vídeo completo no está en el repositorio: está
+[en YouTube](https://youtu.be/h44POh3ymnc). `--card` hace `docs/social-card.png`, la imagen que representa al
+repositorio donde se comparte su enlace.
 
 ## Licencia
 

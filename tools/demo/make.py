@@ -4,6 +4,7 @@
 Usage: make.py OUTPUT.mp4 [THUMBNAIL.png] [--music=FILE|none] [--lang=CODE]
        make.py --preview OUTPUT.gif         (the short one, which plays by itself in a README)
        make.py --thumbnail OUTPUT.png       (only the picture that stands for the video)
+       make.py --card OUTPUT.png            (the card of the repository, 1280x640: docs/social-card.png)
        make.py --soundtrack OUTPUT.wav      (only the music, to listen to it)
        make.py --check                      (durations and chapters only)
 
@@ -491,9 +492,10 @@ class Film:
                                 "-loop", "0", self.output], check=True)
 
 
-def thumbnail(path):
+def thumbnail(path, height=720):
     """The picture that stands for the video where it is published: the mark and the name,
-    large enough to be read when it is small, over the screen of the step marked `poster`."""
+    large enough to be read when it is small, over the screen of the step marked `poster`.
+    With a height of 640 it is the card that stands for the repository where its link is shared."""
     term = None
     for scene in STORY:
         typed = scene.get("start", "")
@@ -501,7 +503,7 @@ def thumbnail(path):
             typed += step.get("keys", "")
             if step.get("poster"):
                 term = paint(screen((scene["open"], tuple(scene.get("options", ()))), typed))
-    w, h = 2560, 1440  # twice the size, then reduced
+    w, h = 2560, 2 * height  # twice the size, then reduced
     scale = max(w / term.width, h / term.height) * 1.12
     back = term.resize((round(term.width * scale), round(term.height * scale)), Image.LANCZOS)
     back = back.crop((60, 150, 60 + w, 150 + h)).filter(ImageFilter.GaussianBlur(5))
@@ -511,7 +513,7 @@ def thumbnail(path):
     small = font("DejaVuSansMono-Bold.ttf", 60)
     mark, gap = 420, 70
     width = mark + gap + d.textlength("Pseudoscope", font=name)
-    x, y = (w - width) / 2, 330
+    x, y = (w - width) / 2, (h - 826) / 2 + 23  # what is drawn is 826 high: a little below the middle
     logo.draw(im, x, y, mark)
     d.text((x + mark + gap, y + mark / 2 - 16), "Pseudoscope", font=name, fill=TEXT, anchor="lm")
     d.text((w / 2, y + mark + 130), "Pseudocode, brought to life", font=said, fill=YELLOW, anchor="mm")
@@ -524,7 +526,7 @@ def thumbnail(path):
         d.text((x + plate / 2, y + 58), n, font=small, fill=TEXT, anchor="mm")
         x += plate + 28
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
-    im.resize((1280, 720), Image.LANCZOS).save(path, optimize=True)
+    im.resize((1280, height), Image.LANCZOS).save(path, optimize=True)
 
 
 def soundtrack(choice, seconds, starts):
@@ -559,10 +561,10 @@ def main():
     words = [w for w in sys.argv[1:] if not w.startswith(("--music=", "--lang="))]
     chosen = [w.split("=", 1)[1] for w in sys.argv[1:] if w.startswith("--music=")]
     mode = words.pop(0) if words and words[0].startswith("--") else ""
-    if mode not in ("", "--preview", "--thumbnail", "--soundtrack", "--check") or (mode != "--check" and not words):
+    if mode not in ("", "--preview", "--thumbnail", "--card", "--soundtrack", "--check") or (mode != "--check" and not words):
         raise SystemExit(__doc__)
-    if mode == "--thumbnail":
-        thumbnail(words[0])
+    if mode in ("--thumbnail", "--card"):
+        thumbnail(words[0], 720 if mode == "--thumbnail" else 640)
         return
     preview = mode == "--preview"
     story = TRAILER if preview else STORY
