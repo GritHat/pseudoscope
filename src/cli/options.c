@@ -52,6 +52,7 @@ static void print_help(FILE *out) {
         "      --cc=COMMAND          the compiler, or what runs the program, for build and run\n"
         "                            (default: $CC or cc, c++, rustc, java, node, python3)\n"
         "      --steps=N             exec: stop after N steps\n"
+        "      --canvas=FILE         exec: save what the program drew, as a PPM picture\n"
         "      --lang=LANG           it or en (default: $PSEUDOSCOPE_LANG, or it for ui and en for\n"
         "                            the other commands)\n"
         "      --dot                 ast: Graphviz format\n"
@@ -80,7 +81,7 @@ static int choose(const char *option, const char *value, const char *const *choi
     return -1;
 }
 
-enum { OPT_OPERATORS = 256, OPT_CC, OPT_DOT, OPT_COLOR, OPT_STEPS, OPT_DIALECT, OPT_LANG, OPT_KEYS, OPT_SIZE };
+enum { OPT_OPERATORS = 256, OPT_CC, OPT_DOT, OPT_COLOR, OPT_STEPS, OPT_DIALECT, OPT_LANG, OPT_KEYS, OPT_SIZE, OPT_CANVAS };
 
 bool parse_options(int argc, char **argv, Options *options, int *status) {
     static const struct option LONG[] = {
@@ -100,6 +101,7 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
         {"keys", required_argument, NULL, OPT_KEYS},
         {"size", required_argument, NULL, OPT_SIZE},
         {"steps", required_argument, NULL, OPT_STEPS},
+        {"canvas", required_argument, NULL, OPT_CANVAS},
         {"quiet", no_argument, NULL, 'q'},
         {"werror", no_argument, NULL, 'W'},
         {"verbose", no_argument, NULL, 'v'},
@@ -197,6 +199,7 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
                 break;
             }
             case OPT_DOT: options->dot = true; break;
+            case OPT_CANVAS: options->canvas = optarg; break;
             case 'q': options->quiet = true; break;
             case 'W': options->werror = true; break;
             case 'v': options->verbose = true; break;

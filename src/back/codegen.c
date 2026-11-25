@@ -264,6 +264,27 @@ static void gen_call(Gen *g, const Expr *expr) {
         put(g, ")");
         return;
     }
+    if (callee->builtin && (strcmp(name, "min") == 0 || strcmp(name, "max") == 0)) {
+        if (expr->type->kind == TY_REAL) {
+            g->uses_math = true;
+            strbuf_printf(g->out, "f%s(", name);
+            gen_expr(g, expr->args.items[0], P_LOWEST);
+            put(g, ", ");
+            gen_expr(g, expr->args.items[1], P_LOWEST);
+            put(g, ")");
+        } else { /* C has none for integers */
+            put(g, "(");
+            gen_expr(g, expr->args.items[0], P_REL + 1);
+            put(g, name[1] == 'i' ? " < " : " > ");
+            gen_expr(g, expr->args.items[1], P_REL + 1);
+            put(g, " ? ");
+            gen_expr(g, expr->args.items[0], P_OR + 1);
+            put(g, " : ");
+            gen_expr(g, expr->args.items[1], P_OR + 1);
+            put(g, ")");
+        }
+        return;
+    }
     if (callee->builtin && strcmp(name, "random") == 0) {
         g->uses_random = true;
         name = "plike_random";

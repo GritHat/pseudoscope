@@ -181,6 +181,10 @@ const char *const ITALIAN_MESSAGES[][2] = {
      "questo aspetta una chiamata tra oggetti, di cui tiene traccia solo l'esecuzione fatta qui (exec, test, ui)"},
     {"components and tests are not translated to C yet: choose another language with --to",
      "componenti e prove non si traducono ancora in C: scegli un altro linguaggio con --to"},
+    /* libraries */
+    {"the library '%s' has no '%s' here", "qui la libreria '%s' non ha '%s'"},
+    {"'%s' comes from a library that only works when the program is run here (exec, ui): it is not translated",
+     "'%s' viene da una libreria che funziona solo quando il programma è eseguito qui (exec, ui): non viene tradotto"},
 };
 
 const int ITALIAN_MESSAGE_COUNT = sizeof ITALIAN_MESSAGES / sizeof ITALIAN_MESSAGES[0];

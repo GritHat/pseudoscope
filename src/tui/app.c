@@ -56,6 +56,7 @@ static void draw_help(const App *app) {
         {"f", "codice o diagramma di attività", "code or activity diagram"},
         {"v", "array come celle o barre", "arrays as cells or bars"},
         {"o", "cosa è stato stampato", "what was printed"},
+        {"d", "cosa è stato disegnato", "what was drawn"},
         {"c", "tutta la storia", "the whole story"},
         {"x", "torna a esplorare", "back to exploring"},
         {"q", "esci", "quit"},

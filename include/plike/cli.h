@@ -29,6 +29,7 @@ typedef struct {
     const char *keys;      /* ui without a terminal, for the tests */
     int width, height;
     long max_steps;        /* exec; 0: no limit */
+    const char *canvas;    /* exec: where to save what the program drew */
 } Options;
 
 enum { EXIT_OK = 0, EXIT_PROBLEMS = 1, EXIT_USAGE = 2, EXIT_IO = 3 };

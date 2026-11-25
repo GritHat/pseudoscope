@@ -787,7 +787,7 @@ static void put_all(StrBuf *out, const char *const *pieces) {
 
 static void cpp(unsigned n, long long seed, StrBuf *out) {
     strbuf_puts(out, "#include <iostream>\n#include <string>\n#include <vector>\n");
-    if (n & N_MATH) strbuf_puts(out, "#include <cmath>\n");
+    if (n & N_MATH) strbuf_puts(out, "#include <algorithm>\n#include <cmath>\n");
     if (n & (N_TEXT | N_INPUT | N_FAIL | N_SIM)) strbuf_puts(out, "#include <cstdio>\n#include <cstdlib>\n");
     if (n & N_SIM) strbuf_puts(out, "#include <any>\n#include <functional>\n");
     strbuf_puts(out, "\n");

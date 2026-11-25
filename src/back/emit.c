@@ -1210,6 +1210,21 @@ static void builtin(Gen *g, const Expr *e) {
         return;
     }
     if (strcmp(name, "fabs") == 0) name = "abs";
+    if (strcmp(name, "min") == 0 || strcmp(name, "max") == 0) { /* of two values of the same kind */
+        const Type *kind = e->type->kind == TY_REAL ? &real : &whole;
+        if (RUST) {
+            rust_receiver(g, a, kind);
+            putf(g, ".%s(", name);
+        } else {
+            putf(g, PY ? "%s(" : CPP ? "std::%s(" : "Math.%s(", name);
+            if (CPP) g->needs |= N_MATH;
+            value(g, a, kind, P_LOWEST);
+            put(g, ", ");
+        }
+        value(g, b, kind, P_LOWEST);
+        put(g, ")");
+        return;
+    }
     const Type *want = whole_abs ? &whole : &real;
     if (RUST) { /* x.sqrt() */
         static const char *const NAMES[][2] = {{"log", "ln"}, {"pow", "powf"}};

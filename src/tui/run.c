@@ -84,6 +84,11 @@ static const char *vm_text(const char *english) {
         {"the size of the array is not valid", "la dimensione dell'array non è valida"},
         {"shift by a negative number, or by more bits than there are", "spostamento di bit negativo o troppo grande"},
         {"the message has nobody to go to", "il messaggio non ha un destinatario"},
+        {"this method is abstract: there is nothing to execute", "questo metodo è astratto: non c'è niente da eseguire"},
+        {"too many files are open", "ci sono troppi file aperti"},
+        {"the file cannot be opened", "il file non si può aprire"},
+        {"the file is not open for writing", "il file non è aperto in scrittura"},
+        {"the file is not open", "il file non è aperto"},
         {"the text has no end: a character 0 is missing", "il testo non finisce: manca il carattere 0"},
     };
     if (!ui_italian || !english) return english ? english : "";
@@ -562,6 +567,7 @@ static void draw_status(App *app, int w) {
     size_t length;
     vm_output(vm, &length);
     if (length) print_at(w - 13, 1, 13, S_DIM, M_TYPE "≡ " M_RESET "%s", L("stampe: o", "output: o"));
+    if (vm_draw_count(vm)) print_at(w - 28, 1, 14, S_DIM, M_TYPE "▣ " M_RESET "%s", L("disegno: d", "drawing: d"));
 }
 
 /* The end of the output, or `back` lines before. */
@@ -581,6 +587,49 @@ static void draw_output_text(App *app, int x, int y, int w, int rows, int back) 
         i += n + 1;
     }
     if (length == 0) print_at(x, y, w, S_FAINT, "%s", L("Niente.", "Nothing."));
+}
+
+/* The nearest of the 256 colours of a terminal. */
+static short color_of(int rgb) {
+    int r = rgb >> 16 & 255, g = rgb >> 8 & 255, b = rgb & 255;
+    if (r == g && g == b) return r < 8 ? 16 : r > 248 ? 231 : (short)(232 + (r - 8) / 10);
+    return (short)(16 + 36 * ((r + 25) / 51) + 6 * ((g + 25) / 51) + (b + 25) / 51);
+}
+
+/* What the program has drawn: each character is two dots, one above the other. */
+static void draw_canvas(App *app, int w, int h) {
+    const Vm *vm = app->run.vm;
+    int cw, ch, cols = w - 4, rows = h - 7;
+    vm_canvas_size(vm, &cw, &ch);
+    /* as large as it fits, keeping its shape (a character is twice as tall as it is wide) */
+    if ((long)cols * ch > (long)rows * 2 * cw) cols = (int)((long)rows * 2 * cw / ch);
+    else rows = (int)((long)cols * ch / cw / 2);
+    if (cols < 2 || rows < 1) return;
+    char title[80];
+    snprintf(title, sizeof title, "%s  %d x %d  %d %s", L("Cosa ha disegnato il programma", "What the program drew"), cw, ch,
+             vm_draw_count(vm), L("tratti", "strokes"));
+    draw_box(0, 2, w, h - 4, C_TYPE, title);
+    int *pixels = malloc((size_t)cols * (size_t)rows * 2 * sizeof(int));
+    if (!pixels) abort();
+    vm_render(vm, cols, rows * 2, pixels);
+    int x0 = (w - cols) / 2, y0 = 4;
+    for (int y = 0; y < rows; y++) {
+        for (int x = 0; x < cols; x++) {
+            int top = pixels[y * 2 * cols + x], bottom = pixels[(y * 2 + 1) * cols + x];
+            if (top < 0 && bottom < 0) put_text(x0 + x, y0 + y, S(C_FAINT, 255, 0), " ");
+            else put_text(x0 + x, y0 + y, S(top < 0 ? 255 : color_of(top), bottom < 0 ? 255 : color_of(bottom), 0), "▀");
+        }
+    }
+    int first = 0, count = vm_draw_count(vm);
+    for (int i = 0; i < count; i++)
+        if (vm_draw(vm, i)->kind == 'c') first = i + 1;
+    for (int i = first; i < count; i++) { /* texts are written as they are */
+        const DrawOp *op = vm_draw(vm, i);
+        if (op->kind != 't') continue;
+        int x = (int)((long)op->x * cols / cw), y = (int)((long)op->y * rows / ch);
+        if (x >= 0 && x < cols && y >= 0 && y < rows) print_at(x0 + x, y0 + y, cols - x, S(color_of(op->color), 255, A_BOLD), "%s", vm_draw_text(vm, op));
+    }
+    free(pixels);
 }
 
 static void draw_output(App *app, int w, int h) {
@@ -614,6 +663,13 @@ void run_draw(App *app) {
                             L("Memoria", "Memory")};
     draw_header(path, levels, 5, (int)r->level - 1, C_FOCUS);
     draw_status(app, w);
+    if (app->overlay == OVERLAY_CANVAS) { /* it goes on running under it */
+        draw_canvas(app, w, h);
+        const Hint hints[] = {{"→", L("passo", "step")}, {"←", L("indietro", "back")}, {L("Spazio", "Space"), L("vai", "play")},
+                              {"g", L("alla fine", "to the end")}, {"d", L("chiudi", "close")}};
+        draw_footer(hints, 5);
+        return;
+    }
     if (app->overlay == OVERLAY_OUTPUT || app->overlay == OVERLAY_LOG) {
         if (app->overlay == OVERLAY_OUTPUT) draw_output(app, w, h);
         else draw_log(app, w, h);
@@ -708,6 +764,10 @@ void run_key(App *app, int key) {
         else if (key == K_ESC || key == 'o' || key == 'c' || key == 'q' || key == K_ENTER) app->overlay = OVERLAY_NONE;
         return;
     }
+    if (app->overlay == OVERLAY_CANVAS && (key == K_ESC || key == 'd' || key == 'q')) {
+        app->overlay = OVERLAY_NONE;
+        return;
+    }
     if (vm_status(r->vm) == VM_NEEDS_INPUT) {
         input_key(app, key);
         return;
@@ -760,6 +820,9 @@ void run_key(App *app, int key) {
             break;
         }
         case 'o': app->overlay = OVERLAY_OUTPUT; r->overlay_top = 0; break;
+        case 'd':
+            if (vm_draw_count(r->vm)) app->overlay = OVERLAY_CANVAS;
+            break;
         case 'c': app->overlay = OVERLAY_LOG; r->overlay_top = 0; break;
         case 'x': leave(app); break;
         case 'q': app->quit = true; break;

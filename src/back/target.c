@@ -1,4 +1,5 @@
 #include "plike/target.h"
+#include "plike/builtins.h"
 
 #include <string.h>
 
@@ -118,6 +119,14 @@ static void check_expr(Check *c, const Expr *e, bool strict) {
         diag_error(c->diag, e->loc, "'%s' is not in the file: it cannot be called in %s", e->symbol->name, lang_name(c->lang));
         c->problems++;
     }
+    if (e->is_call && e->symbol && e->symbol->builtin) {
+        const Builtin *b = builtin_named(e->symbol->builtin);
+        if (b && b->here_only) {
+            diag_error(c->diag, e->loc, "'%s' comes from a library that only works when the program is run here (exec, ui): it is not translated",
+                       e->base && e->base->text ? e->base->text : e->symbol->name);
+            c->problems++;
+        }
+    }
     if (strict && gives_values_back(c, e)) {
         diag_error(c->diag, e->loc, "in %s what '%s' changes comes back with its result: call it in a statement of its own",
                    lang_name(c->lang), e->symbol->name);
@@ -200,7 +209,10 @@ bool translatable(const Program *program, const Config *config, Lang lang, Diag 
         c.problems++;
         break;
     }
-    if (lang == LANG_C) return c.problems == 0;
+    if (lang == LANG_C) { /* its own generator: only what it cannot say is looked for */
+        for (const Function *f = program->functions; f; f = f->next) check_statements(&c, f->body);
+        return c.problems == 0;
+    }
     check_decls(&c, program->globals);
     for (const Record *r = program->records; r; r = r->next) check_decls(&c, r->fields);
     for (const Function *f = program->functions; f; f = f->next) {

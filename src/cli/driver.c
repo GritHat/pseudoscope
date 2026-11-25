@@ -185,10 +185,54 @@ static const char *class_name_for(const Options *options, Arena *arena) {
 }
 
 /* Runs on the virtual machine, reading input only when it is asked for. */
-static int interpret(const Program *program, const Options *options) {
+/* VisuAlg: arquivo "dados.txt" reads from a file what would be typed. */
+static char *input_file_of(const Source *source, Arena *arena) {
+    for (const char *s = source->text; *s;) {
+        while (*s == ' ' || *s == '\t') s++;
+        if (strncmp(s, "arquivo", 7) == 0 || strncmp(s, "Arquivo", 7) == 0 || strncmp(s, "ARQUIVO", 7) == 0) {
+            const char *open = strchr(s, '"'), *line = s + strcspn(s, "\n");
+            const char *close = open && open < line ? strchr(open + 1, '"') : NULL;
+            if (close && close < line) return arena_strndup(arena, open + 1, (size_t)(close - open - 1));
+        }
+        s += strcspn(s, "\n");
+        if (*s) s++;
+    }
+    return NULL;
+}
+
+/* The drawing, as a picture that everything opens (PPM). */
+static bool write_canvas(const Vm *vm, const char *path) {
+    int width, height;
+    vm_canvas_size(vm, &width, &height);
+    int *pixels = malloc((size_t)width * (size_t)height * sizeof(int));
+    FILE *file = fopen(path, "w");
+    if (!pixels || !file) {
+        fprintf(stderr, "pseudoscope: cannot write '%s'\n", path);
+        free(pixels);
+        if (file) fclose(file);
+        return false;
+    }
+    vm_render(vm, width, height, pixels);
+    fprintf(file, "P3\n%d %d\n255\n", width, height);
+    for (int i = 0; i < width * height; i++) {
+        int c = pixels[i] < 0 ? 0xFFFFFF : pixels[i];
+        fprintf(file, "%d %d %d%s", c >> 16 & 255, c >> 8 & 255, c & 255, (i + 1) % width == 0 ? "\n" : " ");
+    }
+    free(pixels);
+    return fclose(file) == 0;
+}
+
+static int interpret(const Program *program, const Options *options, const Source *source, Arena *arena) {
     Vm *vm = vm_create(program, &options->config);
     size_t shown = 0, length;
     vm_start(vm);
+    const char *input_file = options->config.dialect == DIALECT_VISUALG ? input_file_of(source, arena) : NULL;
+    if (input_file) {
+        StrBuf typed = {0};
+        if (read_file(input_file, &typed)) vm_give_input(vm, typed.data);
+        vm_end_input(vm);
+        strbuf_free(&typed);
+    }
     long left = options->max_steps;
     for (;;) {
         long chunk = options->max_steps && left < 100000 ? left : 100000;
@@ -219,6 +263,21 @@ static int interpret(const Program *program, const Options *options) {
         fprintf(stderr, ": %s\n", vm_message(vm));
     }
     int status = vm_exit_status(vm);
+    /* what the program wrote in its files reaches the disk now */
+    for (int i = 0; i < vm_file_count(vm); i++) {
+        const char *data;
+        int size;
+        bool written;
+        const char *path = vm_file(vm, i, &data, &size, &written);
+        if (!written) continue;
+        FILE *file = fopen(path, "wb");
+        if (!file || fwrite(data, 1, (size_t)size, file) != (size_t)size) {
+            fprintf(stderr, "pseudoscope: cannot write '%s'\n", path);
+            if (status == 0) status = EXIT_IO;
+        }
+        if (file) fclose(file);
+    }
+    if (options->canvas && !write_canvas(vm, options->canvas) && status == 0) status = EXIT_IO;
     vm_destroy(vm);
     return status;
 }
@@ -311,7 +370,7 @@ static int translate(const Options *options, const Source *source, Arena *arena,
     if (options->command == CMD_TEST && !options->target_given) return run_tests(program, options, diag.italian);
     if (options->command == CMD_EXEC) {
         step(options, "executing");
-        return has_main(program) || has_components(program) ? interpret(program, options) : no_main();
+        return has_main(program) || has_components(program) ? interpret(program, options, source, arena) : no_main();
     }
     if (!translatable(program, &options->config, lang, &diag)) return EXIT_PROBLEMS;
     if (options->command == CMD_BUILD && !is_compiled(lang)) {

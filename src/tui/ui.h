@@ -159,7 +159,7 @@ void draw_table_row(int x, int y, int w, bool selected, const char *format, ...)
 /* ---- the application ---- */
 
 typedef enum { VIEW_FILES, VIEW_EXPLORE, VIEW_TRIAL, VIEW_RUN, VIEW_TESTS, VIEW_UML } View;
-typedef enum { OVERLAY_NONE, OVERLAY_HELP, OVERLAY_OUTPUT, OVERLAY_LOG } Overlay;
+typedef enum { OVERLAY_NONE, OVERLAY_HELP, OVERLAY_OUTPUT, OVERLAY_LOG, OVERLAY_CANVAS } Overlay;
 
 typedef struct {
     char *name;

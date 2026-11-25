@@ -1,4 +1,5 @@
 #include "plike/sema.h"
+#include "plike/builtins.h"
 
 #include <errno.h>
 #include <limits.h>
@@ -532,29 +533,16 @@ static Type *resolve_decl_type(Sema *s, VarDecl *decl, TypeSpec *spec, bool dims
 
 /* ---- expressions ---- */
 
-/* C library functions that can be used without declaring them. */
-static const struct {
-    const char *name;
-    int arity;
-} BUILTINS[] = {
-    {"sqrt", 1}, {"sin", 1}, {"cos", 1}, {"tan", 1}, {"exp", 1}, {"log", 1},
-    {"floor", 1}, {"ceil", 1}, {"fabs", 1}, {"pow", 2}, {"abs", 1}, {"random", 2},
-    {"random_below", 1}, {"trunc", 1}, {"round", 1}, {"length", 1}, {"upper", 1}, {"lower", 1},
-    {"substring", 3}, {"concat", 2},
-};
-
 static Symbol *find_builtin(Sema *s, const char *name) {
-    for (size_t i = 0; i < sizeof BUILTINS / sizeof BUILTINS[0]; i++) {
-        if (strcmp(BUILTINS[i].name, name) != 0) continue;
-        Symbol *sym = ARENA_NEW(s->arena, Symbol);
-        sym->kind = SYM_FUNCTION;
-        sym->name = name;
-        sym->c_name = sym->builtin = BUILTINS[i].name;
-        sym->type = &T_REAL;
-        sym->param_count = BUILTINS[i].arity;
-        return sym;
-    }
-    return NULL;
+    const Builtin *b = builtin_named(name);
+    if (!b) return NULL;
+    Symbol *sym = ARENA_NEW(s->arena, Symbol);
+    sym->kind = SYM_FUNCTION;
+    sym->name = name;
+    sym->c_name = sym->builtin = b->name;
+    sym->type = b->result == 'i' ? &T_INT : b->result == 't' ? &T_STRING : b->result == 'b' ? &T_BOOL : b->result == 'v' ? &T_VOID : &T_REAL;
+    sym->param_count = b->arity;
+    return sym;
 }
 
 static bool is_lvalue(const Expr *expr) {
@@ -591,14 +579,14 @@ static Type *check_scalar(Sema *s, Expr *expr, const char *what) {
 static void check_argument(Sema *s, Symbol *callee, int index, Expr *arg) {
     Type *type = check_value(s, arg);
     if (!callee->params) { /* builtin */
-        bool text = strcmp(callee->name, "length") == 0 || strcmp(callee->name, "upper") == 0 ||
-                    strcmp(callee->name, "lower") == 0 || strcmp(callee->name, "concat") == 0 ||
-                    (strcmp(callee->name, "substring") == 0 && index == 0);
-        if (text) {
-            if (!is_error(type) && type->kind != TY_STRING)
+        const Builtin *b = callee->builtin ? builtin_named(callee->builtin) : NULL;
+        char wants = b && index < (int)strlen(b->takes) ? b->takes[index] : 'n';
+        if (wants == 't') {
+            if (!is_error(type) && type->kind != TY_STRING && type->kind != TY_CHAR)
                 diag_error(s->diag, arg->loc, "'%s' takes a text, not %s", callee->name, type_name(s->arena, type));
             return;
         }
+        if (wants == 'a' && (type->kind == TY_STRING || is_number(type))) return;
         if (!is_error(type) && !is_number(type))
             diag_error(s->diag, arg->loc, "'%s' takes numbers, not %s", callee->name,
                        type_name(s->arena, type));
@@ -643,17 +631,12 @@ static Type *check_call(Sema *s, Expr *expr, Symbol *callee) {
         return callee->type;
     }
     for (int i = 0; i < expr->args.count; i++) check_argument(s, callee, i, expr->args.items[i]);
-    if (callee->builtin) {
-        static const char *const INTS[] = {"random", "random_below", "trunc", "round", "length"};
-        static const char *const TEXTS[] = {"upper", "lower", "substring", "concat"};
-        for (int i = 0; i < 5; i++)
-            if (strcmp(callee->builtin, INTS[i]) == 0) return &T_INT;
-        for (int i = 0; i < 4; i++)
-            if (strcmp(callee->builtin, TEXTS[i]) == 0) return &T_STRING;
+    const Builtin *b = callee->builtin ? builtin_named(callee->builtin) : NULL;
+    if (b && b->result == 'n') { /* as what it is given */
+        bool real = false;
+        for (int i = 0; i < expr->args.count; i++) real |= !is_integral(expr->args.items[i]->type);
+        return real ? &T_REAL : &T_INT;
     }
-    if (callee->builtin && strcmp(callee->builtin, "abs") == 0 &&
-        is_integral(expr->args.items[0]->type))
-        return &T_INT;
     return callee->type;
 }
 
