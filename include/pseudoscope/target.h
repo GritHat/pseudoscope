@@ -1,7 +1,7 @@
-#ifndef PLIKE_TARGET_H
-#define PLIKE_TARGET_H
+#ifndef PSEUDOSCOPE_TARGET_H
+#define PSEUDOSCOPE_TARGET_H
 
-#include "plike/codegen.h"
+#include "pseudoscope/codegen.h"
 
 /* The languages a program can be translated to. */
 typedef enum { LANG_C, LANG_CPP, LANG_JAVA, LANG_RUST, LANG_TS, LANG_JS, LANG_PYTHON, LANG_COUNT } Lang;

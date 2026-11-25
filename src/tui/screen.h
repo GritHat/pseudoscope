@@ -1,5 +1,5 @@
-#ifndef PLIKE_SCREEN_H
-#define PLIKE_SCREEN_H
+#ifndef PSEUDOSCOPE_SCREEN_H
+#define PSEUDOSCOPE_SCREEN_H
 
 /* Terminal graphics: a buffer of cells, of which only the changed ones are
  * sent. Taken from the interface of reliable-over-unreliable.

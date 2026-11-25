@@ -1,7 +1,7 @@
-#ifndef PLIKE_CODEGEN_H
-#define PLIKE_CODEGEN_H
+#ifndef PSEUDOSCOPE_CODEGEN_H
+#define PSEUDOSCOPE_CODEGEN_H
 
-#include "plike/sema.h"
+#include "pseudoscope/sema.h"
 
 /* Writes the C translation of an analysed program. */
 void generate(const Program *program, const Config *config, Arena *arena, StrBuf *out);

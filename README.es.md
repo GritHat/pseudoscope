@@ -31,8 +31,8 @@ TypeScript, JavaScript o Python.
   simulación incluidas; lo que un lenguaje no sabe decir se rechaza explicando por qué.
 - **En tu idioma**: interfaz, errores y ayuda en inglés, italiano y español.
 
-Nació como `plike-translator`, un proyecto de primer curso para ejecutar el pseudocódigo
-que se usaba en clase. Aquel pseudocódigo nunca tuvo una sintaxis fija, así que se
+Nació como un proyecto de primer curso para ejecutar P-like, el pseudocódigo que se
+usaba en clase. Aquel pseudocódigo nunca tuvo una sintaxis fija, así que se
 aceptan todas las grafías: `A[i,j]`, `A[i][j]` o `A(i,j)`, `and`, `.AND.` o `&&`, `end f`
 o `endfunction`, y así sucesivamente.
 
@@ -42,8 +42,8 @@ Hace falta un compilador de C11, make y un sistema POSIX. Las pruebas necesitan 
 Python 3.
 
 ```sh
-git clone https://github.com/GritHat/plike-translator
-cd plike-translator
+git clone https://github.com/GritHat/pseudoscope
+cd pseudoscope
 make                 # bin/pseudoscope
 make install         # opcional, PREFIX=/usr/local
 ```
@@ -165,8 +165,7 @@ grafía de P-like:
 | `--operators` | `standard`, `dotted`, `mixed` | `mixed` |
 | `-m`, `--mixed-arrays` | `true`, `false` | `true` |
 
-`-b` añade el control de índices al programa generado. El nombre antiguo, `plike`, sigue
-funcionando.
+`-b` añade el control de índices al programa generado.
 
 ## Límites
 

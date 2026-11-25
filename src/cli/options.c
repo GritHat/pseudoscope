@@ -1,5 +1,5 @@
-#include "plike/cli.h"
-#include "plike/i18n.h"
+#include "pseudoscope/cli.h"
+#include "pseudoscope/i18n.h"
 
 #include <getopt.h>
 #include <stdio.h>
@@ -220,7 +220,7 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
                 *status = EXIT_OK;
                 return false;
             case 'V':
-                puts("pseudoscope " PLIKE_VERSION);
+                puts("pseudoscope " PSEUDOSCOPE_VERSION);
                 *status = EXIT_OK;
                 return false;
             default:

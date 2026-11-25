@@ -1,4 +1,4 @@
-#include "plike/target.h"
+#include "pseudoscope/target.h"
 
 /* What a translated program brings along: only what it uses. */
 

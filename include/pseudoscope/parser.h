@@ -1,7 +1,7 @@
-#ifndef PLIKE_PARSER_H
-#define PLIKE_PARSER_H
+#ifndef PSEUDOSCOPE_PARSER_H
+#define PSEUDOSCOPE_PARSER_H
 
-#include "plike/ast.h"
+#include "pseudoscope/ast.h"
 
 /* Builds the tree for a whole file. Syntax errors go to diag; a tree is
  * returned anyway, but is only meaningful when there were none. */

@@ -1,5 +1,5 @@
-#ifndef PLIKE_CONFIG_H
-#define PLIKE_CONFIG_H
+#ifndef PSEUDOSCOPE_CONFIG_H
+#define PSEUDOSCOPE_CONFIG_H
 
 #include <stdbool.h>
 

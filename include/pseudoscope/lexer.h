@@ -1,9 +1,9 @@
-#ifndef PLIKE_LEXER_H
-#define PLIKE_LEXER_H
+#ifndef PSEUDOSCOPE_LEXER_H
+#define PSEUDOSCOPE_LEXER_H
 
-#include "plike/arena.h"
-#include "plike/config.h"
-#include "plike/diag.h"
+#include "pseudoscope/arena.h"
+#include "pseudoscope/config.h"
+#include "pseudoscope/diag.h"
 
 typedef enum {
     TOK_EOF,

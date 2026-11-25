@@ -1,5 +1,5 @@
-#include "plike/builtins.h"
-#include "plike/parser.h"
+#include "pseudoscope/builtins.h"
+#include "pseudoscope/parser.h"
 
 #include <stdio.h>
 #include <stdlib.h>

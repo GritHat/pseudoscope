@@ -1,6 +1,6 @@
 #include "ui.h"
 
-#include "plike/ui.h"
+#include "pseudoscope/ui.h"
 
 #include <stdio.h>
 #include <stdlib.h>

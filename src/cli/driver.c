@@ -1,12 +1,12 @@
-#include "plike/blocks.h"
-#include "plike/cli.h"
+#include "pseudoscope/blocks.h"
+#include "pseudoscope/cli.h"
 
-#include "plike/codegen.h"
-#include "plike/dump.h"
-#include "plike/parser.h"
-#include "plike/ui.h"
-#include "plike/uml.h"
-#include "plike/vm.h"
+#include "pseudoscope/codegen.h"
+#include "pseudoscope/dump.h"
+#include "pseudoscope/parser.h"
+#include "pseudoscope/ui.h"
+#include "pseudoscope/uml.h"
+#include "pseudoscope/vm.h"
 
 #include <errno.h>
 #include <stdlib.h>

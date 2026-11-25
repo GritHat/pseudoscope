@@ -1,8 +1,8 @@
-#ifndef PLIKE_BLOCKS_H
-#define PLIKE_BLOCKS_H
+#ifndef PSEUDOSCOPE_BLOCKS_H
+#define PSEUDOSCOPE_BLOCKS_H
 
-#include "plike/uml.h"
-#include "plike/config.h"
+#include "pseudoscope/uml.h"
+#include "pseudoscope/config.h"
 
 /* Documents that hold programs and diagrams among their text: Markdown, with
  * its fenced blocks, and LaTeX, with its environments. */

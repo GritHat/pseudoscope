@@ -1,4 +1,4 @@
-#include "plike/vm.h"
+#include "pseudoscope/vm.h"
 
 #include <stdlib.h>
 #include <string.h>

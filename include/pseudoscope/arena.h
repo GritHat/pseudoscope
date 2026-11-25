@@ -1,5 +1,5 @@
-#ifndef PLIKE_ARENA_H
-#define PLIKE_ARENA_H
+#ifndef PSEUDOSCOPE_ARENA_H
+#define PSEUDOSCOPE_ARENA_H
 
 #include <stdarg.h>
 #include <stddef.h>

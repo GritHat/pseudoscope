@@ -31,8 +31,8 @@ Rust, TypeScript, JavaScript or Python.
   simulation included; what a language cannot say is refused with the reason.
 - **In your language**: interface, errors and help in English, Italian and Spanish.
 
-It started as `plike-translator`, a first-year project to run the pseudocode used in our
-lectures. That pseudocode never had a fixed syntax, so all the spellings are accepted:
+It started as a first-year project to run P-like, the pseudocode used in our lectures.
+That pseudocode never had a fixed syntax, so all the spellings are accepted:
 `A[i,j]`, `A[i][j]` or `A(i,j)`, `and`, `.AND.` or `&&`, `end f` or `endfunction`, and so
 on.
 
@@ -41,8 +41,8 @@ on.
 Needs a C11 compiler, make and a POSIX system. The tests also need Python 3.
 
 ```sh
-git clone https://github.com/GritHat/plike-translator
-cd plike-translator
+git clone https://github.com/GritHat/pseudoscope
+cd pseudoscope
 make                 # bin/pseudoscope
 make install         # optional, PREFIX=/usr/local
 ```
@@ -162,7 +162,7 @@ spelling of P-like:
 | `--operators` | `standard`, `dotted`, `mixed` | `mixed` |
 | `-m`, `--mixed-arrays` | `true`, `false` | `true` |
 
-`-b` adds bounds checks to the generated program. The old name, `plike`, still works.
+`-b` adds bounds checks to the generated program.
 
 ## Limits
 

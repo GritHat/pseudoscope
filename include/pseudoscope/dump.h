@@ -1,7 +1,7 @@
-#ifndef PLIKE_DUMP_H
-#define PLIKE_DUMP_H
+#ifndef PSEUDOSCOPE_DUMP_H
+#define PSEUDOSCOPE_DUMP_H
 
-#include "plike/ast.h"
+#include "pseudoscope/ast.h"
 
 void dump_tokens(TokenList tokens, StrBuf *out);
 void dump_tree(const Program *program, StrBuf *out);     /* indented text */

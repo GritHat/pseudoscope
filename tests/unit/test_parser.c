@@ -1,4 +1,4 @@
-#include "plike/parser.h"
+#include "pseudoscope/parser.h"
 #include "unit.h"
 
 static int parse_errors(const char *text, Config config) {

@@ -32,8 +32,8 @@ in C, C++, Java, Rust, TypeScript, JavaScript o Python.
   perché.
 - **Nella tua lingua**: interfaccia, errori e aiuto in inglese, italiano e spagnolo.
 
-È nato come `plike-translator`, un progetto del primo anno per eseguire lo pseudocodice
-usato a lezione. Quello pseudocodice non ha mai avuto una sintassi fissa, quindi si
+È nato come un progetto del primo anno per eseguire il P-like, lo pseudocodice usato a
+lezione. Quello pseudocodice non ha mai avuto una sintassi fissa, quindi si
 accettano tutte le grafie: `A[i,j]`, `A[i][j]` o `A(i,j)`, `and`, `.AND.` o `&&`, `end f`
 o `endfunction`, e così via.
 
@@ -42,8 +42,8 @@ o `endfunction`, e così via.
 Servono un compilatore C11, make e un sistema POSIX. Per i test anche Python 3.
 
 ```sh
-git clone https://github.com/GritHat/plike-translator
-cd plike-translator
+git clone https://github.com/GritHat/pseudoscope
+cd pseudoscope
 make                 # bin/pseudoscope
 make install         # facoltativo, PREFIX=/usr/local
 ```
@@ -164,8 +164,7 @@ legge lo standard input. `pseudoscope --help` elenca le opzioni; queste scelgono
 | `--operators` | `standard`, `dotted`, `mixed` | `mixed` |
 | `-m`, `--mixed-arrays` | `true`, `false` | `true` |
 
-`-b` aggiunge il controllo degli indici al programma generato. Il vecchio nome, `plike`,
-funziona ancora.
+`-b` aggiunge il controllo degli indici al programma generato.
 
 ## Limiti
 

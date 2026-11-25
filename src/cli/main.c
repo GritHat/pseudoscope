@@ -1,5 +1,5 @@
-#include "plike/cli.h"
-#include "plike/i18n.h"
+#include "pseudoscope/cli.h"
+#include "pseudoscope/i18n.h"
 
 int main(int argc, char **argv) {
     Options options;

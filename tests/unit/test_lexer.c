@@ -1,4 +1,4 @@
-#include "plike/lexer.h"
+#include "pseudoscope/lexer.h"
 #include "unit.h"
 
 #include <stdlib.h>

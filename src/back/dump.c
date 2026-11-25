@@ -1,4 +1,4 @@
-#include "plike/dump.h"
+#include "pseudoscope/dump.h"
 
 #define MAX_PATH 4096
 
@@ -161,7 +161,7 @@ void dump_tree(const Program *program, StrBuf *out) {
 
 void dump_tree_dot(const Program *program, StrBuf *out) {
     Dump dump = {.out = out, .dot = true};
-    strbuf_puts(out, "digraph plike {\n  node [shape=box, fontname=\"monospace\"];\n");
+    strbuf_puts(out, "digraph program {\n  node [shape=box, fontname=\"monospace\"];\n");
     walk_program(&dump, program);
     strbuf_puts(out, "}\n");
 }

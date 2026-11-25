@@ -1,4 +1,4 @@
-#include "plike/diag.h"
+#include "pseudoscope/diag.h"
 
 #include <stdarg.h>
 #include <string.h>

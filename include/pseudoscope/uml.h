@@ -1,8 +1,8 @@
-#ifndef PLIKE_UML_H
-#define PLIKE_UML_H
+#ifndef PSEUDOSCOPE_UML_H
+#define PSEUDOSCOPE_UML_H
 
-#include "plike/diag.h"
-#include "plike/arena.h"
+#include "pseudoscope/diag.h"
+#include "pseudoscope/arena.h"
 
 /* Diagrams written as text, in PlantUML or Mermaid: the kinds that can be
  * walked through. */

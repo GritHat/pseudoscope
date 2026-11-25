@@ -171,7 +171,7 @@ int main(int argc, char **argv) {
         fputs("po2c: too many languages\n", stderr);
         return 1;
     }
-    puts("/* Made by tools/po2c from lang/: do not edit. */\n#include \"plike/i18n.h\"\n");
+    puts("/* Made by tools/po2c from lang/: do not edit. */\n#include \"pseudoscope/i18n.h\"\n");
     for (int i = 1; i < argc; i++) ok &= catalog(argv[i], codes[i - 1], sizeof codes[0], names[i - 1], sizeof names[0], &counts[i - 1]);
     puts("const Catalog CATALOGS[] = {");
     for (int i = 0; i < argc - 1; i++)

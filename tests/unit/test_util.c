@@ -1,5 +1,5 @@
-#include "plike/arena.h"
-#include "plike/diag.h"
+#include "pseudoscope/arena.h"
+#include "pseudoscope/diag.h"
 #include "unit.h"
 
 #include <stdint.h>

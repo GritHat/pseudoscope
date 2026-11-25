@@ -1,7 +1,7 @@
-#ifndef PLIKE_AST_H
-#define PLIKE_AST_H
+#ifndef PSEUDOSCOPE_AST_H
+#define PSEUDOSCOPE_AST_H
 
-#include "plike/lexer.h"
+#include "pseudoscope/lexer.h"
 
 typedef struct Expr Expr;
 typedef struct Stmt Stmt;

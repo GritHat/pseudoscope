@@ -1,6 +1,6 @@
 #include "screen.h"
 
-#include "plike/i18n.h"
+#include "pseudoscope/i18n.h"
 
 #include <errno.h>
 #include <poll.h>

@@ -1,5 +1,5 @@
-#ifndef PLIKE_BUILTINS_H
-#define PLIKE_BUILTINS_H
+#ifndef PSEUDOSCOPE_BUILTINS_H
+#define PSEUDOSCOPE_BUILTINS_H
 
 #include <stdbool.h>
 

@@ -1,7 +1,7 @@
-#ifndef PLIKE_DIAG_H
-#define PLIKE_DIAG_H
+#ifndef PSEUDOSCOPE_DIAG_H
+#define PSEUDOSCOPE_DIAG_H
 
-#include "plike/i18n.h"
+#include "pseudoscope/i18n.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>

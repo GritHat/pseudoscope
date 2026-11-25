@@ -1,7 +1,7 @@
-#ifndef PLIKE_VM_H
-#define PLIKE_VM_H
+#ifndef PSEUDOSCOPE_VM_H
+#define PSEUDOSCOPE_VM_H
 
-#include "plike/sema.h"
+#include "pseudoscope/sema.h"
 
 #include <stdint.h>
 

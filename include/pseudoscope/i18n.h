@@ -1,5 +1,5 @@
-#ifndef PLIKE_I18N_H
-#define PLIKE_I18N_H
+#ifndef PSEUDOSCOPE_I18N_H
+#define PSEUDOSCOPE_I18N_H
 
 #include <stdbool.h>
 
@@ -38,14 +38,14 @@ bool locale_choose(const char *name);
 void locale_from_environment(void);
 
 #if defined(__GNUC__) || defined(__clang__)
-#define PLIKE_FORMAT_ARG(n) __attribute__((format_arg(n)))
+#define PSEUDOSCOPE_FORMAT_ARG(n) __attribute__((format_arg(n)))
 #else
-#define PLIKE_FORMAT_ARG(n)
+#define PSEUDOSCOPE_FORMAT_ARG(n)
 #endif
 
-const char *tr(const char *english) PLIKE_FORMAT_ARG(1);
-const char *tr_count(const char *one, const char *many, long count) PLIKE_FORMAT_ARG(1) PLIKE_FORMAT_ARG(2);
-const char *tr_in(const char *context, const char *english) PLIKE_FORMAT_ARG(2);
+const char *tr(const char *english) PSEUDOSCOPE_FORMAT_ARG(1);
+const char *tr_count(const char *one, const char *many, long count) PSEUDOSCOPE_FORMAT_ARG(1) PSEUDOSCOPE_FORMAT_ARG(2);
+const char *tr_in(const char *context, const char *english) PSEUDOSCOPE_FORMAT_ARG(2);
 
 #define T(text) tr(text)
 #define TN(one, many, count) tr_count(one, many, count)

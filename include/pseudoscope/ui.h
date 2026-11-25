@@ -1,7 +1,7 @@
-#ifndef PLIKE_PUBLIC_UI_H
-#define PLIKE_PUBLIC_UI_H
+#ifndef PSEUDOSCOPE_PUBLIC_UI_H
+#define PSEUDOSCOPE_PUBLIC_UI_H
 
-#include "plike/config.h"
+#include "pseudoscope/config.h"
 
 #include <stddef.h>
 

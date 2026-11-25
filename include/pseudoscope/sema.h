@@ -1,7 +1,7 @@
-#ifndef PLIKE_SEMA_H
-#define PLIKE_SEMA_H
+#ifndef PSEUDOSCOPE_SEMA_H
+#define PSEUDOSCOPE_SEMA_H
 
-#include "plike/ast.h"
+#include "pseudoscope/ast.h"
 
 typedef enum { SYM_VAR, SYM_PARAM, SYM_RESULT, SYM_FUNCTION,
     SYM_FIELD,   /* of the class: stands for self.field */
