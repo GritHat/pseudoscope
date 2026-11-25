@@ -3,6 +3,7 @@
 #include "plike/codegen.h"
 #include "plike/dump.h"
 #include "plike/parser.h"
+#include "plike/ui.h"
 #include "plike/vm.h"
 
 #include <errno.h>
@@ -169,9 +170,15 @@ static void step(const Options *options, const char *text) {
     if (options->verbose) fprintf(stderr, "plike: %s\n", text);
 }
 
+static bool italian(const Options *options, bool otherwise) {
+    const char *lang = options->lang ? options->lang : getenv("PLIKE_LANG");
+    return lang && *lang ? strcmp(lang, "it") == 0 : otherwise;
+}
+
 static int translate(const Options *options, const Source *source, Arena *arena, StrBuf *out) {
     bool tty = isatty(STDERR_FILENO) && !getenv("NO_COLOR");
     Diag diag = {.source = source, .out = stderr, .silent_warnings = options->quiet,
+                 .italian = italian(options, false),
                  .color = options->color == COLOR_ALWAYS ||
                           (options->color == COLOR_AUTO && tty)};
 
@@ -218,7 +225,16 @@ static int translate(const Options *options, const Source *source, Arena *arena,
     return build_and_run(options, out, arena);
 }
 
+static int start_ui(const Options *options) {
+    UiOptions ui = {.config = options->config, .path = options->input,
+                    .italian = italian(options, true), .keys = options->keys,
+                    .width = options->width, .height = options->height,
+                    .colors = options->color == COLOR_ALWAYS};
+    return run_ui(&ui);
+}
+
 int run_command(const Options *options) {
+    if (options->command == CMD_UI) return start_ui(options);
     StrBuf text = {0};
     if (!read_file(options->input, &text)) {
         strbuf_free(&text);

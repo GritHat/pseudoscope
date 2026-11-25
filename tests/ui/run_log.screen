@@ -1,0 +1,30 @@
+ ◆ PLIKE  fib.plike                           ▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
+  ✓ finito                                                                             ≡ stampe: o
+╭─ Tutto quello che è successo ────────────────────────────────────────────────────────────────────╮
+│               ▶ si entra in fib(n=1)                                                             │
+│    5          ? n < 2  →  1 < 2   vero   si esegue questo ramo                                   │
+│    6        ◀ fib restituisce  1                                                                 │
+│               ▶ si entra in fib(n=0)                                                             │
+│    5          ? n < 2  →  0 < 2   vero   si esegue questo ramo                                   │
+│    6        ◀ fib restituisce  0                                                                 │
+│    8      ◀ fib restituisce  1                                                                   │
+│             ▶ si entra in fib(n=1)                                                               │
+│    5        ? n < 2  →  1 < 2   vero   si esegue questo ramo                                     │
+│    6      ◀ fib restituisce  1                                                                   │
+│    8    ◀ fib restituisce  2                                                                     │
+│           ▶ si entra in fib(n=2)                                                                 │
+│    5      ? n < 2  →  2 < 2   falso   questo ramo si salta                                       │
+│             ▶ si entra in fib(n=1)                                                               │
+│    5        ? n < 2  →  1 < 2   vero   si esegue questo ramo                                     │
+│    6      ◀ fib restituisce  1                                                                   │
+│             ▶ si entra in fib(n=0)                                                               │
+│    5        ? n < 2  →  0 < 2   vero   si esegue questo ramo                                     │
+│    6      ◀ fib restituisce  0                                                                   │
+│    8    ◀ fib restituisce  1                                                                     │
+│    8  ◀ fib restituisce  3                                                                       │
+│   13  ≡ stampa   3                                                                               │
+│   13  ◀ main ha finito                                                                           │
+│       ✓ programma terminato                                                                      │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+  ↑↓  scorri   Esc  chiudi

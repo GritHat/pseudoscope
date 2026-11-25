@@ -1,0 +1,35 @@
+// A binary search tree. The number read decides the order of the keys: try 3.
+
+type Node: record
+    key: integer
+    left: Node*
+    right: Node*
+end
+
+procedure insert(in/out: root; in: node)
+var root, node: Node*
+begin
+    if root = 0 then
+        root := node
+    elseif node.key < root.key then
+        insert(root.left, node)
+    else
+        insert(root.right, node)
+    endif
+end insert
+
+procedure main()
+var n: array[6] of Node
+var root: Node*
+var i, k: integer
+begin
+    root := 0
+    read(k)
+    for i := 1 to 6 do
+        n[i].key := (i * k) mod 7
+        n[i].left := 0
+        n[i].right := 0
+        insert(root, &n[i])
+    endfor
+    print("done")
+end main

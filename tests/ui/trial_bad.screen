@@ -1,0 +1,30 @@
+ ◆ PLIKE  basic.plike ▸ BubbleSort ▸ prova
+
+╭─ Con quali valori? ──────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                  │
+│  Scegli i valori da passare, poi premi Invio per vedere cosa succede.                            │
+│                                                                                                  │
+│  ▸ n                integer                                                                      │
+│     z                                                                                            │
+│                                                                                                  │
+│    A                array [1..n] of real                              valori: casuali            │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│  ✗ Non capisco i valori di 'n'                                                                   │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+  ↑↓  campo   Invio  esegui   Tab  altri valori   Esc  indietro

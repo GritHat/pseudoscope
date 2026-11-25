@@ -45,9 +45,34 @@ def mutate(rng):
     return b"".join(parts)
 
 
+KEYS = ["<up>", "<down>", "<left>", "<right>", "<right>", "<right>", "<enter>", "<enter>", "<esc>", "<tab>",
+        "<space>", "<back>", "<home>", "<end>", "<pgup>", "<pgdn>", "r", "n", "u", "b", "v", "o", "c",
+        "0", "1", "2", "3", "4", "?", "5", "x", "g"]
+
+
+def run_ui(rng, text):
+    if rng.randrange(2):
+        text = rng.choice(corpus)  # as it is, to get to run it
+    keys = "".join(rng.choice(KEYS) for _ in range(rng.randrange(60)))
+    size = f"{rng.choice([20, 80, 81, 100, 160])}x{rng.choice([5, 24, 25, 40])}"
+    with tempfile.NamedTemporaryFile(suffix=".plike") as program:
+        program.write(text)
+        program.flush()
+        try:
+            result = subprocess.run([PLIKE, "ui", program.name, "--keys=r" + keys, "--size=" + size,
+                                     rng.choice(["--lang=it", "--lang=en"])], capture_output=True, timeout=120)
+        except subprocess.TimeoutExpired:
+            return text, "timeout with keys " + keys
+    if result.returncode == 0:
+        return None
+    return text, f"keys {keys} size {size}\n" + result.stderr.decode(errors="replace")[:2500]
+
+
 def run(i):
     rng = random.Random(SEED * 1000003 + i)
     text = mutate(rng)
+    if rng.randrange(4) == 0:
+        return run_ui(rng, text)
     args = [PLIKE, rng.choice(["translate", "translate", "exec", "exec", "ast", "tokens"]), "-"]
     args += rng.choice([[], ["-b"], ["--indexing=zero"], ["--assignment=equals"],
                         ["--operators=dotted"], ["--mixed-arrays=false"]])

@@ -1,0 +1,14 @@
+// Recursion: look at it from level 1.
+
+function fib(in n: integer): integer
+begin
+    if n < 2 then
+        return n
+    endif
+    return fib(n - 1) + fib(n - 2)
+end fib
+
+procedure main()
+begin
+    print(fib(4))
+end main

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 static const struct {
     const char *name;
@@ -11,6 +12,7 @@ static const struct {
 } COMMANDS[] = {
     {"translate", CMD_TRANSLATE}, {"check", CMD_CHECK}, {"build", CMD_BUILD},
     {"run", CMD_RUN}, {"exec", CMD_EXEC}, {"tokens", CMD_TOKENS}, {"ast", CMD_AST},
+    {"ui", CMD_UI},
 };
 
 static void print_help(FILE *out) {
@@ -20,6 +22,8 @@ static void print_help(FILE *out) {
         "Translates P-like pseudocode to C. FILE may be - for the standard input.\n"
         "\n"
         "Commands:\n"
+        "  ui          explore programs and watch them run (FILE may be a folder;\n"
+        "              the default without arguments)\n"
         "  translate   write the C code (the default command)\n"
         "  check       only report errors and warnings\n"
         "  build       translate and compile to an executable\n"
@@ -42,6 +46,8 @@ static void print_help(FILE *out) {
         "  -b, --bounds-check        stop with an error on array indices out of bounds\n"
         "      --cc=COMPILER         C compiler for build and run (default: $CC or cc)\n"
         "      --steps=N             exec: stop after N steps\n"
+        "      --lang=LANG           it or en (default: $PLIKE_LANG, or it for ui and en for\n"
+        "                            the other commands)\n"
         "      --dot                 ast: Graphviz format\n"
         "\n"
         "Messages:\n"
@@ -68,7 +74,7 @@ static int choose(const char *option, const char *value, const char *const *choi
     return -1;
 }
 
-enum { OPT_OPERATORS = 256, OPT_CC, OPT_DOT, OPT_COLOR, OPT_STEPS };
+enum { OPT_OPERATORS = 256, OPT_CC, OPT_DOT, OPT_COLOR, OPT_STEPS, OPT_LANG, OPT_KEYS, OPT_SIZE };
 
 bool parse_options(int argc, char **argv, Options *options, int *status) {
     static const struct option LONG[] = {
@@ -82,6 +88,9 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
         {"cc", required_argument, NULL, OPT_CC},
         {"dot", no_argument, NULL, OPT_DOT},
         {"color", required_argument, NULL, OPT_COLOR},
+        {"lang", required_argument, NULL, OPT_LANG},
+        {"keys", required_argument, NULL, OPT_KEYS},
+        {"size", required_argument, NULL, OPT_SIZE},
         {"steps", required_argument, NULL, OPT_STEPS},
         {"quiet", no_argument, NULL, 'q'},
         {"werror", no_argument, NULL, 'W'},
@@ -95,9 +104,10 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
     static const char *const PARAMS[] = {"decl", "body", "mixed", NULL};
     static const char *const OPERATORS[] = {"standard", "dotted", "mixed", NULL};
     static const char *const BOOLEAN[] = {"false", "true", NULL};
+    static const char *const LANGUAGES[] = {"it", "en", NULL};
     static const char *const COLOR[] = {"auto", "always", "never", NULL};
 
-    *options = (Options){.command = CMD_TRANSLATE, .config = CONFIG_DEFAULT};
+    *options = (Options){.command = CMD_TRANSLATE, .config = CONFIG_DEFAULT, .width = 100, .height = 30};
     *status = EXIT_USAGE;
 
     if (argc > 1) {
@@ -143,6 +153,18 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
             case 'o': options->output = optarg; break;
             case 'b': options->config.bounds_check = true; break;
             case OPT_CC: options->cc = optarg; break;
+            case OPT_LANG:
+                value = choose("lang", optarg, LANGUAGES);
+                options->lang = optarg;
+                break;
+            case OPT_KEYS: options->keys = optarg; break;
+            case OPT_SIZE:
+                if (sscanf(optarg, "%dx%d", &options->width, &options->height) != 2 ||
+                    options->width < 1 || options->width > 500 || options->height < 1 || options->height > 200) {
+                    fprintf(stderr, "plike: invalid value '%s' for --size\n", optarg);
+                    return false;
+                }
+                break;
             case OPT_STEPS: {
                 char *end;
                 options->max_steps = strtol(optarg, &end, 10);
@@ -171,6 +193,12 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
         if (value < 0) return false;
     }
 
+    if (optind >= argc && (options->command == CMD_UI ||
+                           (argc == 1 && isatty(STDIN_FILENO) && isatty(STDOUT_FILENO)))) {
+        options->command = CMD_UI;
+        options->input = ".";
+        return true;
+    }
     if (optind >= argc) {
         fputs("plike: no input file\nTry 'plike --help'.\n", stderr);
         return false;

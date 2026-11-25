@@ -3,6 +3,7 @@
 ```mermaid
 flowchart LR
     source --> lexer --> parser --> sema[semantic analysis] --> codegen[code generator] --> C
+    sema --> vm[virtual machine] --> ui[interface]
 ```
 
 | Directory | Content |
@@ -10,6 +11,8 @@ flowchart LR
 | `src/front` | lexer, parser |
 | `src/sema` | names, types, checks |
 | `src/back` | C output, dumps of tokens and tree |
+| `src/vm` | bytecode compiler and virtual machine |
+| `src/tui` | the interface |
 | `src/cli` | options, reading and writing files, running the C compiler |
 | `src/util` | arena, string buffer, messages |
 
@@ -34,3 +37,17 @@ are not direct:
   passed as a plain pointer, and given its shape back at the beginning of the function.
 - Bounds that are not constant are saved when the array comes into scope, because the
   variables they are made of may change.
+
+**Virtual machine.** Bytecode in which some instructions mark where a statement, an
+expression or a call begins or ends: those are the places to stop at, for each level of
+detail. The whole state is a handful of arrays, so a snapshot is a few copies. Going back
+means restoring the last snapshot before the target and executing again up to it; input,
+output and history only ever grow, so doing it again writes the same things.
+
+Memory is made of objects (a variable each) of slots (a number or pointer each). A pointer
+is an object, an offset and a serial number, which tells when the object is gone.
+
+**Interface.** `screen.c` draws cells and sends the ones that changed; it comes from
+[reliable-over-unreliable](https://github.com/GritHat/reliable-over-unreliable). The views
+only read: the state of a run is all in the virtual machine, so any of them can be drawn
+at any moment.

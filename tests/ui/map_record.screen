@@ -1,0 +1,30 @@
+ ◆ PLIKE  tree.plike                                                     ▐ Mappa ▌▸▐ Codice ▌▸▐ C ▌
+
+╭─ Mappa ───────────────────────╮╭─────────────────────────────────────────────────────────────────╮
+│ Sottoprogrammi                ││                                                                 │
+│  ■ insert                     ││  Node  record: più valori insieme, ognuno con un nome           │
+│  ■ main  si parte da qui      ││                                                                 │
+│                               ││  ╭─ Node ───────────────────────────────────────────────╮       │
+│ Strutture (record)            ││  │ key             integer                              │       │
+│▸ ▦ Node                       ││  │ left            ──▶ Node                             │       │
+│                               ││  │ right           ──▶ Node                             │       │
+│                               ││  ╰──────────────────────────────────────────────────────╯       │
+│                               ││                                                                 │
+│                               ││  usato da     insert   main                                     │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+╰───────────────────────────────╯╰─────────────────────────────────────────────────────────────────╯
+
+  ↑↓  scorri   Invio  più dettaglio   Esc  meno dettaglio   r  esegui   E  modifica   ?  aiuto

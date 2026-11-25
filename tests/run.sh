@@ -4,6 +4,7 @@
 #              (NAME.in: input, NAME.opts: options, NAME.status: exit status)
 #   accept/    syntax that must be accepted, and give C that compiles
 #   errors/    programs to refuse; messages compared with NAME.err
+#   ui/        NAME.ui: program, size, keys, options; compared with NAME.screen
 # UPDATE=1 rewrites the expected files.
 here=$(cd "$(dirname "$0")" && pwd)
 plike=$(cd "$(dirname "${PLIKE:-bin/plike}")" && pwd)/$(basename "${PLIKE:-bin/plike}")
@@ -75,8 +76,19 @@ done
 cd "$here/../examples" || exit 1
 for file in *.plike; do
     opts= ; grep -q 'plike run --indexing=zero' "$file" && opts=--indexing=zero
-    if "$plike" run -b $opts --cc="$here/ccheck" "$file" > /dev/null 2> "$tmp/err"
+    input=/dev/null; [ -f "${file%.plike}.in" ] && input=${file%.plike}.in
+    if "$plike" run -b $opts --cc="$here/ccheck" "$file" < "$input" > /dev/null 2> "$tmp/err"
     then pass; else fail "examples/$file" "$tmp/err"; fi
+done
+
+cd "$here/ui" || exit 1
+for file in *.ui; do
+    name=${file%.ui}
+    { IFS= read -r program; IFS= read -r size; IFS= read -r keys; IFS= read -r opts; } < "$file"
+    # shellcheck disable=SC2086
+    if "$plike" ui "$program" --size="$size" --keys="$keys" $opts > "$tmp/out" 2> "$tmp/err"
+    then compare "ui/$name" "$name.screen" "$tmp/out"
+    else fail "ui/$name" "$tmp/err"; fi
 done
 
 . "$here/cli.sh"

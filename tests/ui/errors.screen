@@ -1,0 +1,30 @@
+ ◆ PLIKE  types.plike
+
+╭─ Da correggere prima di continuare ──────────────────────────────────────────────────────────────╮
+│  ✗ riga 2  il record 'loop' contiene se stesso; usa un puntatore                                 │
+│  ✗ riga 11  manca la dimensione di 't'                                                           │
+│▸ ✗ riga 12  la dimensione di un array deve essere positiva                                       │
+│  ✗ riga 13  il limite di un array deve essere un integer, non real                               │
+│  ✗ riga 15  non posso mettere r in integer                                                       │
+│  ✗ riga 16  non posso mettere integer in r                                                       │
+│  ✗ riga 17  non posso mettere integer in array of integer                                        │
+│  ✗ riga 18  dimensioni dell'array: 1, indici scritti: 2                                          │
+│  ✗ riga 19  non posso mettere integer in array of integer                                        │
+│  ✗ riga 20  integer non è un array                                                               │
+│  ✗ riga 21  l'indice di un array deve essere un integer, non real                                │
+│  ✗ riga 22  non c'è un campo 'b' in r                                                            │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────────────────────────────────────╮
+│     6 begin f := a[1] end f                                                                      │
+│     7 procedure p(in v: array[3] of integer, in m: array[2,2] of integer)                       ┃│
+│     8 var x: r                                                                                  ┃│
+│     9 var i: integer                                                                             │
+│    10 var s: real                                                                                │
+│    11 var t: array of integer                                                                    │
+│ ▶  12 var z: array[0] of integer                                                                 │
+│    13 var b: array[1.5] of integer                                                               │
+│    14 begin                                                                                      │
+│    15     i := x                                                                                 │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+  ↑↓  scegli   E  modifica   Esc  file   ?  aiuto   q  esci

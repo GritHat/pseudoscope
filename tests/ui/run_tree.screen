@@ -1,0 +1,34 @@
+ ◆ PLIKE  tree.plike                          ▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
+  ‖ fermo   main
+╭─ main ─────────────────────────────────────╮╭─ Dati ─────────────────────────────────────────────╮
+│   21 procedure main()                      ││                                                    │
+│   22 var n: array[6] of Node               ││ i  6    k  3                                       │
+│   23 var root: Node*                       ││                                                    │
+│   24 var i, k: integer                     ││ n  array [6] of Node                               │
+│   25 begin                                 ││  [1]     key  3   left  →n[3]   right  →n[2]       │
+│   26     root := 0                         ││  [2]     key  6   left  →n[4]   right  ∅           │
+│   27     read(k)                           ││  [3]     key  2   left  →n[5]   right  ∅           │
+│   28     for i := 1 to 6 do                ││  [4]     key  5   left  →n[6]   right  ∅           │
+│   29         n[i].key := (i * k) mod 7     ││  [5]     key  1   left  ∅   right  ∅               │
+│   30         n[i].left := 0                ││  [6]     key  4   left  ∅   right  ∅               │
+│   31         n[i].right := 0               ││                                                    │
+│▶  32         insert(root, &n[i])           ││ root  Node*                                        │
+│   33     endfor                            ││   3                                                │
+│   34     print("done")                     ││      ├─left─  2                                    │
+│   35 end main                              ││          ├─left─  1                                │
+│                                            ││      └─right─  6                                   │
+│                                            ││          ├─left─  5                                │
+│                                            ││              ├─left─  4                            │
+│                                            ││                                                    │
+│                                            ││                                                    │
+│                                            ││                                                    │
+│                                            ││                                                    │
+│                                            ││                                                    │
+│                                            ││                                                    │
+╰────────────────────────────────────────────╯╰────────────────────────────────────────────────────╯
+╭─ Cosa è successo ────────────────────────────────────────────────────────────────────────────────╮
+│ ◀ insert ha finito                                                                               │
+│ ◀ insert ha finito                                                                               │
+│ ◀ insert ha finito                                                                               │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   n  salta   ?  aiuto

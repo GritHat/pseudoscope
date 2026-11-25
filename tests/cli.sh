@@ -44,6 +44,14 @@ cli "run" 0 "$plike" run hi.plike;            has "run text" out "hi"
 cli "missing compiler" 3 "$plike" run --cc=/no/such/cc hi.plike
 cli "tokens" 0 "$plike" tokens hi.plike;      has "tokens text" out "string	hi"
 cli "ast" 0 "$plike" ast hi.plike;            has "ast text" out "procedure main"
+cli "italian" 1 "$plike" check --lang=it bad.plike; has "italian text" err "errore: 'x' non è stato dichiarato"
+cli "exec" 0 "$plike" exec hi.plike;          has "exec text" out "hi"
+cli "exec steps" 1 "$plike" exec --steps=2 hi.plike; has "steps text" err "too many steps"
+cli "bad steps" 2 "$plike" exec --steps=x hi.plike
+cli "ui needs a terminal" 2 "$plike" ui hi.plike
+cli "ui missing file" 3 "$plike" ui missing.plike
+cli "ui files" 0 "$plike" ui . --keys= ;      has "ui files text" out "hi.plike"
+cli "ui open file" 0 "$plike" ui . --keys="<down><down><down><up><home><enter>"
 cli "dot" 0 "$plike" ast --dot hi.plike;      has "dot text" out "digraph"
 "$plike" run - < hi.plike > out 2> err && [ "$(cat out)" = hi ] && pass || fail "cli: standard input" err
 [ -z "$(find "${TMPDIR:-/tmp}" -maxdepth 1 -name 'plike-*' -newer hi.plike 2>/dev/null)" ] && pass || fail "cli: temporary files left"

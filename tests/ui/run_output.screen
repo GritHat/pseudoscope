@@ -1,0 +1,24 @@
+ ◆ PLIKE  basic.plike     ▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
+  ✓ finito                                                         ≡ stampe: o
+╭─ Codice ─────────────────────────╮╭─ Cosa ha stampato ───────────────────────╮
+│  162 procedure main()            ││                                          │
+│  163     var v : array [1..6] o… ││ 1.000000                                 │
+│  164     var i : integer         ││ 2.000000                                 │
+│  165     begin                   ││ 3.000000                                 │
+│  166         for i := 1 to 6 do  ││ 4.000000                                 │
+│  167             v(i) := (i * 5… ││ 5.000000                                 │
+│  168         endfor              ││ 6.000000                                 │
+│  169         BubbleSort(6, v)    ││ 256.000000                               │
+│  170         for i := 1 to 6 do  ││                                          │
+│  171             print(v(i))     ││                                          │
+│  172         endfor              ││                                          │
+│  173         print(pow(2, 8))    ││                                          │
+│  174     end                     ││                                          │
+│  175 end main                    ││                                          │
+╰──────────────────────────────────╯╰──────────────────────────────────────────╯
+╭─ Cosa è successo ────────────────────────────────────────────────────────────╮
+│ ≡ stampa   256.000000                                                        │
+│ ◀ main ha finito                                                             │
+│ ✓ programma terminato                                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   n  salta   ?  aiuto

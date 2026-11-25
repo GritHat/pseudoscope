@@ -1,0 +1,30 @@
+ ◆ PLIKE  basic.plike                         ▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
+  ‖ fermo   main
+╭─ main ─────────────────────────────────────╮╭─ Dati ─────────────────────────────────────────────╮
+│  162 procedure main()                      ││                                                    │
+│  163     var v : array [1..6] of real      ││ i  6                                               │
+│  164     var i : integer                   ││                                                    │
+│  165     begin                             ││ v  array [1..6] of real                            │
+│▶ 166         for i := 1 to 6 do            ││                                 ▼ i                │
+│  167             v(i) := (i * 5) mod 7     ││   5.0   3.0   1.0   6.0   4.0   2.0                │
+│  168         endfor                        ││    1     2     3     4     5     6                 │
+│  169         BubbleSort(6, v)              ││                                                    │
+│  170         for i := 1 to 6 do            ││                                                    │
+│  171             print(v(i))               ││                                                    │
+│  172         endfor                        ││                                                    │
+│  173         print(pow(2, 8))              ││                                                    │
+│  174     end                               ││                                                    │
+│  175 end main                              ││                                                    │
+│                                            ││                                                    │
+│                                            ││                                                    │
+│                                            ││                                                    │
+│                                            ││                                                    │
+│                                            ││                                                    │
+│                                            ││                                                    │
+╰────────────────────────────────────────────╯╰────────────────────────────────────────────────────╯
+╭─ Cosa è successo ────────────────────────────────────────────────────────────────────────────────╮
+│ ↻ prossimo giro: i =  6                                                                          │
+│ ? i = 6, fino a 6   vero   si entra nel ciclo                                                    │
+│ ✎ v[6] diventa  2.0                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   n  salta   ?  aiuto

@@ -1,0 +1,24 @@
+ ◆ PLIKE  out_of_bounds…  ▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
+  ✗ errore   main                                                  ≡ stampe: o
+╭─ main ───────────────────────────╮╭─ Dati ───────────────────────────────────╮
+│    1 procedure main()            ││                                          │
+│    2 var a: array[3] of integer  ││ i  4                                     │
+│    3 var i: integer              ││                                          │
+│    4 begin                       ││ a  array [3] of integer                  │
+│    5     for i := 1 to 4 do      ││                           i = 4          │
+│▶   6         a[i] := i           ││   1    2    3                            │
+│    7         print(a[i])         ││   1    2    3                            │
+│    8     endfor                  ││                                          │
+│    9 end main                    ││                                          │
+│                                  ││                                          │
+│                                  ││                                          │
+│                                  ││                                          │
+│                                  ││                                          │
+│                                  ││                                          │
+╰──────────────────────────────────╯╰──────────────────────────────────────────╯
+╭─ Cosa è successo ────────────────────────────────────────────────────────────╮
+│ ↻ prossimo giro: i =  4                                                      │
+│ ? i = 4, fino a 4   vero   si entra nel ciclo                                │
+│ ✗ indice fuori dai limiti dell'array   a[4]  validi: 1..3                    │
+╰──────────────────────────────────────────────────────────────────────────────╯
+  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   n  salta   ?  aiuto

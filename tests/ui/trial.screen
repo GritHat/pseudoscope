@@ -1,0 +1,30 @@
+ ◆ PLIKE  basic.plike ▸ BubbleSort ▸ prova
+
+╭─ Con quali valori? ──────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                  │
+│  Scegli i valori da passare, poi premi Invio per vedere cosa succede.                            │
+│                                                                                                  │
+│    n                integer                                                                      │
+│     6                                                                                            │
+│                                                                                                  │
+│  ▸ A                array [1..n] of real                              valori: decrescenti        │
+│     18 15 12 9 6 3                                                                               │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+  ↑↓  campo   Invio  esegui   Tab  altri valori   Esc  indietro

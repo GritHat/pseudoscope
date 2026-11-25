@@ -1,0 +1,30 @@
+ ◆ PLIKE  tree.plike                          ▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
+  » aspetta   main
+╭─ main ─────────────────────────────────────╮╭─ Dati ─────────────────────────────────────────────╮
+│   21 procedure main()                      ││                                                    │
+│   22 var n: array[6] of Node               ││ i  ·    k  ·                                       │
+│   23 var root: Node*                       ││                                                    │
+│   24 var i, k: integer                     ││ n  array [6] of Node                               │
+│   25 begin                                 ││  [1]     key  ·   left  ·   right  ·               │
+│   26     root := 0                         ││  [2]     key  ·   left  ·   right  ·               │
+│▶  27     read(k)                           ││  [3]     key  ·   left  ·   right  ·               │
+│   28     for i := 1 to 6 do                ││  [4]     key  ·   left  ·   right  ·               │
+│   29         n[i].key := (i * k) mod 7     ││  [5]     key  ·   left  ·   right  ·               │
+│   30         n[i].left := 0                ││  [6]     key  ·   left  ·   right  ·               │
+│   31         n[i].right := 0               ││                                                    │
+│   32         insert(root, &n[i])           ││ root  Node*                                        │
+│   33     endfor                            ││  ─▶ ∅                                              │
+│   34     print("done")                     ││                                                    │
+│   35 end main                              ││                                                    │
+│                                            ││                                                    │
+│                                            ││                                                    │
+│                                            ││                                                    │
+│                                            ││                                                    │
+│                                            ││                                                    │
+╰────────────────────────────────────────────╯╰────────────────────────────────────────────────────╯
+╭─ Il programma aspetta un valore ─────────────────────────────────────────────────────────────────╮
+│                                                                                                  │
+│  Scrivi k   4                                                                                    │
+│                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+  Invio  conferma   Ctrl-D  fine dei dati   Esc  indietro

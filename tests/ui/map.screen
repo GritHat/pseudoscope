@@ -1,0 +1,30 @@
+ ◆ PLIKE  basic.plike                                                    ▐ Mappa ▌▸▐ Codice ▌▸▐ C ▌
+
+╭─ Mappa ───────────────────────╮╭─────────────────────────────────────────────────────────────────╮
+│ Sottoprogrammi                ││                                                                 │
+│  ƒ somma_pari_e_dispari_in_r… ││  BubbleSort  procedura: esegue delle azioni                     │
+│▸ ■ BubbleSort                 ││                                                                 │
+│  ■ SelectionSort2             ││                       ╭────────────────╮                        │
+│  ƒ ScalarProductVdotV         ││         n integer ───▶│                │                        │
+│  ■ saxpy                      ││                       │   BubbleSort   │                        │
+│  ■ MatrixSum                  ││   A array [1..n]… ◀──▶│                │                        │
+│  ■ ScalarProductMdotV         ││                       ╰────────────────╯                        │
+│  ■ ScalarProductMdotM         ││                                                                 │
+│  ƒ OddAndEvenSum              ││  usa         nessuno                                            │
+│  ƒ pow                        ││  usata da     main                                              │
+│  ■ main  si parte da qui      ││                                                                 │
+│                               ││   r  provala con valori scelti da te                            │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+│                               ││                                                                 │
+╰───────────────────────────────╯╰─────────────────────────────────────────────────────────────────╯
+
+  ↑↓  scorri   Invio  più dettaglio   Esc  meno dettaglio   r  esegui   E  modifica   ?  aiuto

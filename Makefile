@@ -2,7 +2,7 @@ CC       ?= cc
 CFLAGS   ?= -O2 -g
 LDFLAGS  ?=
 WARN      = -Wall -Wextra -Wpedantic -Wshadow -Wstrict-prototypes -Wmissing-prototypes
-STD       = -std=c11 -D_POSIX_C_SOURCE=200809L
+STD       = -std=c11 -D_XOPEN_SOURCE=700
 SANITIZE  = -g -O1 -fsanitize=address,undefined -fno-sanitize-recover=all
 
 PREFIX   ?= /usr/local
@@ -10,7 +10,7 @@ BUILD    ?= build
 PLIKE    ?= bin/plike
 
 LIB       = $(wildcard src/util/*.c src/front/*.c src/sema/*.c src/back/*.c src/vm/*.c)
-CLI       = $(wildcard src/cli/*.c)
+CLI       = $(wildcard src/cli/*.c src/tui/*.c)
 UNIT      = $(wildcard tests/unit/*.c)
 
 LIB_OBJ   = $(LIB:%.c=$(BUILD)/%.o)
@@ -41,6 +41,7 @@ e2e: $(PLIKE)
 	PLIKE=$(PLIKE) tests/run.sh
 
 syntax: $(PLIKE)
+	python3 tests/messages.py
 	python3 tests/syntax.py $(PLIKE)
 
 # Everything again, with the translator itself under sanitizers.

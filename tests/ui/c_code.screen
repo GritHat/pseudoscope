@@ -1,0 +1,30 @@
+ ◆ PLIKE  tree.plike ▸ insert                                                      ▐ Mappa ▌▸▐ Codice ▌▸▐ C ▌
+
+╭─ Pseudocodice ──────────────────────────────────────╮╭─ C ─────────────────────────────────────────────────╮
+│     9 procedure insert(in/out: root; in: node)      ││  void insert(struct Node **root, struct Node *node) │
+│    10 var root, node: Node*                         ││      if (*root == 0) {                              │
+│    11 begin                                         ││▶         *root = node;                              │
+│    12     if root = 0 then                          ││      } else if (node->key < (*root)->key) {         │
+│ ▶  13         root := node                          ││          insert(&(*root)->left, node);              │
+│    14     elseif node.key < root.key then           ││      } else {                                       │
+│    15         insert(root.left, node)               ││          insert(&(*root)->right, node);             │
+│    16     else                                      ││      }                                              │
+│    17         insert(root.right, node)              ││  }                                                  │
+│    18     endif                                     ││                                                     │
+│    19 end insert                                    ││                                                     │
+│                                                     ││                                                     │
+│                                                     ││                                                     │
+│                                                     ││                                                     │
+│                                                     ││                                                     │
+│                                                     ││                                                     │
+│                                                     ││                                                     │
+│                                                     ││                                                     │
+│                                                     ││                                                     │
+│                                                     ││                                                     │
+│                                                     ││                                                     │
+│                                                     ││                                                     │
+│                                                     ││                                                     │
+│                                                     ││                                                     │
+╰─────────────────────────────────────────────────────╯╰─────────────────────────────────────────────────────╯
+
+  ↑↓  scorri   Invio  più dettaglio   Esc  meno dettaglio   r  esegui   E  modifica   q  esci   ?  aiuto
