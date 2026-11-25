@@ -1,4 +1,4 @@
- ◆ PSEUDOSCOPE  tree.plike ▸ Node                                        ▐ Mappa ▌▸▐ Codice ▌▸▐ C ▌
+ ◆ PSEUDOSCOPE  tree.pscope ▸ Node                                       ▐ Mappa ▌▸▐ Codice ▌▸▐ C ▌
 
 ╭─ Pseudocodice ─────────────────────────────────╮╭─ C ────────────────────────────────────────────╮
 │ ▶   3 type Node: record                        ││  struct Node {                                 │

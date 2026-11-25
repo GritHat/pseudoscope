@@ -1,6 +1,6 @@
 // An exercise: the same election, with a mistake. The tests find it: which is it?
 // Run "never two leaders in the same term" and look at the Sequence, or at the
-// Timing: who voted for whom? (Compare with ../systems/election.plike.)
+// Timing: who voted for whom? (Compare with ../systems/election.pscope.)
 
 component Node
     states Follower, Candidate, Leader, Crashed

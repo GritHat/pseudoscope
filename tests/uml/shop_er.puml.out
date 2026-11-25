@@ -1,0 +1,13 @@
+entities
+  entity Customer
+    id : number (required)
+    name : text
+    email : text
+  entity Order
+    number : number (required)
+    placed : date
+  entity Product
+    code : text (required)
+    price : real
+  one Customer -- zero or more Order: places
+  zero or more Order -- one or more Product: contains

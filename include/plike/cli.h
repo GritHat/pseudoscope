@@ -2,8 +2,9 @@
 #define PLIKE_CLI_H
 
 #include "plike/config.h"
+#include "plike/target.h"
 
-#define PLIKE_VERSION "3.0.0"
+#define PLIKE_VERSION "4.0.0"
 
 typedef enum {
     CMD_TRANSLATE, CMD_CHECK, CMD_BUILD, CMD_RUN, CMD_EXEC, CMD_TOKENS, CMD_AST, CMD_UI, CMD_TEST
@@ -16,7 +17,9 @@ typedef struct {
     Config config;
     const char *input;     /* "-" is the standard input */
     const char *output;    /* NULL: standard output, or a default name */
-    const char *cc;
+    const char *cc;        /* the compiler, or what runs the program */
+    Lang target;           /* the language to translate to */
+    bool target_given;
     ColorMode color;
     bool quiet;            /* no warnings */
     bool werror;
@@ -26,6 +29,7 @@ typedef struct {
     const char *keys;      /* ui without a terminal, for the tests */
     int width, height;
     long max_steps;        /* exec; 0: no limit */
+    const char *canvas;    /* exec: where to save what the program drew */
 } Options;
 
 enum { EXIT_OK = 0, EXIT_PROBLEMS = 1, EXIT_USAGE = 2, EXIT_IO = 3 };

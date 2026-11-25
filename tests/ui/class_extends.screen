@@ -1,0 +1,30 @@
+ ◆ PSEUDOSCOPE  single.plike                                                       ▐ Mappa ▌▸▐ Codice ▌▸▐ C ▌
+
+╭─ Mappa ──────────────────────────╮╭────────────────────────────────────────────────────────────────────────╮
+│ Classi                           ││                                                                        │
+│  ▣ Shape                         ││  Rectangle  classe: dati e operazioni insieme                          │
+│    ■ area                        ││  estende Shape                                                         │
+│    ■ twice                       ││  ╭────────────────────────────────╮                                    │
+│    ■ describe                    ││  │           Rectangle            │                                    │
+│  ▣ Named                         ││  │────────────────────────────────│                                    │
+│    ■ label                       ││  │ id integer                     │                                    │
+│▸ ▣ Rectangle                     ││  │ w real                         │                                    │
+│    ■ area                        ││  │ h real                         │                                    │
+│  ▣ Square                        ││  │────────────────────────────────│                                    │
+│    ■ side                        ││  │ area()                         │                                    │
+│    ■ describe                    ││  ╰────────────────────────────────╯                                    │
+│    ■ label                       ││                                                                        │
+│  ▣ Circle                        ││                                                                        │
+│    ■ area                        ││                                                                        │
+│                                  ││                                                                        │
+│ Sottoprogrammi                   ││                                                                        │
+│  ■ show                          ││                                                                        │
+│  ƒ total                         ││                                                                        │
+│  ƒ tag                           ││                                                                        │
+│  ■ main  si parte da qui         ││                                                                        │
+│                                  ││                                                                        │
+│                                  ││                                                                        │
+│                                  ││                                                                        │
+╰──────────────────────────────────╯╰────────────────────────────────────────────────────────────────────────╯
+
+  ↑↓  scorri   Invio  più dettaglio   Esc  meno dettaglio   r  esegui   E  modifica   q  esci   ?  aiuto

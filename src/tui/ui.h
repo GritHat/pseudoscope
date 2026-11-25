@@ -3,6 +3,8 @@
 
 #include "plike/codegen.h"
 #include "plike/uml.h"
+#include "plike/blocks.h"
+#include "plike/target.h"
 #include "plike/vm.h"
 #include "screen.h"
 
@@ -38,7 +40,9 @@ typedef struct {
 } Item;
 
 typedef struct {
-    char *path;
+    char *path;              /* as asked: "notes.md#2" is the second block of a document */
+    char *file;              /* the file itself */
+    int top_line;            /* where what matters begins */
     StrBuf text;
     Source source;
     Config config;
@@ -156,11 +160,12 @@ void draw_table_row(int x, int y, int w, bool selected, const char *format, ...)
 /* ---- the application ---- */
 
 typedef enum { VIEW_FILES, VIEW_EXPLORE, VIEW_TRIAL, VIEW_RUN, VIEW_TESTS, VIEW_UML } View;
-typedef enum { OVERLAY_NONE, OVERLAY_HELP, OVERLAY_OUTPUT, OVERLAY_LOG } Overlay;
+typedef enum { OVERLAY_NONE, OVERLAY_HELP, OVERLAY_OUTPUT, OVERLAY_LOG, OVERLAY_CANVAS } Overlay;
 
 typedef struct {
     char *name;
     bool directory;
+    char *target;            /* what it opens, when it is not a file of the folder */
 } Entry;
 
 typedef struct {
@@ -254,9 +259,18 @@ typedef struct {
     Tests tests;
     UmlWalk walk;
     char notice[160];
+    Lang target;             /* the language translations are shown in: T changes it */
+    char problem[240];       /* why the program cannot be said in it; empty if it can */
+    const Document *problem_doc;
+    Lang problem_target;
 } App;
 
+/* Why what is open cannot be translated to the chosen language, or NULL. */
+const char *translation_problem(App *app);
+
 void files_open(App *app, const char *directory);
+/* Back to where a document was chosen from. */
+void files_back(App *app, const char *path);
 void files_draw(App *app);
 void files_key(App *app, int key);
 void files_close(App *app);
@@ -295,6 +309,11 @@ void tests_draw(App *app);
 void tests_key(App *app, int key);
 void tests_close(App *app);
 
+void draw_uml_plan(App *app, int x, int y, int w, int h);
+void draw_uml_tree(App *app, int x, int y, int w, int h);
+void draw_uml_pie(App *app, int x, int y, int w, int h);
+long plan_step(const Uml *uml, long day, int direction);
+const char *uml_kind_name(const Uml *uml);
 void uml_draw(App *app);
 void uml_key(App *app, int key);
 int uml_tick(App *app);      /* as run_tick */

@@ -2,11 +2,16 @@
 """Makes the demo video: the real interface, driven by keys, with captions.
 
 Usage: make.py OUTPUT.mp4 [POSTER.png]      (needs Pillow and ffmpeg)
-       make.py --check                      (durations only)
+       make.py --preview OUTPUT.gif         (the short one, which plays by itself in a README)
+       make.py --check                      (durations and chapters only)
+
+The scenes in a terminal run the real commands: the last chapter needs rustc,
+java and python3.
 """
 import glob
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -17,7 +22,10 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT = Path(__file__).resolve().parent.parent.parent
 BIN = ROOT / "bin" / "pseudoscope"
 sys.path.insert(0, str(Path(__file__).parent))
-from story import STORY  # noqa: E402
+from story import STORY, TRAILER  # noqa: E402
+
+# Programs that write files write them here, not among the examples.
+WORK = tempfile.mkdtemp(prefix="pseudoscope-demo-")
 
 W, H, FPS = 1920, 1080, 30
 COLS, ROWS, CW, CH = 124, 30, 15, 28
@@ -58,8 +66,8 @@ def screen(session, keys, cache={}):
     path, options = session
     key = (path, options, keys)
     if key not in cache:
-        out = subprocess.run([str(BIN), "ui", path, f"--size={COLS}x{ROWS}", "--color=always", "--keys=" + keys, *options],
-                             cwd=ROOT, env=dict(os.environ, HOME=str(ROOT.parent)), capture_output=True, text=True, check=True).stdout
+        out = subprocess.run([str(BIN), "ui", str(ROOT / path), f"--size={COLS}x{ROWS}", "--color=always", "--keys=" + keys, *options],
+                             cwd=WORK, env=dict(os.environ, HOME=str(ROOT.parent)), capture_output=True, text=True, check=True).stdout
         rows = []
         fg = bg = None
         at = set()
@@ -86,6 +94,31 @@ def screen(session, keys, cache={}):
             rows.append(row)
         cache[key] = rows
     return cache[key]
+
+
+def command(text, cache={}):
+    """What a command prints, run for real from the folder of the project."""
+    if text not in cache:
+        path = os.pathsep.join([str(ROOT / "bin"), str(Path.home() / ".cargo" / "bin"), os.environ.get("PATH", "")])
+        done = subprocess.run(["bash", "-c", text], cwd=ROOT, env=dict(os.environ, PATH=path), capture_output=True, text=True)
+        out = (done.stdout + done.stderr).rstrip("\n")
+        if "cannot run" in out or "not found" in out:
+            raise SystemExit(f"demo: {text!r} needs a tool that is not installed:\n{out}")
+        cache[text] = out.split("\n")
+    return cache[text]
+
+
+def cells(text, fg=None, bold=False):
+    return [(ch, fg, None, frozenset({1} if bold else ())) for ch in text]
+
+
+def printed(line):
+    """A line a command printed, with its marks in colour."""
+    mark = line.lstrip()[:1]
+    if mark in "✓✗" and mark:
+        at = len(line) - len(line.lstrip())
+        return cells(" " + line[:at]) + cells(mark, GREEN if mark == "✓" else (255, 135, 120), True) + cells(line[at + 1:])
+    return cells(" " + line)
 
 
 def paint(rows):
@@ -183,19 +216,29 @@ def ease(t):
 
 
 class Film:
-    def __init__(self, output, poster):
+    def __init__(self, story, output, poster=None, preview=False):
+        self.story = story
         self.time = 0.0
         self.frames = 0
         self.output = output
         self.poster = poster
+        self.preview = preview  # a GIF: cuts, since each frame of a fade would weigh as much as a picture
         self.pipe = None
         self.total = 1.0
         self.marks = []
-        if output:
+        self.chapters = []
+        self.raw = None
+        for path in (output, poster):
+            if path:
+                os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+        source = ["ffmpeg", "-loglevel", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-"]
+        if output and preview:
+            self.raw = os.path.join(WORK, "preview.mkv")
+            self.pipe = subprocess.Popen(source + ["-c:v", "libx264rgb", "-preset", "ultrafast", "-crf", "0", self.raw], stdin=subprocess.PIPE)
+        elif output:
             self.pipe = subprocess.Popen(
-                ["ffmpeg", "-loglevel", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
-                 "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "veryslow", "-crf", "31", "-g", "300", "-pix_fmt", "yuv420p",
-                 "-tune", "animation", "-movflags", "+faststart", output], stdin=subprocess.PIPE)
+                source + ["-c:v", "libx264", "-preset", "veryslow", "-crf", "31", "-g", "300", "-pix_fmt", "yuv420p",
+                          "-tune", "animation", "-movflags", "+faststart", output], stdin=subprocess.PIPE)
 
     def put(self, im, seconds):
         n = round((self.time + seconds) * FPS) - self.frames
@@ -209,7 +252,10 @@ class Film:
     def fade(self, a, b, seconds=0.4):
         n = max(1, round(seconds * FPS))
         for i in range(n):
-            self.put(Image.blend(a, b, ease((i + 1) / n)) if self.pipe else None, 1 / FPS)
+            if self.preview:
+                self.put(b, 1 / FPS)
+            else:
+                self.put(Image.blend(a, b, ease((i + 1) / n)) if self.pipe else None, 1 / FPS)
 
     def progress(self, d):
         d.rectangle([0, H - 8, W, H], fill=(30, 32, 40))
@@ -276,6 +322,74 @@ class Film:
         self.progress(d)
         return im
 
+    def arrive(self, term, words, first):
+        """The words come first, then what happens."""
+        now = self.frame(term, words, [], False) if self.pipe else None
+        self.fade(self.last, now, 0.35 if not first else 0.6)
+        if self.pipe:
+            self.last = now
+
+    def settle(self, term, rows, words, label, step, start, needed, acted):
+        """What to look at, and enough time to read and to look."""
+        spot = step.get("spot")
+        if spot:
+            hole = region(rows, spot)
+            n = round(0.35 * FPS)
+            for i in range(n):
+                if self.pipe:
+                    self.last = self.frame(term, words, label, False, hole, ease((i + 1) / n))
+                self.put(self.last, 1 / FPS)
+        elif self.pipe and acted:
+            self.last = self.frame(term, words, label, False)
+        if step.get("poster") and self.poster and self.pipe:
+            self.save_poster(term)
+        settle = step.get("hold", 1.6 if acted or spot else 0)
+        self.put(self.last, max(settle, needed - (self.time - start)))
+        if spot:
+            after = self.frame(term, words, label, False) if self.pipe else None
+            self.fade(self.last, after, 0.25)
+            if self.pipe:
+                self.last = after
+
+    def shell_(self, scene):
+        """Steps in a terminal: caption, a command typed, what it prints."""
+        self.chapter = scene["name"]
+        self.marks_now(scene["name"])
+        history, first = [], True
+        for step in scene["steps"]:
+            words = caption(step["it"], step["en"])
+            needed = step.get("seconds") or reading_time(step["it"])
+            start = self.time
+            if step.get("clear"):
+                history = []
+            line = cells(" $ ", GREEN, True)
+            history.append(line)
+            rows = [[]] + history[-(ROWS - 2):]
+            term = paint(rows) if self.pipe else None
+            self.arrive(term, words, first)
+            first = False
+            self.put(self.last, min(1.2, needed * 0.3))
+            text = step["run"]
+            for i, ch in enumerate(text):  # two letters per frame
+                line.append((ch, TEXT, None, frozenset({1})))
+                if i % 2 and i + 1 < len(text):
+                    continue
+                if self.pipe:
+                    term = paint(rows)
+                    self.last = self.frame(term, words, [], False)
+                self.put(self.last, 2 / FPS)
+            self.put(self.last, 0.35)
+            out = command(text) if self.pipe or step.get("spot") else []
+            if step.get("lines") and len(out) > step["lines"]:
+                out = out[:step["lines"]] + ["…"]
+            history += [printed(o) for o in out] + [[]]
+            rows = [[]] + history[-(ROWS - 2):]
+            if self.pipe:
+                term = paint(rows)
+                self.last = self.frame(term, words, ["Invio"], True)
+            self.put(self.last, 0.5)
+            self.settle(term, rows, words, ["Invio"], step, start, needed, True)
+
     def chapter_(self, scene):
         """Steps: caption, keys, what to look at."""
         session = (scene["open"], tuple(scene.get("options", ())))
@@ -289,19 +403,12 @@ class Film:
             words = caption(step["it"], step["en"])
             keys = re.findall(r"<\w+>|.", step.get("keys", ""))
             pace = step.get("pace", 0.55)
-            needed = reading_time(step["it"])
+            needed = step.get("seconds") or reading_time(step["it"])
             start = self.time
             lead = min(1.6, needed * 0.35) if keys else 0
             if not keys and step.get("spot"):
                 lead = 0
-            # the words come first, then the keys
-            if self.pipe:
-                now = self.frame(term, words, [], False)
-                self.fade(self.last, now, 0.35 if not first else 0.6)
-                self.last = now
-            else:
-                self.time += 0.35 if not first else 0.6
-                self.frames = round(self.time * FPS)
+            self.arrive(term, words, first)
             first = False
             self.put(self.last if self.pipe else None, lead)
             pressed = []
@@ -321,34 +428,19 @@ class Film:
                     self.last = self.frame(term, words, label, True)
                 self.put(self.last if self.pipe else None, pace)
             label = (pressed[:-1] + [pressed[-1] + (f" ×{self.repeat}" if self.repeat > 1 else "")]) if pressed else []
-            spot = step.get("spot")
-            if spot:
-                hole = region(rows, spot)
-                n = round(0.35 * FPS)
-                for i in range(n):
-                    if self.pipe:
-                        self.last = self.frame(term, words, label, False, hole, ease((i + 1) / n))
-                    self.put(self.last if self.pipe else None, 1 / FPS)
-            elif self.pipe and keys:
-                self.last = self.frame(term, words, label, False)
-            if step.get("poster") and self.poster and self.pipe:
-                self.save_poster(self.last)
-            # enough to read, and to look at the result
-            settle = step.get("hold", 1.6 if keys or spot else 0)
-            self.put(self.last if self.pipe else None, max(settle, needed - (self.time - start)))
-            if spot and self.pipe:
-                self.after = self.frame(term, words, label, False)
-                self.fade(self.last, self.after, 0.25)
-                self.last = self.after
-            elif spot:
-                self.put(None, 0.25)
+            self.settle(term, rows, words, label, step, start, needed, bool(keys))
 
-    def save_poster(self, im):
-        im = im.copy()
-        d = ImageDraw.Draw(im, "RGBA")
-        x, y, r = W // 2, TY + ROWS * CH * 2 // 3, 80
-        d.ellipse([x - r, y - r, x + r, y + r], fill=(255, 215, 95, 235))
-        d.polygon([(x - 26, y - 44), (x - 26, y + 44), (x + 48, y)], fill=(20, 20, 24, 255))
+    def save_poster(self, term):
+        """The picture that stands for the video where it is published: a screen, and the name."""
+        self.chapter, chapter = "", self.chapter
+        im = self.frame(term, None, [], False)
+        self.chapter = chapter
+        d = ImageDraw.Draw(im)
+        d.rectangle([0, BAND - 6, W, H], fill=BG)
+        d.text((TX, BAND + 2), "Pseudoscope", font=BOLD[84], fill=TEXT)
+        x = TX + d.textlength("Pseudoscope", font=BOLD[84]) + 44
+        d.text((x, BAND + 14), "Pseudocodice e progetti che prendono vita", font=SANS[34], fill=YELLOW)
+        d.text((x, BAND + 62), "Pseudocode and designs, brought to life in the terminal", font=SANS[30], fill=DIM)
         im.resize((1280, 720), Image.LANCZOS).quantize(128).save(self.poster, optimize=True)
 
     def marks_now(self, name):
@@ -357,36 +449,71 @@ class Film:
 
     def run(self):
         self.last = Image.new("RGB", (W, H), BG)
-        for scene in STORY:
+        for scene in self.story:
             if "title" in scene:
                 if not self.pipe:
+                    self.chapters.append((self.time, scene.get("chapter", scene["title"]), scene.get("title_en", scene["title"])))
                     self.time += 0.4
                     text = scene["title"] + scene["sub"] + "".join(a + b for a, b in scene.get("lines", []))
                     self.time += scene.get("seconds") or 1.6 + len(text) * 0.04
                     self.frames = round(self.time * FPS)
                 else:
                     self.card(scene)
-            else:
+            elif "open" in scene:
                 self.chapter_(scene)
-        if self.pipe:
+            else:
+                self.shell_(scene)
+        if not self.preview:
             self.fade(self.last, Image.new("RGB", (W, H), BG), 0.8)
+        if self.pipe:
             self.pipe.stdin.close()
             if self.pipe.wait():
                 raise SystemExit("demo: ffmpeg failed")
+        if self.raw:
+            self.gif()
+
+    def gif(self):
+        """Few colours, chosen once, and only what changes from a frame to the next."""
+        look = "fps=10,scale=960:-1:flags=lanczos"
+        palette = os.path.join(WORK, "palette.png")
+        quiet = ["ffmpeg", "-loglevel", "error", "-y", "-i", self.raw]
+        subprocess.run(quiet + ["-vf", look + ",palettegen=max_colors=128:stats_mode=full", palette], check=True)
+        subprocess.run(quiet + ["-i", palette, "-lavfi", look + "[x];[x][1:v]paletteuse=dither=none:diff_mode=rectangle",
+                                "-loop", "0", self.output], check=True)
+
+
+def clock(t):
+    return f"{int(t // 60)}:{int(t % 60):02d}"
+
+
+def chapters(plan):
+    """Where each part begins, as the sites that show videos want it: none shorter than ten seconds."""
+    kept = []
+    for t, it, en in plan.chapters:
+        if kept and t - kept[-1][0] < 10:
+            t = kept.pop()[0]
+        kept.append((t, it, en))
+    return kept
 
 
 def main():
-    plan = Film(None, None)
+    preview = sys.argv[1:2] == ["--preview"]
+    story = TRAILER if preview else STORY
+    plan = Film(story, None, preview=preview)
     plan.run()
-    total = plan.time + 0.8
-    print(f"{int(total // 60)}:{total % 60:04.1f}")
-    for t, name in plan.marks:
-        print(f"  {int(t // 60)}:{int(t % 60):02d} {name}")
+    print(f"{int(plan.time // 60)}:{plan.time % 60:04.1f}")
+    for which in (1, 2):
+        print()
+        for chapter in chapters(plan):
+            print(f"{clock(chapter[0])} {chapter[which]}")
     if sys.argv[1:] == ["--check"]:
         return
-    film = Film(sys.argv[1], sys.argv[2] if len(sys.argv) > 2 else None)
-    film.total, film.marks = total, plan.marks
+    film = Film(story, sys.argv[2] if preview else sys.argv[1], sys.argv[2] if len(sys.argv) > 2 and not preview else None, preview)
+    film.total, film.marks = plan.time, plan.marks
     film.run()
 
 
-main()
+try:
+    main()
+finally:
+    shutil.rmtree(WORK, ignore_errors=True)

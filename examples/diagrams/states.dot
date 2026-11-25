@@ -1,0 +1,13 @@
+// A lexer as a graph, in Graphviz
+digraph lexer {
+    rankdir=LR;
+    start [shape=point];
+    start -> idle;
+    idle -> word [label="letter"];
+    word -> word [label="letter or digit"];
+    word -> idle [label="other"];
+    idle -> number [label="digit"];
+    number -> number [label="digit"];
+    number -> idle [label="other"];
+    idle -> done [label="end"];
+}

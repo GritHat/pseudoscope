@@ -1,3 +1,4 @@
+#include "plike/blocks.h"
 #include "plike/cli.h"
 
 #include "plike/codegen.h"
@@ -70,13 +71,28 @@ static int execute(const char *const *args) {
     return WEXITSTATUS(status);
 }
 
-static bool compile_c(const Options *options, const char *source, const char *executable) {
-    const char *cc = options->cc ? options->cc : getenv("CC");
-    if (!cc || !*cc) cc = "cc";
-    const char *const args[] = {cc, "-std=c11", "-O1", "-o", executable, source, "-lm", NULL};
-    if (options->verbose) fprintf(stderr, "pseudoscope: compiling with %s\n", cc);
-    if (execute(args) == 0) return true;
-    fputs("pseudoscope: the C compiler failed\n", stderr);
+/* The command that compiles, or runs, programs in a language. */
+static const char *tool_for(const Options *options, Lang lang, Arena *arena) {
+    static const char *const VARIABLES[LANG_COUNT] = {"CC", "CXX", "JAVA", "RUSTC", "NODE", "NODE", "PYTHON"};
+    static const char *const DEFAULTS[LANG_COUNT] = {"cc", "c++", "java", "rustc", "node", "node", "python3"};
+    const char *tool = options->cc ? options->cc : getenv(VARIABLES[lang]);
+    if (tool && *tool) return tool;
+    if (lang == LANG_RUST && system("command -v rustc > /dev/null 2>&1") != 0) { /* rustup does not always reach the PATH */
+        const char *home = getenv("HOME");
+        char *cargo = arena_printf(arena, "%s/.cargo/bin/rustc", home ? home : "");
+        if (access(cargo, X_OK) == 0) return cargo;
+    }
+    return DEFAULTS[lang];
+}
+
+static bool compile_source(const Options *options, Lang lang, const char *source, const char *executable, Arena *arena) {
+    const char *tool = tool_for(options, lang, arena);
+    const char *const c[] = {tool, "-std=c11", "-O1", "-o", executable, source, "-lm", NULL};
+    const char *const cpp[] = {tool, "-std=c++17", "-O1", "-o", executable, source, NULL};
+    const char *const rust[] = {tool, "--edition=2021", "-A", "warnings", "-o", executable, source, NULL};
+    if (options->verbose) fprintf(stderr, "pseudoscope: compiling with %s\n", tool);
+    if (execute(lang == LANG_C ? c : lang == LANG_CPP ? cpp : rust) == 0) return true;
+    fprintf(stderr, "pseudoscope: the %s compiler failed\n", lang_name(lang));
     return false;
 }
 
@@ -95,20 +111,47 @@ static int no_main(void) {
     return EXIT_PROBLEMS;
 }
 
-static int build_and_run(const Options *options, const StrBuf *code, Arena *arena) {
+static bool is_compiled(Lang lang) { return lang == LANG_C || lang == LANG_CPP || lang == LANG_RUST; }
+
+/* `argument`: given to the program, or NULL. */
+static int build_and_run(const Options *options, Lang lang, const StrBuf *code, Arena *arena, const char *class_name,
+                         const char *argument) {
     const char *base = getenv("TMPDIR");
     char *dir = arena_printf(arena, "%s/pseudoscope-XXXXXX", base && *base ? base : "/tmp");
     if (!mkdtemp(dir)) {
         fprintf(stderr, "pseudoscope: cannot create a temporary directory: %s\n", strerror(errno));
         return EXIT_IO;
     }
-    char *source = arena_printf(arena, "%s/program.c", dir);
+    char *source = lang == LANG_JAVA ? arena_printf(arena, "%s/%s.java", dir, class_name)
+                                     : arena_printf(arena, "%s/program%s", dir, lang_extension(lang));
     char *executable = arena_printf(arena, "%s/program", dir);
     int status = EXIT_IO;
 
-    if (write_file(source, code) && compile_c(options, source, executable)) {
-        if (options->command == CMD_RUN) {
-            const char *const args[] = {executable, NULL};
+    if (!write_file(source, code)) {
+        /* reported */
+    } else if (lang == LANG_TS && !options->cc && system("command -v tsc > /dev/null 2>&1") == 0) {
+        /* checked and turned into JavaScript by its compiler */
+        char *script = arena_printf(arena, "%s/program.js", dir);
+        const char *const tsc[] = {"tsc", "--target", "es2022", "--module", "commonjs", "--strict", "--outDir", dir, source, NULL};
+        const char *const node[] = {tool_for(options, LANG_JS, arena), script, argument, NULL};
+        if (options->verbose) fputs("pseudoscope: compiling with tsc\n", stderr);
+        if (execute(tsc) != 0) {
+            fputs("pseudoscope: the TypeScript compiler failed\n", stderr);
+        } else {
+            status = execute(node);
+            if (status < 0) status = EXIT_IO;
+        }
+        unlink(script);
+    } else if (!is_compiled(lang)) {
+        const char *tool = tool_for(options, lang, arena);
+        const char *const plain[] = {tool, source, argument, NULL};
+        const char *const stripped[] = {tool, "--no-warnings", "--experimental-strip-types", source, argument, NULL};
+        if (options->verbose) fprintf(stderr, "pseudoscope: running with %s\n", tool);
+        status = execute(lang == LANG_TS && !options->cc ? stripped : plain);
+        if (status < 0) status = EXIT_IO;
+    } else if (compile_source(options, lang, source, executable, arena)) {
+        if (options->command != CMD_BUILD) {
+            const char *const args[] = {executable, argument, NULL};
             if (options->verbose) fputs("pseudoscope: running\n", stderr);
             status = execute(args);
             if (status < 0) status = EXIT_IO;
@@ -128,11 +171,68 @@ static int build_and_run(const Options *options, const StrBuf *code, Arena *aren
     return status;
 }
 
+/* The name of the class that Java wants around a program: that of the file. */
+static const char *class_name_for(const Options *options, Arena *arena) {
+    const char *path = options->command == CMD_TRANSLATE ? options->output : NULL;
+    if (!path) return "Main";
+    const char *slash = strrchr(path, '/'), *start = slash ? slash + 1 : path, *dot = strrchr(start, '.');
+    size_t length = dot ? (size_t)(dot - start) : strlen(start);
+    bool ok = length > 0 && ((start[0] >= 'A' && start[0] <= 'Z') || (start[0] >= 'a' && start[0] <= 'z') || start[0] == '_');
+    for (size_t i = 0; ok && i < length; i++)
+        ok = (start[i] >= 'A' && start[i] <= 'Z') || (start[i] >= 'a' && start[i] <= 'z') || (start[i] >= '0' && start[i] <= '9') ||
+             start[i] == '_';
+    return ok ? arena_strndup(arena, start, length) : "Main";
+}
+
 /* Runs on the virtual machine, reading input only when it is asked for. */
-static int interpret(const Program *program, const Options *options) {
+/* VisuAlg: arquivo "dados.txt" reads from a file what would be typed. */
+static char *input_file_of(const Source *source, Arena *arena) {
+    for (const char *s = source->text; *s;) {
+        while (*s == ' ' || *s == '\t') s++;
+        if (strncmp(s, "arquivo", 7) == 0 || strncmp(s, "Arquivo", 7) == 0 || strncmp(s, "ARQUIVO", 7) == 0) {
+            const char *open = strchr(s, '"'), *line = s + strcspn(s, "\n");
+            const char *close = open && open < line ? strchr(open + 1, '"') : NULL;
+            if (close && close < line) return arena_strndup(arena, open + 1, (size_t)(close - open - 1));
+        }
+        s += strcspn(s, "\n");
+        if (*s) s++;
+    }
+    return NULL;
+}
+
+/* The drawing, as a picture that everything opens (PPM). */
+static bool write_canvas(const Vm *vm, const char *path) {
+    int width, height;
+    vm_canvas_size(vm, &width, &height);
+    int *pixels = malloc((size_t)width * (size_t)height * sizeof(int));
+    FILE *file = fopen(path, "w");
+    if (!pixels || !file) {
+        fprintf(stderr, "pseudoscope: cannot write '%s'\n", path);
+        free(pixels);
+        if (file) fclose(file);
+        return false;
+    }
+    vm_render(vm, width, height, pixels);
+    fprintf(file, "P3\n%d %d\n255\n", width, height);
+    for (int i = 0; i < width * height; i++) {
+        int c = pixels[i] < 0 ? 0xFFFFFF : pixels[i];
+        fprintf(file, "%d %d %d%s", c >> 16 & 255, c >> 8 & 255, c & 255, (i + 1) % width == 0 ? "\n" : " ");
+    }
+    free(pixels);
+    return fclose(file) == 0;
+}
+
+static int interpret(const Program *program, const Options *options, const Source *source, Arena *arena) {
     Vm *vm = vm_create(program, &options->config);
     size_t shown = 0, length;
     vm_start(vm);
+    const char *input_file = options->config.dialect == DIALECT_VISUALG ? input_file_of(source, arena) : NULL;
+    if (input_file) {
+        StrBuf typed = {0};
+        if (read_file(input_file, &typed)) vm_give_input(vm, typed.data);
+        vm_end_input(vm);
+        strbuf_free(&typed);
+    }
     long left = options->max_steps;
     for (;;) {
         long chunk = options->max_steps && left < 100000 ? left : 100000;
@@ -163,6 +263,21 @@ static int interpret(const Program *program, const Options *options) {
         fprintf(stderr, ": %s\n", vm_message(vm));
     }
     int status = vm_exit_status(vm);
+    /* what the program wrote in its files reaches the disk now */
+    for (int i = 0; i < vm_file_count(vm); i++) {
+        const char *data;
+        int size;
+        bool written;
+        const char *path = vm_file(vm, i, &data, &size, &written);
+        if (!written) continue;
+        FILE *file = fopen(path, "wb");
+        if (!file || fwrite(data, 1, (size_t)size, file) != (size_t)size) {
+            fprintf(stderr, "pseudoscope: cannot write '%s'\n", path);
+            if (status == 0) status = EXIT_IO;
+        }
+        if (file) fclose(file);
+    }
+    if (options->canvas && !write_canvas(vm, options->canvas) && status == 0) status = EXIT_IO;
     vm_destroy(vm);
     return status;
 }
@@ -206,14 +321,14 @@ static bool italian(const Options *options, bool otherwise) {
     return lang && *lang ? strcmp(lang, "it") == 0 : otherwise;
 }
 
-static int translate(const Options *options, const Source *source, Arena *arena, StrBuf *out) {
+static int translate(const Options *options, const Source *source, Arena *arena, StrBuf *out, bool diagram) {
     bool tty = isatty(STDERR_FILENO) && !getenv("NO_COLOR");
     Diag diag = {.source = source, .out = stderr, .silent_warnings = options->quiet,
                  .italian = italian(options, false),
                  .color = options->color == COLOR_ALWAYS ||
                           (options->color == COLOR_AUTO && tty)};
 
-    if (is_uml_path(source->name)) { /* a diagram: it can be checked and listed */
+    if (diagram) { /* it can be checked and listed */
         Uml *uml = uml_parse(source, arena, &diag);
         if (!uml || diag.errors) return EXIT_PROBLEMS;
         if (options->command == CMD_CHECK) return options->werror && diag.warnings ? EXIT_PROBLEMS : EXIT_OK;
@@ -249,18 +364,24 @@ static int translate(const Options *options, const Source *source, Arena *arena,
     }
     if (options->command == CMD_CHECK) return EXIT_OK;
 
-    if (options->command == CMD_TEST) return run_tests(program, options, diag.italian);
-    if (has_components(program) && options->command != CMD_EXEC) {
-        fputs("pseudoscope: components live only in exec, test and ui: they are not translated to C\n", stderr);
-        return EXIT_PROBLEMS;
-    }
+    Lang lang = options->target, found;
+    if (!options->target_given && options->command == CMD_TRANSLATE && options->output && lang_from_path(options->output, &found))
+        lang = found;
+    if (options->command == CMD_TEST && !options->target_given) return run_tests(program, options, diag.italian);
     if (options->command == CMD_EXEC) {
         step(options, "executing");
-        return has_main(program) || has_components(program) ? interpret(program, options) : no_main();
+        return has_main(program) || has_components(program) ? interpret(program, options, source, arena) : no_main();
+    }
+    if (!translatable(program, &options->config, lang, &diag)) return EXIT_PROBLEMS;
+    if (options->command == CMD_BUILD && !is_compiled(lang)) {
+        fprintf(stderr, "pseudoscope: build makes an executable, and %s programs are run as they are: use translate, or run\n",
+                lang_name(lang));
+        return EXIT_USAGE;
     }
 
-    step(options, "generating C");
-    generate(program, &options->config, arena, out);
+    step(options, "translating");
+    const char *class_name = class_name_for(options, arena);
+    translate_program(program, &options->config, arena, lang, class_name, out);
     if (options->command == CMD_TRANSLATE) {
         if (options->output && same_file(options->input, options->output)) {
             fputs("pseudoscope: the output would overwrite the input\n", stderr);
@@ -268,34 +389,109 @@ static int translate(const Options *options, const Source *source, Arena *arena,
         }
         return write_file(options->output, out) ? EXIT_OK : EXIT_IO;
     }
-    if (!has_main(program)) return no_main();
-    return build_and_run(options, out, arena);
+    if (options->command == CMD_TEST) {
+        if (!has_tests(program)) {
+            fputs("pseudoscope: there are no tests in this program\n", stderr);
+            return EXIT_PROBLEMS;
+        }
+        return build_and_run(options, lang, out, arena, class_name, "test");
+    }
+    if (!has_main(program) && !has_components(program)) return no_main();
+    return build_and_run(options, lang, out, arena, class_name, NULL);
 }
 
 static int start_ui(const Options *options) {
     UiOptions ui = {.config = options->config, .path = options->input,
                     .italian = italian(options, true), .keys = options->keys,
                     .width = options->width, .height = options->height,
-                    .colors = options->color == COLOR_ALWAYS};
+                    .colors = options->color == COLOR_ALWAYS, .target = (int)options->target};
     return run_ui(&ui);
+}
+
+/* Markdown and LaTeX: the programs and the diagrams they hold. */
+static int run_document(const Options *given, const char *file, int number, const StrBuf *text) {
+    Arena arena = {0};
+    Source whole = {file, text->data, text->length};
+    Blocks *blocks = blocks_read(&whole, &arena);
+    int status = EXIT_OK;
+    if (number > blocks->count) {
+        fprintf(stderr, "pseudoscope: '%s' holds %d programs and diagrams, not %d\n", file, blocks->count, number);
+        arena_free(&arena);
+        return EXIT_USAGE;
+    }
+    if (number == 0 && given->command == CMD_AST) { /* what there is */
+        StrBuf out = {0};
+        strbuf_puts(&out, "");
+        if (blocks->outline) uml_dump(blocks->outline, &out);
+        for (int i = 0; i < blocks->count; i++) {
+            const DocBlock *b = &blocks->items[i];
+            strbuf_printf(&out, "#%d  line %d  %s  %s%s%s\n", i + 1, b->line, b->diagram ? "diagram" : "program", b->language,
+                          b->title ? "  " : "", b->title ? b->title : "");
+        }
+        status = write_file(given->output, &out) ? EXIT_OK : EXIT_IO;
+        strbuf_free(&out);
+        arena_free(&arena);
+        return status;
+    }
+    int first = number ? number - 1 : 0, last = number ? number - 1 : blocks->count - 1;
+    if (number == 0 && given->command != CMD_CHECK) { /* the only program, if there is only one */
+        int programs = 0;
+        for (int i = 0; i < blocks->count; i++) {
+            if (blocks->items[i].diagram) continue;
+            programs++;
+            first = last = i;
+        }
+        if (programs != 1) {
+            fprintf(stderr, "pseudoscope: '%s' holds %d programs: say which with %s#N (ast lists them)\n", file, programs, file);
+            arena_free(&arena);
+            return EXIT_USAGE;
+        }
+    }
+    for (int i = first; i <= last; i++) {
+        const DocBlock *b = &blocks->items[i];
+        Options adjusted = *given;
+        adjusted.config.dialect = b->dialect;
+        adjusted.config.dialect_given = true;
+        adjusted.config = config_for(adjusted.config, file);
+        Source source = {arena_printf(&arena, "%s#%d", file, i + 1), b->text, strlen(b->text)};
+        StrBuf out = {0};
+        strbuf_puts(&out, "");
+        int result = translate(&adjusted, &source, &arena, &out, b->diagram);
+        if (result > status) status = result;
+        strbuf_free(&out);
+    }
+    if (number == 0 && given->command == CMD_CHECK && !given->quiet)
+        fprintf(stderr, "pseudoscope: %s: %d programs and diagrams checked\n", file, blocks->count);
+    arena_free(&arena);
+    return status;
 }
 
 int run_command(const Options *given) {
     if (given->command == CMD_UI) return start_ui(given);
     Options adjusted = *given;
     const Options *options = &adjusted;
-    adjusted.config = config_for(given->config, given->input);
+    char file[1024];
+    int number = block_number(given->input, file, sizeof file);
     StrBuf text = {0};
-    if (!read_file(options->input, &text)) {
+    if (!read_file(file, &text)) {
         strbuf_free(&text);
         return EXIT_IO;
     }
-    const char *name = strcmp(options->input, "-") == 0 ? "<stdin>" : options->input;
+    /* what it is: by its name, or by how it begins */
+    bool standard = strcmp(file, "-") == 0;
+    FileKind kind = standard ? (looks_like_uml(text.data) ? FILE_DIAGRAM : FILE_PROGRAM) : file_kind(file, text.data);
+    if (kind == FILE_DOCUMENT) {
+        int result = run_document(given, file, number, &text);
+        strbuf_free(&text);
+        return result;
+    }
+    adjusted.config = config_for_text(given->config, standard ? "" : file, standard ? NULL : text.data);
+    const char *name = standard ? "<stdin>" : options->input;
     Source source = {name, text.data, text.length};
     Arena arena = {0};
     StrBuf out = {0};
     strbuf_puts(&out, "");
-    int status = translate(options, &source, &arena, &out);
+    int status = translate(options, &source, &arena, &out, kind == FILE_DIAGRAM);
     strbuf_free(&out);
     arena_free(&arena);
     strbuf_free(&text);

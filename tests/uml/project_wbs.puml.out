@@ -1,0 +1,11 @@
+work breakdown
+  Compiler
+    Front end
+      Lexer
+      Parser
+    Analysis
+      Names
+      Types
+    Back end
+      C
+      Virtual machine

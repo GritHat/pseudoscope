@@ -24,18 +24,19 @@ static void print_help(FILE *out) {
         "Commands:\n"
         "  ui          explore programs and watch them run (FILE may be a folder;\n"
         "              the default without arguments)\n"
-        "  translate   write the C code (the default command)\n"
+        "  translate   write the program in C or in another language (the default command)\n"
         "  check       only report errors and warnings\n"
-        "  build       translate and compile to an executable\n"
-        "  run         build in a temporary directory and execute\n"
-        "  exec        execute without a C compiler, checking every access\n"
-        "  test        run the tests of the program\n"
+        "  build       translate and compile to an executable (C, C++, Rust)\n"
+        "  run         translate, and execute with the tools of that language\n"
+        "  exec        execute here, without other tools, checking every access\n"
+        "  test        run the tests of the program (with --to: translated)\n"
         "  tokens      list the tokens\n"
         "  ast         print the syntax tree\n"
         "\n"
         "Language:\n"
         "      --dialect=NAME        plike, pseint, visualg, portugol or cambridge\n"
-        "                            (default: from the extension .plike .psc .alg .por .pse)\n"
+        "                            (default: from the extension .pscope .plike .psc .alg .por\n"
+        "                            .pse, or from how the file begins)\n"
         "  -a, --assignment=STYLE    colon-equals (default) or equals\n"
         "  -i, --indexing=BASE       first index of arrays without a range:\n"
         "                            one (default) or zero\n"
@@ -44,11 +45,15 @@ static void print_help(FILE *out) {
         "  -m, --mixed-arrays=BOOL   accept a(i) for a[i]: true (default) or false\n"
         "\n"
         "Output:\n"
-        "  -o, --output=FILE         translate: C file (default: standard output)\n"
+        "  -t, --to=LANGUAGE         c (default), cpp, java, rust, ts, js or python;\n"
+        "                            translate also tells from the extension of the output\n"
+        "  -o, --output=FILE         translate: where to write (default: standard output)\n"
         "                            build: executable (default: FILE without extension)\n"
         "  -b, --bounds-check        stop with an error on array indices out of bounds\n"
-        "      --cc=COMPILER         C compiler for build and run (default: $CC or cc)\n"
+        "      --cc=COMMAND          the compiler, or what runs the program, for build and run\n"
+        "                            (default: $CC or cc, c++, rustc, java, node, python3)\n"
         "      --steps=N             exec: stop after N steps\n"
+        "      --canvas=FILE         exec: save what the program drew, as a PPM picture\n"
         "      --lang=LANG           it or en (default: $PSEUDOSCOPE_LANG, or it for ui and en for\n"
         "                            the other commands)\n"
         "      --dot                 ast: Graphviz format\n"
@@ -77,7 +82,7 @@ static int choose(const char *option, const char *value, const char *const *choi
     return -1;
 }
 
-enum { OPT_OPERATORS = 256, OPT_CC, OPT_DOT, OPT_COLOR, OPT_STEPS, OPT_DIALECT, OPT_LANG, OPT_KEYS, OPT_SIZE };
+enum { OPT_OPERATORS = 256, OPT_CC, OPT_DOT, OPT_COLOR, OPT_STEPS, OPT_DIALECT, OPT_LANG, OPT_KEYS, OPT_SIZE, OPT_CANVAS };
 
 bool parse_options(int argc, char **argv, Options *options, int *status) {
     static const struct option LONG[] = {
@@ -87,6 +92,7 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
         {"operators", required_argument, NULL, OPT_OPERATORS},
         {"mixed-arrays", required_argument, NULL, 'm'},
         {"output", required_argument, NULL, 'o'},
+        {"to", required_argument, NULL, 't'},
         {"bounds-check", no_argument, NULL, 'b'},
         {"cc", required_argument, NULL, OPT_CC},
         {"dot", no_argument, NULL, OPT_DOT},
@@ -96,6 +102,7 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
         {"keys", required_argument, NULL, OPT_KEYS},
         {"size", required_argument, NULL, OPT_SIZE},
         {"steps", required_argument, NULL, OPT_STEPS},
+        {"canvas", required_argument, NULL, OPT_CANVAS},
         {"quiet", no_argument, NULL, 'q'},
         {"werror", no_argument, NULL, 'W'},
         {"verbose", no_argument, NULL, 'v'},
@@ -127,7 +134,7 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
     }
 
     int opt, value = 0;
-    while ((opt = getopt_long(argc, argv, "a:i:p:m:o:bqWvhV", LONG, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "a:i:p:m:o:t:bqWvhV", LONG, NULL)) != -1) {
         switch (opt) {
             case 'a':
                 value = choose("assignment", optarg, ASSIGNMENT);
@@ -157,6 +164,13 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
                 options->color = value == 1 ? COLOR_ALWAYS : value == 2 ? COLOR_NEVER : COLOR_AUTO;
                 break;
             case 'o': options->output = optarg; break;
+            case 't':
+                if (!lang_from_name(optarg, &options->target)) {
+                    fprintf(stderr, "pseudoscope: invalid value '%s' for --to (use c, cpp, java, rust, ts, js or python)\n", optarg);
+                    return false;
+                }
+                options->target_given = true;
+                break;
             case 'b': options->config.bounds_check = true; break;
             case OPT_CC: options->cc = optarg; break;
             case OPT_DIALECT:
@@ -186,6 +200,7 @@ bool parse_options(int argc, char **argv, Options *options, int *status) {
                 break;
             }
             case OPT_DOT: options->dot = true; break;
+            case OPT_CANVAS: options->canvas = optarg; break;
             case 'q': options->quiet = true; break;
             case 'W': options->werror = true; break;
             case 'v': options->verbose = true; break;

@@ -1,0 +1,26 @@
+ ◆ PSEUDOSCOPE  ~/Desktop/plike-translator/examples/documents/lesson.md
+
+╭─ File ───────────────────────────╮╭─ Anteprima ────────────────────────────────────────────────────────────╮
+│  ▪ ../                           ││ ƒ 2 sottoprogrammi   ▦ 0 record   82 righe                             │
+│  ◆ ≡ indice                      ││ ✓ nessun errore                                                 P-like │
+│  ◆ 1  mermaid  The idea          ││ ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │
+│▸ ◆ 2  pseudocode  The algorithm  ││   22 function search(in n: integer, in a[n]: array of integer, in x:…┃ │
+│  ◆ 3  pseint  The same, as stud… ││   23 var lo, hi, mid: integer                                        ┃ │
+│  ◆ 4  plantuml  Who talks to wh… ││   24 begin                                                           ┃ │
+│  ◆ 5  mermaid  Planning the hom… ││   25     lo := 1                                                     ┃ │
+│                                  ││   26     hi := n                                                       │
+│                                  ││   27     search := 0                                                   │
+│                                  ││   28     while lo <= hi and search = 0 do                              │
+│                                  ││   29         mid := (lo + hi) / 2                                      │
+│                                  ││   30         if a[mid] = x then                                        │
+│                                  ││   31             search := mid                                         │
+│                                  ││   32         elseif a[mid] < x then                                    │
+│                                  ││   33             lo := mid + 1                                         │
+│                                  ││   34         else                                                      │
+│                                  ││   35             hi := mid - 1                                         │
+│                                  ││   36         endif                                                     │
+│                                  ││   37     endwhile                                                      │
+│                                  ││   38 end search                                                        │
+╰──────────────────────────────────╯╰────────────────────────────────────────────────────────────────────────╯
+
+  ↑↓  scegli   Invio  apri   ←  cartella superiore   ?  aiuto   q  esci

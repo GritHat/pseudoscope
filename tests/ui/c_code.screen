@@ -1,4 +1,4 @@
- ◆ PSEUDOSCOPE  tree.plike ▸ insert                                                ▐ Mappa ▌▸▐ Codice ▌▸▐ C ▌
+ ◆ PSEUDOSCOPE  tree.pscope ▸ insert                                               ▐ Mappa ▌▸▐ Codice ▌▸▐ C ▌
 
 ╭─ Pseudocodice ──────────────────────────────────────╮╭─ C ─────────────────────────────────────────────────╮
 │     9 procedure insert(in/out: root; in: node)      ││  void insert(struct Node **root, struct Node *node) │

@@ -1,4 +1,4 @@
- ◆ PSEUDOSCOPE  tree.plike        ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
+ ◆ PSEUDOSCOPE  tree.pscope       ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
   ‖ fermo   main
 ╭─ main ─────────────────────────────────────╮╭─ Dati ─────────────────────────────────────────────╮
 │   21 procedure main()                      ││                                                    │

@@ -24,13 +24,17 @@ def read(*patterns):
 
 
 # by kind of file; what is mutated gets words of its own kind
-KINDS = {".plike": read("/*/*.plike", "/../examples/*.plike", "/../examples/*/*.plike")}
+KINDS = {".plike": read("/*/*.plike", "/../examples/*.pscope", "/../examples/*/*.pscope")}
 for ext in (".psc", ".alg", ".por", ".pse"):
-    KINDS[ext] = read("/dialects/*" + ext)
+    KINDS[ext] = read("/dialects/*" + ext, "/../examples/libraries/*" + ext)
 for ext in (".puml", ".mmd"):
-    KINDS[ext] = read("/../examples/uml/*" + ext)
+    KINDS[ext] = read("/../examples/uml/*" + ext, "/../examples/diagrams/*" + ext)
+for ext in (".dot", ".md", ".tex"):
+    KINDS[ext] = read("/../examples/*/*" + ext)
 WORDS = {e: sorted(set(t for text in c for t in re.findall(rb"\w+|[^\w\s]+", text))) for e, c in KINDS.items()}
-WEIGHTS = [10, 1, 1, 1, 1, 1, 1]
+WEIGHTS = [10, 1, 1, 1, 1, 2, 2, 1, 1, 1]
+LANGUAGES = ["cpp", "java", "rust", "ts", "js", "python"]
+scratch = tempfile.mkdtemp()  # where programs that write files are run
 
 
 def mutate(rng, ext):
@@ -92,7 +96,8 @@ def run(i):
             program.flush()
             command = rng.choice([["check"], ["ast"], ["exec", "--steps=300000"], ["translate", "-o", output.name]])
             try:
-                result = subprocess.run([PLIKE, *command, program.name], stdin=subprocess.DEVNULL, capture_output=True, timeout=60)
+                result = subprocess.run([PLIKE, *command, program.name], stdin=subprocess.DEVNULL, capture_output=True, timeout=60,
+                                        cwd=scratch)
             except subprocess.TimeoutExpired:
                 return text, "timeout in " + command[0]
             bad = b"Sanitizer" in result.stderr or b"runtime error:" in result.stderr or result.returncode < 0
@@ -103,6 +108,14 @@ def run(i):
                 if result.returncode:
                     return text, "invalid C: " + result.stderr.decode(errors="replace")[:800]
         return None
+    if rng.randrange(5) == 0:  # to another language: whatever is written, nothing must break
+        try:
+            result = subprocess.run([PLIKE, "translate", "--to=" + rng.choice(LANGUAGES), "-", "-o", os.devnull], input=text,
+                                    capture_output=True, timeout=30)
+        except subprocess.TimeoutExpired:
+            return text, "timeout translating"
+        bad = b"Sanitizer" in result.stderr or b"runtime error:" in result.stderr or result.returncode not in (0, 1)
+        return (text, "translate\n" + result.stderr.decode(errors="replace")[:1500]) if bad else None
     args = [PLIKE, rng.choice(["translate", "translate", "exec", "exec", "ast", "tokens"]), "-"]
     args += rng.choice([[], ["-b"], ["--indexing=zero"], ["--assignment=equals"],
                         ["--operators=dotted"], ["--mixed-arrays=false"]])

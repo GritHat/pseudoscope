@@ -3,19 +3,36 @@
 *[English](README.md)*
 
 Pseudocodice e progetti che prendono vita nel terminale. Si scrive un algoritmo, delle
-classi, un sistema distribuito o un diagramma UML; lo si guarda girare passo per passo,
+classi, un sistema distribuito o un diagramma; lo si guarda girare passo per passo,
 avanti e indietro, dall'esterno o in ogni dettaglio; lo si mette alla prova; lo si traduce
-in C.
+in C, C++, Java, Rust, TypeScript, JavaScript o Python.
 
-[![Demo](docs/demo/poster.png)](docs/demo/pseudoscope.mp4)
+![Pseudoscope in quarantacinque secondi](docs/demo/preview.gif)
 
-*Sette minuti, senza audio; testi in italiano e in inglese. Fatto con `tools/demo/make.py`.*
+## Che cosa fa
+
+- **Esegue lo pseudocodice passo per passo**, avanti e indietro, a cinque livelli: dal
+  diagramma di sequenza di un intero sistema fino ai byte in memoria.
+- **Legge lo pseudocodice che c'è già**: il P-like in tutte le sue grafie, PSeInt,
+  VisuAlg, Portugol Studio e Cambridge, ognuno con le sue librerie per testi, numeri,
+  file e disegni.
+- **Classi ed ereditarietà**: classi astratte, interfacce, più classi base; il metodo lo
+  sceglie l'oggetto.
+- **Sistemi**: componenti che si scambiano messaggi su collegamenti che li ritardano e
+  li perdono, e prove che dicono che cosa deve succedere da un capo all'altro.
+- **Diagrammi da percorrere**: UML (sequenza, stati, attività, classi, tempi), Gantt,
+  entità e relazioni, mappe mentali, WBS, linee del tempo, in PlantUML, Mermaid e
+  Graphviz.
+- **Documenti**: i programmi e i diagrammi dentro appunti in Markdown e articoli in
+  LaTeX si aprono lì dove sono.
+- **Sette linguaggi**: C, C++, Java, Rust, TypeScript, JavaScript e Python, prove e
+  simulazione comprese; ciò che un linguaggio non sa dire viene rifiutato spiegando
+  perché.
 
 È nato come `plike-translator`, un progetto del primo anno per eseguire lo pseudocodice
 usato a lezione. Quello pseudocodice non ha mai avuto una sintassi fissa, quindi si
 accettano tutte le grafie: `A[i,j]`, `A[i][j]` o `A(i,j)`, `and`, `.AND.` o `&&`, `end f`
-o `endfunction`, e così via. Ora legge anche PSeInt, VisuAlg, Portugol, lo pseudocodice di
-Cambridge, PlantUML e Mermaid.
+o `endfunction`, e così via.
 
 ## Compilare
 
@@ -32,9 +49,12 @@ make install         # facoltativo, PREFIX=/usr/local
 
 ```sh
 bin/pseudoscope                           # la cartella corrente
-bin/pseudoscope ui examples/sorting.plike
+bin/pseudoscope ui examples/sorting.pscope
 tools/pseudoscope-window examples         # in una finestra nuova, con qualsiasi terminale
 ```
+
+I programmi finiscono in `.pscope` (`.plike` funziona ancora), o in niente: un file è ciò
+che dicono le sue prime righe.
 
 Invio scende nel dettaglio, Esc risale, `r` esegue, `t` lancia le prove, `?` elenca i
 tasti. L'interfaccia è in italiano; `--lang=en` per l'inglese. Funziona in kitty, GNOME
@@ -61,17 +81,21 @@ successo.
 
 | | Prova | Guarda |
 |---|---|---|
-| Ordinamento | `examples/sorting.plike` | livello Funzione, `v` per le barre, ← per tornare indietro |
-| Ricorsione | `examples/fib.plike` | livello Programma |
-| Liste e alberi | `examples/list.plike`, `tree.plike` | i puntatori come frecce |
-| Grafi | `examples/advanced/dijkstra.plike` | le prove (`t`), che verificano anche una proprietà |
-| Classi | `examples/advanced/stack_class.plike` | Oggetti |
-| Un progetto senza codice | `examples/design/shop.plike` | Sequenza |
-| Un protocollo | `examples/systems/stop_and_wait.plike` | che cosa succede quando i pacchetti si perdono |
-| End to end | `examples/systems/login.plike` | una prova, mentre gira |
-| Consenso | `examples/systems/election.plike` | Tempi: chi comanda, e quando |
-| Trova l'errore | `examples/exercises/two_leaders.plike` | quale regola manca? Le prove lo mostrano |
+| Ordinamento | `examples/sorting.pscope` | livello Funzione, `v` per le barre, ← per tornare indietro |
+| Ricorsione | `examples/fib.pscope` | livello Programma |
+| Liste e alberi | `examples/list.pscope`, `tree.pscope` | i puntatori come frecce |
+| Grafi | `examples/advanced/dijkstra.pscope` | le prove (`t`), che verificano anche una proprietà |
+| Classi | `examples/advanced/stack_class.pscope` | Oggetti |
+| Ereditarietà | `examples/advanced/shapes.pscope` | `T`: le stesse classi in ogni linguaggio |
+| Un progetto senza codice | `examples/design/shop.pscope` | Sequenza |
+| Un protocollo | `examples/systems/stop_and_wait.pscope` | che cosa succede quando i pacchetti si perdono |
+| End to end | `examples/systems/login.pscope` | una prova, mentre gira |
+| Consenso | `examples/systems/election.pscope` | Tempi: chi comanda, e quando |
+| Trova l'errore | `examples/exercises/two_leaders.pscope` | quale regola manca? Le prove lo mostrano |
 | UML | `examples/uml` | diagrammi da percorrere |
+| Piani, entità, mappe mentali | `examples/diagrams` | un Gantt giorno per giorno |
+| Appunti e articoli | `examples/documents` | Markdown e LaTeX, aperti come cartelle |
+| File e disegni | `examples/libraries` | `d`: ciò che disegna un programma Portugol |
 
 I componenti si scambiano messaggi su collegamenti che li ritardano e li perdono; le prove
 dicono che cosa deve succedere da un capo all'altro:
@@ -88,14 +112,36 @@ begin
 end test
 ```
 
+## Sette linguaggi
+
+```sh
+pseudoscope translate --to=java program.pscope     # oppure -o Program.java
+pseudoscope run --to=python program.pscope
+pseudoscope test --to=rust system.pscope           # le prove, tradotte
+```
+
+| | Le classi estendono | |
+|---|---|---|
+| C | niente | `float`, puntatori, controllo degli indici con `-b` |
+| C++ | più classi | riferimenti, `std::vector` |
+| Java | una classe, e interfacce | ciò che un sottoprogramma modifica torna in un `record` |
+| Rust | interfacce (trait) | tuple; `unsafe` solo con variabili globali e puntatori |
+| TypeScript, JavaScript | una classe, e interfacce | supera `tsc --strict` |
+| Python | più classi | annotazioni di tipo, `abc` |
+
+Ciò che un linguaggio non sa dire viene rifiutato spiegando perché, non scritto
+sbagliato. Si traducono anche componenti e prove, simulazione compresa: una prova dà lo
+stesso esito in tutti e sette. `make targets` lo verifica, programma per programma.
+Vedi [docs/translation.md](docs/translation.md).
+
 ## Riga di comando
 
 ```sh
-pseudoscope exec program.plike            # esegue, senza compilatore C
-pseudoscope test program.plike            # lancia le sue prove
-pseudoscope program.plike -o program.c    # traduce in C
-pseudoscope run program.plike             # compila ed esegue
-pseudoscope build program.plike -o program
+pseudoscope exec program.pscope            # esegue, senza compilatore C
+pseudoscope test program.pscope            # lancia le sue prove
+pseudoscope program.pscope -o program.c    # traduce in C (o .cpp .java .rs .ts .js .py)
+pseudoscope run program.pscope             # compila ed esegue
+pseudoscope build program.pscope -o program
 pseudoscope check program.psc             # segnala solo gli errori
 pseudoscope ast diagram.puml              # che cosa ha capito (--dot per Graphviz)
 ```
@@ -117,8 +163,10 @@ funziona ancora.
 
 ## Limiti
 
-Le classi non hanno ereditarietà. Componenti e prove si eseguono, non si traducono in C.
-Dei diagrammi si leggono i tipi elencati in [docs/diagrams.md](docs/diagrams.md).
+File, disegni e le altre funzioni di libreria degli pseudocodici si eseguono qui e non si
+traducono. I puntatori a valori semplici esistono solo in C, C++ e Rust. Non si leggono
+`algorithm2e` né tastiera, mouse e rete di Portugol Studio. Ogni documento dice che
+cos'altro manca.
 
 ## Documentazione
 
@@ -127,8 +175,9 @@ In inglese:
 - [L'interfaccia](docs/interface.md)
 - [Il linguaggio](docs/language.md)
 - [Sistemi: classi, componenti, prove](docs/systems.md)
+- [Tradurre: sette linguaggi](docs/translation.md)
 - [Altri pseudocodici](docs/dialects.md)
-- [Diagrammi](docs/diagrams.md)
+- [Diagrammi e documenti](docs/diagrams.md)
 - [Come funziona](docs/design.md)
 
 ## Test
@@ -136,8 +185,15 @@ In inglese:
 ```sh
 make test       # test di unità, end to end, schermate, combinazioni di sintassi
 make sanitize   # gli stessi, con il programma sotto ASan e UBSan
+make targets    # ogni programma in ogni linguaggio di cui ci sono gli strumenti
 make fuzz       # programmi e diagrammi alterati, tasti a caso
 ```
+
+## Il video
+
+`tools/demo/make.py` riprende la vera interfaccia, guidata dai tasti scritti in
+`tools/demo/story.py`, e i veri comandi: `--preview` fa quello breve qui sopra. Il video
+intero non sta nel repository.
 
 ## Licenza
 

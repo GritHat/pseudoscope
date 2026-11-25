@@ -17,7 +17,7 @@ LIB_OBJ   = $(LIB:%.c=$(BUILD)/%.o)
 CLI_OBJ   = $(CLI:%.c=$(BUILD)/%.o)
 UNIT_OBJ  = $(UNIT:%.c=$(BUILD)/%.o)
 
-.PHONY: all test unit e2e syntax sanitize fuzz install uninstall clean
+.PHONY: all test unit e2e syntax targets sanitize fuzz install uninstall clean
 
 all: $(PLIKE) bin/plike
 
@@ -40,7 +40,7 @@ $(BUILD)/%.o: %.c
 test: unit e2e syntax
 
 unit: $(BUILD)/unit
-	$(BUILD)/unit tests/programs/*.plike examples/*/*.plike
+	$(BUILD)/unit tests/programs/*.plike tests/targets/*.plike examples/*/*.pscope
 
 e2e: $(PLIKE)
 	PLIKE=$(PLIKE) tests/run.sh
@@ -48,6 +48,10 @@ e2e: $(PLIKE)
 syntax: $(PLIKE)
 	python3 tests/messages.py
 	python3 tests/syntax.py $(PLIKE)
+
+# Every program translated to every language whose tools are here, and run.
+targets: $(PLIKE)
+	python3 tests/targets.py $(PLIKE)
 
 # Everything again, with the translator itself under sanitizers.
 sanitize:

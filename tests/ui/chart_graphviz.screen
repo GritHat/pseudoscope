@@ -1,0 +1,26 @@
+ ◆ PSEUDOSCOPE  states.dot ▸ diagramma
+
+╭────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                            │
+│ ╭────────╮                                                              │ Il cammino fatto                 │
+│ │ start  │────▶ idle                                                    │                                  │
+│ ╰────────╯                                                              │  start                           │
+│ ╭────────╮── letter ──▶ word                                            │  idle                            │
+│ │  idle  │── digit ──▶ number                                           │  word                            │
+│ ╰────────╯── end ──▶ done                                               │  word                            │
+│                                                                         │                                  │
+│ ╭────────╮── letter or digit ──▶ word                                   │                                  │
+│ │  word  │── other ──▶ idle                                             │                                  │
+│ ╰────────╯                                                              │                                  │
+│                                                                         │                                  │
+│ ╭────────╮── digit ──▶ number                                           │                                  │
+│ │ number │── other ──▶ idle                                             │                                  │
+│ ╰────────╯                                                              │                                  │
+│                                                                         │                                  │
+│ ╭────────╮                                                              │                                  │
+│ │  done  │                                                              │                                  │
+│ ╰────────╯                                                              │                                  │
+│                                                                         │                                  │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+  ↑↓  quale freccia   →  segui   ←  indietro   Spazio  va da solo   0  da capo   Esc  file   ?  aiuto

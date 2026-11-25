@@ -3,6 +3,7 @@
 #include "plike/lexer.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 typedef struct {
@@ -13,6 +14,7 @@ typedef struct {
     int line;
     char inside[64];
     int depth;
+    int indent;     /* of the line being read */
 } Reader;
 
 #define GROW(array, count, capacity)                                                               \
@@ -259,7 +261,7 @@ static int node(Reader *r, const char *id, const char *text, UmlShape shape) {
         return i;
     }
     GROW(u->nodes, u->node_count, u->node_capacity);
-    u->nodes[u->node_count] = (UmlNode){id, text ? text : id, shape, r->inside[0] ? arena_strdup(r->arena, r->inside) : NULL, r->line};
+    u->nodes[u->node_count] = (UmlNode){id, text ? text : id, shape, r->inside[0] ? arena_strdup(r->arena, r->inside) : NULL, r->line, -1, 0, 0};
     return u->node_count++;
 }
 
@@ -693,7 +695,7 @@ static bool class_line(Reader *r, const char *s) {
                 Uml *u = r->uml;
                 int to = class_of_name(r, other, NULL);
                 GROW(u->relations, u->relation_count, u->relation_capacity);
-                u->relations[u->relation_count++] = (UmlRelation){c, to, implements ? "implements" : "extends", ""};
+                u->relations[u->relation_count++] = (UmlRelation){c, to, implements ? "implements" : "extends", "", NULL, NULL};
             }
         }
         const char *brace = strchr(p, '{');
@@ -743,7 +745,7 @@ static bool class_line(Reader *r, const char *s) {
     int a = class_of_name(r, from, NULL), b = class_of_name(r, to, NULL);
     Uml *u = r->uml;
     GROW(u->relations, u->relation_count, u->relation_capacity);
-    u->relations[u->relation_count++] = (UmlRelation){reversed ? b : a, reversed ? a : b, kind, text};
+    u->relations[u->relation_count++] = (UmlRelation){reversed ? b : a, reversed ? a : b, kind, text, NULL, NULL};
     return true;
 }
 
@@ -755,12 +757,16 @@ static bool ends(const char *path, const char *suffix) {
 }
 
 bool is_uml_path(const char *path) {
-    return ends(path, ".puml") || ends(path, ".plantuml") || ends(path, ".iuml") || ends(path, ".mmd") || ends(path, ".mermaid");
+    return ends(path, ".puml") || ends(path, ".plantuml") || ends(path, ".iuml") || ends(path, ".pu") || ends(path, ".mmd") ||
+           ends(path, ".mermaid") || ends(path, ".dot") || ends(path, ".gv");
 }
 
 typedef bool (*LineReader)(Reader *, const char *);
 
 /* What kind of PlantUML this is, from the first lines that tell. */
+
+#include "charts.inc"
+
 static LineReader guess(const char *text) {
     for (const char *s = text; *s;) {
         size_t n = strcspn(s, "\n");
@@ -785,11 +791,25 @@ static LineReader guess(const char *text) {
     return sequence_line;
 }
 
+bool looks_like_uml(const char *text) {
+    static const char *const WORDS[] = {"sequenceDiagram", "classDiagram", "stateDiagram", "flowchart", "erDiagram", "gantt", "mindmap",
+                                        "timeline", "journey", "pie", "digraph"};
+    char line[300];
+    const char *l = first_line(text, line, sizeof line);
+    if (starts(l, "@start")) return true;
+    for (size_t i = 0; i < sizeof WORDS / sizeof WORDS[0]; i++)
+        if (is_word(l, WORDS[i]) || starts(l, "stateDiagram")) return true;
+    return (is_word(l, "graph") && (strchr(l, '{') || strstr(l, " TD") || strstr(l, " LR") || strstr(l, " TB") || strstr(l, " BT") || strstr(l, " RL")));
+}
+
 Uml *uml_parse(const Source *source, Arena *arena, Diag *diag) {
     Uml *uml = ARENA_NEW(arena, Uml);
     Reader reader = {.source = source, .arena = arena, .diag = diag, .uml = uml};
     Reader *r = &reader;
     LineReader read_line = NULL;
+    bool failed = false;
+    if (charts(r, source->text, source->name, &failed)) return failed ? NULL : uml;
+    r->line = 0;
     act = (Activity){0};
     open_class = -1;
     uml->mermaid = !strstr(source->text, "@start");
@@ -843,8 +863,43 @@ Uml *uml_parse(const Source *source, Arena *arena, Diag *diag) {
 }
 
 void uml_dump(const Uml *u, StrBuf *out) {
-    static const char *const KINDS[] = {"?", "sequence", "state", "class", "graph"};
-    strbuf_printf(out, "%s%s%s\n", KINDS[u->kind], u->title ? " " : "", u->title ? u->title : "");
+    static const char *const KINDS[] = {"?", "sequence", "state", "class", "graph", "plan", "entities", "tree", "pie"};
+    strbuf_printf(out, "%s%s%s\n", u->kind == UML_TREE && u->tree_kind ? u->tree_kind : KINDS[u->kind], u->title ? " " : "",
+                  u->title ? u->title : "");
+    if (u->kind == UML_GANTT) {
+        if (u->first_day >= 0) {
+            int y, m, d;
+            uml_date(u->first_day, &y, &m, &d);
+            strbuf_printf(out, "  from %04d-%02d-%02d\n", y, m, d);
+        }
+        for (int i = 0; i < u->task_count; i++) {
+            const UmlTask *t = &u->tasks[i];
+            strbuf_printf(out, "  day %ld, %d day%s: %s%s%s%s%s\n", t->start + 1, t->days, t->days == 1 ? "" : "s", t->name,
+                          t->section ? " [" : "", t->section ? t->section : "", t->section ? "]" : "",
+                          t->milestone ? " (milestone)" : t->done ? " (done)" : t->active ? " (active)" : t->critical ? " (critical)" : "");
+        }
+        return;
+    }
+    if (u->kind == UML_TREE || u->kind == UML_PIE) {
+        for (int i = 0; i < u->node_count; i++) {
+            strbuf_printf(out, "  %*s%s", u->nodes[i].depth * 2, "", u->nodes[i].text);
+            if (u->kind == UML_PIE) strbuf_printf(out, ": %g", u->nodes[i].value);
+            strbuf_puts(out, "\n");
+        }
+        return;
+    }
+    if (u->kind == UML_ER) {
+        for (int i = 0; i < u->class_count; i++) {
+            strbuf_printf(out, "  entity %s\n", u->classes[i].name);
+            for (int k = 0; k < u->classes[i].member_count; k++) strbuf_printf(out, "    %s\n", u->classes[i].members[k]);
+        }
+        for (int i = 0; i < u->relation_count; i++) {
+            const UmlRelation *rel = &u->relations[i];
+            strbuf_printf(out, "  %s %s -- %s %s%s%s\n", rel->from_many, u->classes[rel->from].name, rel->to_many, u->classes[rel->to].name,
+                          rel->text[0] ? ": " : "", rel->text);
+        }
+        return;
+    }
     for (int i = 0; i < u->people_count; i++) strbuf_printf(out, "  person %s\n", u->people[i].name);
     for (int i = 0; i < u->row_count; i++) {
         const UmlRow *row = &u->rows[i];

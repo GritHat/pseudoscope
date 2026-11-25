@@ -96,7 +96,16 @@ static void address(Compiler *c, const Expr *expr) {
         case EX_FIELD:
             if (expr->base->type->kind == TY_POINTER) value(c, expr->base);
             else address(c, expr->base);
-            emit(c, OP_FIELD)->a = expr->symbol->slot;
+            {
+                const Type *record = expr->base->type->kind == TY_POINTER ? expr->base->type->base : expr->base->type;
+                Instr *in = emit(c, OP_FIELD);
+                in->a = expr->symbol->slot;
+                if (record->kind == TY_RECORD && record->record->klass && record->record->klass->has_derived) {
+                    in->b = 1; /* the object may be of a class that extends this one */
+                    in->symbol = expr->symbol;
+                    in->type = (Type *)record;
+                }
+            }
             return;
         case EX_UNARY:
             if (expr->op == TOK_STAR) {
@@ -137,6 +146,7 @@ static void call(Compiler *c, const Expr *expr) {
     in->expr = expr;
     in->symbol = callee;
     in->a = expr->args.count;
+    in->b = expr->is_static;
 }
 
 static void binary(Compiler *c, const Expr *expr) {

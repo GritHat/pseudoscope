@@ -6,3 +6,5 @@
 .vscode/
 output.c
 __pycache__/
+# the full video is published elsewhere: see tools/demo
+*.mp4

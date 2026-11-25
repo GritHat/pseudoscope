@@ -1,10 +1,17 @@
 """What the video tells. `it` is the caption, `en` its translation; keys are
 pressed after the caption appears; `spot` is what to look at, in cells:
-(x, y, w, h), or (text, dx, dy, w, h) from where a text is."""
+(x, y, w, h), or (text, dx, dy, w, h) from where a text is. A scene without
+`open` happens in a terminal: each step types the command in `run`.
+
+TRAILER, at the end, is the short one that plays by itself in the README."""
 
 
 def R(n):
     return "<right>" * n
+
+
+def D(n):
+    return "<down>" * n
 
 
 DATA = (57, 2, 66, 21)
@@ -13,24 +20,30 @@ BOTTOM = (0, 24, 124, 5)
 TABS = (1, 2, 75, 1)
 SEQ = (0, 3, 124, 21)
 LEVELS = (57, 0, 66, 1)
+OTHER = (62, 2, 62, 26)   # the translation, beside the pseudocode
+CALLS = (0, 2, 74, 10)
 
 STORY = [
     {"title": "Pseudoscope", "sub": "Pseudocodice e progetti che prendono vita",
      "en": "Pseudocode and designs, brought to life", "seconds": 4.5},
 
     # ------------------------------------------------------------------
-    {"title": "Il primo algoritmo", "tag": "1 · primo anno", "sub": "Ordinare un array, e capire perché funziona",
+    {"title": "Il primo algoritmo", "title_en": "The first algorithm", "tag": "1 · primo anno",
+     "sub": "Ordinare un array, e capire perché funziona",
      "en": "First year: sorting an array, and understanding why it works"},
     {"name": "1 · Il primo algoritmo", "open": "examples", "start": "", "steps": [
         {"it": "Si parte dai file: a destra c'è l'anteprima di quello scelto.",
          "en": "It starts from the files, with a preview of the chosen one.", "spot": (40, 2, 84, 24)},
     ]},
-    {"name": "1 · Il primo algoritmo", "open": "examples/basic.plike", "start": "<home>", "steps": [
+    {"name": "1 · Il primo algoritmo", "open": "examples/basic.pscope", "start": "<home>", "steps": [
         {"it": "La mappa del programma: ogni sottoprogramma è una scatola, con ciò che entra e ciò che esce.",
          "en": "The map: each subprogram is a box, with what goes in and what comes out.", "keys": "<down>",
          "spot": (39, 2, 85, 24)},
         {"it": "Invio scende nel dettaglio: prima il codice…", "en": "Enter goes into detail: first the code…", "keys": "<enter>"},
         {"it": "…poi la sua traduzione in C, riga per riga.", "en": "…then its translation to C, line by line.", "keys": "<enter>"},
+        {"it": "Con T la stessa cosa in C++, Java, Rust, TypeScript, JavaScript e Python.",
+         "en": "T shows the same in C++, Java, Rust, TypeScript, JavaScript and Python.", "keys": "TTTTTT", "pace": 1.15,
+         "spot": OTHER},
         {"it": "Con r si prova questo sottoprogramma da solo: i valori si scrivono, o si generano.",
          "en": "r tries this subprogram by itself, with values typed or generated.", "keys": "r",
          "spot": (1, 5, 120, 7)},
@@ -46,7 +59,7 @@ STORY = [
         {"it": "E con f il codice diventa il suo diagramma di attività, con il punto in cui siamo.",
          "en": "And f turns the code into its activity diagram, showing where we are.", "keys": "f" + R(6), "spot": CODE},
     ]},
-    {"name": "1 · Il primo algoritmo", "open": "examples/basic.plike", "start": "<home><down>r<enter>" + R(5), "steps": [
+    {"name": "1 · Il primo algoritmo", "open": "examples/basic.pscope", "start": "<home><down>r<enter>" + R(5), "steps": [
         {"it": "Cinque livelli, dall'esterno al dettaglio: il livello decide cosa si vede e quanto è lungo un passo.",
          "en": "Five levels: each decides what you see, and how long a step is.", "spot": LEVELS},
         {"it": "Istruzione: un'espressione diventa il suo valore, un pezzo alla volta.",
@@ -59,9 +72,10 @@ STORY = [
     ]},
 
     # ------------------------------------------------------------------
-    {"title": "Ricorsione e strutture", "tag": "2 · primo e secondo anno", "sub": "Chi aspetta chi, e dove portano i puntatori",
+    {"title": "Ricorsione e strutture", "title_en": "Recursion and data structures", "tag": "2 · primo e secondo anno",
+     "sub": "Chi aspetta chi, e dove portano i puntatori",
      "en": "Recursion and data structures: who waits for whom, and where pointers lead"},
-    {"name": "2 · Ricorsione", "open": "examples/fib.plike", "start": "r2", "steps": [
+    {"name": "2 · Ricorsione", "open": "examples/fib.pscope", "start": "r2", "steps": [
         {"it": "Livello Programma: un passo è una chiamata o un ritorno.", "en": "Program level: a step is a call or a return.",
          "keys": R(9), "pace": 0.6},
         {"it": "A destra la pila: ogni chiamata aspetta che finisca quella sopra di lei.",
@@ -70,48 +84,119 @@ STORY = [
          "en": "On the left, the tree: fib(2) is computed twice. That is why it is slow.", "keys": R(12), "pace": 0.4,
          "spot": (0, 2, 74, 21)},
     ]},
-    {"name": "2 · Strutture dati", "open": "examples/tree.plike", "start": "r<right><right><right>3<enter>", "steps": [
+    {"name": "2 · Strutture dati", "open": "examples/tree.pscope", "start": "r<right><right><right>3<enter>", "steps": [
         {"it": "Un albero binario di ricerca costruito dal programma: i puntatori diventano un disegno.",
          "en": "A binary search tree built by the program: pointers become a drawing.", "keys": R(60), "pace": 0.1,
          "spot": ("root  Node*", -2, 0, 64, 9)},
     ]},
 
     # ------------------------------------------------------------------
-    {"title": "Il tuo pseudocodice", "tag": "3 · ogni scuola ha il suo", "sub": "PSeInt, VisuAlg, Portugol, Cambridge",
-     "en": "Each school has its own: PSeInt, VisuAlg, Portugol, Cambridge"},
+    {"title": "Il tuo pseudocodice", "title_en": "Your own pseudocode", "tag": "3 · ogni scuola ha il suo",
+     "sub": "PSeInt, VisuAlg, Portugol, Cambridge, con le loro librerie",
+     "en": "Each school has its own: PSeInt, VisuAlg, Portugol, Cambridge, with their libraries"},
     {"name": "3 · Altri pseudocodici", "open": "tests/dialects/basico.psc", "start": "<home><down><down><enter>", "steps": [
         {"it": "Un programma scritto per PSeInt, in spagnolo. Non va convertito.",
          "en": "A program written for PSeInt, in Spanish. Nothing to convert.", "spot": (0, 2, 124, 24)},
-        {"it": "Si esegue e si esplora come tutti gli altri, e si traduce in C.",
-         "en": "It runs and is explored like any other, and translates to C.", "keys": "r<enter>" + R(14), "pace": 0.4},
+        {"it": "Si esegue, si esplora e si traduce come tutti gli altri.",
+         "en": "It runs, is explored and is translated like any other.", "keys": "r<enter>" + R(14), "pace": 0.4},
+    ]},
+    {"name": "3 · Le loro librerie", "open": "examples/libraries/files.pse", "start": "", "steps": [
+        {"it": "Ognuno ha le sue librerie. Lo pseudocodice di Cambridge scrive un file, poi lo rilegge riga per riga.",
+         "en": "Each has its libraries. Cambridge pseudocode writes a file, then reads it back.", "keys": "r" + R(16), "pace": 0.3,
+         "spot": BOTTOM},
+    ]},
+    {"name": "3 · Le loro librerie", "open": "examples/libraries/desenho.por", "start": "r" + R(9), "steps": [
+        {"it": "Portugol Studio ha una libreria grafica: con d si guarda il disegno crescere, un'istruzione alla volta.",
+         "en": "Portugol Studio has a graphics library: d shows the drawing grow, statement by statement.",
+         "keys": "d" + R(38), "pace": 0.13},
     ]},
 
     # ------------------------------------------------------------------
-    {"title": "Progettare", "tag": "4 · ingegneria del software", "sub": "Un progetto si può percorrere prima di scriverlo",
+    {"title": "Classi ed ereditarietà", "title_en": "Classes and inheritance", "tag": "4 · programmazione a oggetti",
+     "sub": "Chi estende chi, e quale metodo parte", "en": "Object-oriented programming: who extends whom, and which method runs"},
+    {"name": "4 · Ereditarietà", "open": "examples/advanced/shapes.pscope", "start": "<home>", "steps": [
+        {"it": "Una classe astratta, un'interfaccia, e le classi che le estendono.",
+         "en": "An abstract class, an interface, and the classes that extend them.", "keys": D(8), "pace": 0.35,
+         "spot": (39, 2, 85, 16)},
+        {"it": "Il C non ha classi astratte. Invece di tradurre male, lo dice.",
+         "en": "C has no abstract classes. Rather than translate wrongly, it says so.", "keys": "<enter><enter>", "pace": 0.8,
+         "spot": OTHER},
+        {"it": "Ogni linguaggio a modo suo: in C++ una classe ne estende quante vuole…",
+         "en": "Each language in its own way: in C++ a class extends as many as it likes…", "keys": "T", "spot": OTHER},
+        {"it": "…in Java una sola, più le interfacce…", "en": "…in Java only one, plus interfaces…", "keys": "T", "spot": OTHER},
+        {"it": "…e in Rust nessuna: ci sono solo i trait, e qui non bastano.",
+         "en": "…and in Rust none: there are only traits, and here they are not enough.", "keys": "T", "spot": OTHER},
+        {"it": "Poi TypeScript, JavaScript e Python, con le sue classi multiple.",
+         "en": "Then TypeScript, JavaScript and Python, with its multiple classes.", "keys": "TTT", "pace": 1.3, "spot": OTHER},
+    ]},
+    {"name": "4 · Ereditarietà", "open": "examples/advanced/shapes.pscope", "start": "r2", "steps": [
+        {"it": "Quando gira, il metodo lo sceglie l'oggetto: twice() è di Shape, ma area() è quella di Rectangle.",
+         "en": "At run time the object chooses: twice() is Shape's, but area() is Rectangle's.", "keys": R(11), "pace": 0.5,
+         "spot": CALLS},
+    ]},
+
+    # ------------------------------------------------------------------
+    {"title": "Progettare", "title_en": "Designing", "tag": "5 · ingegneria del software",
+     "sub": "Un progetto si può percorrere prima di scriverlo",
      "en": "Software engineering: a design can be walked through before it is written"},
-    {"name": "4 · UML", "open": "examples/uml/login_sequence.puml", "start": "<right><right>", "steps": [
+    {"name": "5 · UML", "open": "examples/uml/login_sequence.puml", "start": "<right><right>", "steps": [
         {"it": "Un diagramma di sequenza in PlantUML, percorso un messaggio alla volta.",
          "en": "A PlantUML sequence diagram, walked through one message at a time.", "keys": R(6), "pace": 0.75},
         {"it": "Tab prende l'altro ramo: e se la password fosse sbagliata?",
          "en": "Tab takes the other branch: what if the password is wrong?", "keys": "<tab>", "spot": ("the password is wrong", -2, 0, 105, 4)},
     ]},
-    {"name": "4 · UML", "open": "examples/uml/order_state.puml", "steps": [
+    {"name": "5 · UML", "open": "examples/uml/order_state.puml", "steps": [
         {"it": "Un diagramma di stato: si sceglie la freccia, e lo stato cambia dal vivo.",
          "en": "A state diagram: choose an arrow, and the state changes live.", "keys": R(2) + "<down>" + R(1) + R(1) + R(1), "pace": 0.9},
         {"it": "A destra resta il cammino fatto. Valgono anche classi, attività e diagrammi di flusso.",
          "en": "The way so far stays on the right. Classes, activities and flowcharts work too.", "spot": (84, 3, 40, 22)},
     ]},
-    {"name": "4 · Pseudoclassi", "open": "examples/design/shop.plike", "start": "", "steps": [
+    {"name": "5 · Pseudoclassi", "open": "examples/design/shop.pscope", "start": "", "steps": [
         {"it": "Oppure pseudoclassi ancora vuote: dove c'è «...» il codice non esiste.",
          "en": "Or pseudo-classes still empty: where there is “...” there is no code yet.", "keys": "<home><down><enter>"},
         {"it": "Il progetto gira lo stesso, e mostra chi chiama chi.",
          "en": "The design runs all the same, and shows who calls whom.", "keys": "<esc><home>r1" + R(9), "pace": 0.65},
     ]},
+    {"name": "5 · Piani, dati, idee", "open": "examples/diagrams/thesis_plan.puml", "steps": [
+        {"it": "Un piano scritto in PlantUML è un Gantt da percorrere nel tempo: cosa è finito, cosa è in corso.",
+         "en": "A plan written in PlantUML is a Gantt chart to walk through time: what is done, what is under way.",
+         "keys": R(4), "pace": 1.0},
+    ]},
+    {"name": "5 · Piani, dati, idee", "open": "examples/diagrams/library_er.mmd", "steps": [
+        {"it": "Entità e relazioni, in Mermaid: ogni legame si legge come una frase.",
+         "en": "Entities and relationships, in Mermaid: each link reads as a sentence.", "keys": D(2), "pace": 1.0,
+         "spot": (83, 3, 40, 9)},
+    ]},
+    {"name": "5 · Piani, dati, idee", "open": "examples/diagrams/algorithms_mindmap.mmd", "steps": [
+        {"it": "E mappe mentali, WBS, linee del tempo, grafi di Graphviz: un ramo alla volta.",
+         "en": "And mind maps, WBS, timelines, Graphviz graphs: one branch at a time.", "keys": D(10), "pace": 0.3},
+    ]},
 
     # ------------------------------------------------------------------
-    {"title": "Un sistema intero", "tag": "5 · end to end", "sub": "Dal clic dell'utente al database, e ritorno",
+    {"title": "Appunti e articoli", "title_en": "Lecture notes and papers", "tag": "6 · Markdown e LaTeX",
+     "sub": "Ciò che è già scritto si apre così com'è", "en": "Markdown and LaTeX: what is already written opens as it is"},
+    {"name": "6 · Markdown", "open": "examples/documents", "start": "", "steps": [
+        {"it": "Gli appunti in Markdown si aprono come una cartella: dentro, i loro programmi e i loro diagrammi.",
+         "en": "Markdown notes open like a folder: inside, their programs and their diagrams.", "keys": "<enter><down>",
+         "pace": 0.9, "spot": (0, 2, 41, 9)},
+        {"it": "Lo pseudocodice della lezione si esegue lì dov'è, senza copiarlo altrove.",
+         "en": "The pseudocode of the lesson runs where it is, with no copying elsewhere.", "keys": "<enter>r" + R(14),
+         "pace": 0.3},
+    ]},
+    {"name": "6 · LaTeX", "open": "examples/documents", "start": "<down>", "steps": [
+        {"it": "Un articolo in LaTeX: l'ambiente algorithmic diventa un programma, pgfgantt un piano.",
+         "en": "A LaTeX paper: the algorithmic environment becomes a program, pgfgantt a plan.", "keys": "<enter>",
+         "pace": 1.0, "spot": (0, 2, 41, 6)},
+        {"it": "L'algoritmo di Euclide, così com'è nell'articolo, eseguito: Gcd(48, 18) fa 6.",
+         "en": "Euclid's algorithm, as it is written in the paper, executed: Gcd(48, 18) is 6.", "keys": "<enter>r2" + R(5),
+         "pace": 0.6, "spot": CALLS},
+    ]},
+
+    # ------------------------------------------------------------------
+    {"title": "Un sistema intero", "title_en": "A whole system", "tag": "7 · end to end",
+     "sub": "Dal clic dell'utente al database, e ritorno",
      "en": "End to end: from the user's click to the database, and back"},
-    {"name": "5 · End to end", "open": "examples/systems/login.plike", "start": "<home><down><down><down><down>", "steps": [
+    {"name": "7 · End to end", "open": "examples/systems/login.pscope", "start": "<home><down><down><down><down>", "steps": [
         {"it": "Tre componenti: ognuno vive per conto suo e reagisce ai messaggi.",
          "en": "Three components: each lives on its own and reacts to messages.", "spot": (39, 2, 85, 12)},
         {"it": "Con t si lanciano tutte le prove. Invio ne mostra una mentre gira.",
@@ -130,9 +215,10 @@ STORY = [
     ]},
 
     # ------------------------------------------------------------------
-    {"title": "Quando le cose vanno storte", "tag": "6 · reti", "sub": "Un protocollo affidabile su un canale che perde pacchetti",
+    {"title": "Quando le cose vanno storte", "title_en": "When things go wrong", "tag": "8 · reti",
+     "sub": "Un protocollo affidabile su un canale che perde pacchetti",
      "en": "Networks: a reliable protocol over a channel that loses packets"},
-    {"name": "6 · Protocolli", "open": "examples/systems/stop_and_wait.plike", "start": "t<enter>", "steps": [
+    {"name": "8 · Protocolli", "open": "examples/systems/stop_and_wait.pscope", "start": "t<enter>", "steps": [
         {"it": "Stop-and-wait: il canale perde un messaggio su quattro.", "en": "Stop-and-wait: the channel loses one message in four.",
          "keys": R(7), "pace": 0.6},
         {"it": "Ecco: la conferma si è persa.", "en": "There: the acknowledgement got lost.", "keys": R(2), "pace": 0.8,
@@ -148,9 +234,10 @@ STORY = [
     ]},
 
     # ------------------------------------------------------------------
-    {"title": "Algoritmi avanzati", "tag": "7 · anni successivi", "sub": "Verificare una proprietà, non solo un risultato",
+    {"title": "Algoritmi avanzati", "title_en": "Advanced algorithms", "tag": "9 · anni successivi",
+     "sub": "Verificare una proprietà, non solo un risultato",
      "en": "Later years: checking a property, not only a result"},
-    {"name": "7 · Grafi", "open": "examples/advanced/dijkstra.plike", "start": "", "steps": [
+    {"name": "9 · Grafi", "open": "examples/advanced/dijkstra.pscope", "start": "", "steps": [
         {"it": "Dijkstra. Una prova verifica le distanze, l'altra una proprietà che deve valere sempre.",
          "en": "Dijkstra. One test checks distances, the other a property that must always hold.", "keys": "t<down>", "pace": 1.0,
          "spot": (0, 2, 124, 6)},
@@ -160,9 +247,10 @@ STORY = [
     ]},
 
     # ------------------------------------------------------------------
-    {"title": "Sistemi distribuiti", "tag": "8 · magistrale", "sub": "Eleggere un leader, come fa Raft",
+    {"title": "Sistemi distribuiti", "title_en": "Distributed systems", "tag": "10 · magistrale",
+     "sub": "Eleggere un leader, come fa Raft",
      "en": "Master's: electing a leader, as Raft does"},
-    {"name": "8 · Consenso", "open": "examples/systems/election.plike", "start": "t<enter>", "steps": [
+    {"name": "10 · Consenso", "open": "examples/systems/election.pscope", "start": "t<enter>", "steps": [
         {"it": "Cinque nodi. Chi non sente un leader per un po' si candida e chiede i voti.",
          "en": "Five nodes. Whoever hears no leader for a while asks for votes.", "keys": R(14), "pace": 0.25},
         {"it": "Due candidati nello stesso istante!", "en": "Two candidates at the same moment!", "keys": R(4), "pace": 0.4,
@@ -175,9 +263,9 @@ STORY = [
          "en": "The timing diagram: the leader crashes, and the others elect a new one.", "keys": "<tab>g", "pace": 0.8,
          "spot": (0, 4, 90, 12)},
     ]},
-    {"title": "E se fosse sbagliato?", "tag": "un esercizio", "color": (255, 135, 120),
+    {"title": "E se fosse sbagliato?", "title_en": "What if it were wrong?", "tag": "un esercizio", "color": (255, 135, 120),
      "sub": "La stessa elezione, con una regola dimenticata", "en": "What if it were wrong? The same election, with a rule forgotten"},
-    {"name": "8 · Trovare l'errore", "open": "examples/exercises/two_leaders.plike", "start": "", "steps": [
+    {"name": "10 · Trovare l'errore", "open": "examples/exercises/two_leaders.pscope", "start": "", "steps": [
         {"it": "Le prove falliscono: in un mandato ci sono due leader.", "en": "The tests fail: there are two leaders in the same term.",
          "keys": "t<down>", "pace": 1.0, "spot": (0, 2, 124, 6)},
         {"it": "Si guarda dove succede, sul diagramma dei tempi…", "en": "Let us see where it happens, on the timing diagram…",
@@ -190,9 +278,64 @@ STORY = [
     ]},
 
     # ------------------------------------------------------------------
-    {"title": "Pseudoscope", "sub": "Dal primo ciclo ai sistemi distribuiti, in qualunque terminale",
-     "en": "From the first loop to distributed systems, in any terminal", "seconds": 8,
+    {"title": "Sette linguaggi", "title_en": "Seven languages", "tag": "11 · dal progetto al codice",
+     "sub": "Le stesse prove, tradotte e compilate", "en": "From the design to the code: the same tests, translated and compiled"},
+    {"name": "11 · Sette linguaggi", "steps": [
+        {"run": "pseudoscope test examples/systems/election.pscope",
+         "it": "Le prove dell'elezione, eseguite qui: non serve nessun altro strumento.",
+         "en": "The tests of the election, run here: no other tool is needed."},
+        {"run": "pseudoscope test --to=rust examples/systems/election.pscope",
+         "it": "Le stesse, tradotte in Rust e compilate. Anche la simulazione è tradotta: l'esito è identico.",
+         "en": "The same, translated to Rust and compiled. The simulation is translated too: same result."},
+        {"run": "pseudoscope test --to=java examples/exercises/two_leaders.pscope",
+         "it": "Anche gli errori sono gli stessi: in Java l'esercizio fallisce nello stesso punto.",
+         "en": "The mistakes are the same too: in Java the exercise fails at the same point.", "hold": 2.4},
+        {"run": "pseudoscope translate --to=python examples/fib.pscope", "clear": True,
+         "it": "E il codice si porta via: C, C++, Java, Rust, TypeScript, JavaScript, Python.",
+         "en": "And the code is yours to take away: C, C++, Java, Rust, TypeScript, JavaScript, Python.", "hold": 2.4},
+    ]},
+
+    # ------------------------------------------------------------------
+    {"title": "Pseudoscope", "chapter": "Per cominciare", "title_en": "Getting started", "sub": "Dal primo ciclo ai sistemi distribuiti, in qualunque terminale",
+     "en": "From the first loop to distributed systems, in any terminal", "seconds": 9,
      "lines": [("make && bin/pseudoscope", "apri la cartella e comincia"),
-               ("pseudoscope test file.plike", "lancia le prove"),
+               ("pseudoscope test file.pscope", "lancia le prove"),
+               ("pseudoscope run --to=java file.pscope", "tradotto, in sette linguaggi"),
                ("?", "tutti i tasti")]},
+]
+
+# Forty seconds, for those who have not decided to watch ten minutes yet.
+TRAILER = [
+    {"name": "Passo per passo", "open": "examples/basic.pscope", "start": "<home><down>r<enter>", "steps": [
+        {"it": "Pseudocodice che gira: ogni → è un'istruzione, e con ← si torna indietro.",
+         "en": "Pseudocode that runs: each → is a statement, and ← goes back.", "keys": R(12) + "<left><left><left>", "pace": 0.3,
+         "seconds": 5.5, "hold": 0.6},
+        {"it": "I dati mentre cambiano: qui l'array, visto come grafico.",
+         "en": "The data while they change: here the array, seen as bars.", "keys": "v" + R(26), "pace": 0.14, "seconds": 5.5,
+         "hold": 0.8},
+    ]},
+    {"name": "Sette linguaggi", "open": "examples/basic.pscope", "start": "<home><down><enter><enter>", "steps": [
+        {"it": "La traduzione riga per riga: C, C++, Java, Rust, TypeScript, JavaScript, Python.",
+         "en": "The translation line by line: C, C++, Java, Rust, TypeScript, JavaScript, Python.", "keys": "TTTTTT", "pace": 0.7,
+         "seconds": 6.0, "hold": 0.8},
+    ]},
+    {"name": "Sistemi", "open": "examples/systems/election.pscope", "start": "t<enter>", "steps": [
+        {"it": "Un sistema distribuito: il diagramma di sequenza si disegna da solo.",
+         "en": "A distributed system: the sequence diagram draws itself.", "keys": R(30), "pace": 0.13, "seconds": 6.0, "hold": 1.0},
+    ]},
+    {"name": "Diagrammi", "open": "examples/diagrams/thesis_plan.puml", "steps": [
+        {"it": "Diagrammi da percorrere: UML, Gantt, entità e relazioni, mappe mentali.",
+         "en": "Diagrams to walk through: UML, Gantt, entities and relationships, mind maps.", "keys": R(4), "pace": 0.6,
+         "seconds": 4.5, "hold": 0.8},
+    ]},
+    {"name": "Altri pseudocodici", "open": "examples/libraries/desenho.por", "start": "r" + R(9), "steps": [
+        {"it": "Gli pseudocodici delle scuole, con le loro librerie: qui Portugol disegna.",
+         "en": "The pseudocodes of schools, with their libraries: here Portugol draws.", "keys": "d" + R(38), "pace": 0.09,
+         "seconds": 5.5, "hold": 1.0},
+    ]},
+    {"name": "Prove tradotte", "steps": [
+        {"run": "pseudoscope test --to=rust examples/systems/election.pscope",
+         "it": "E le prove, tradotte e compilate: stesso esito in ogni linguaggio.",
+         "en": "And the tests, translated and compiled: the same result in every language.", "seconds": 5.5, "hold": 2.0},
+    ]},
 ]

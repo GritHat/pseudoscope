@@ -1,0 +1,19 @@
+@startuml
+entity "Customer" as c {
+  *id : number
+  --
+  name : text
+  email : text
+}
+entity "Order" as o {
+  *number : number
+  --
+  placed : date
+}
+entity "Product" as p {
+  *code : text
+  price : real
+}
+c ||--o{ o : places
+o }o--|{ p : contains
+@enduml

@@ -17,10 +17,10 @@
 │ f          codice o diagramma di attività      ││  2          Programma: chiamate                │
 │ v          array come celle o barre            ││  3          Funzione: istruzioni               │
 │ o          cosa è stato stampato               ││  4          Istruzione: calcoli                │
-│ c          tutta la storia                     ││  5          Memoria: letture, scritture        │
+│ d          cosa è stato disegnato              ││  5          Memoria: letture, scritture        │
+│ c          tutta la storia                     ││                                                │
 │ x          torna a esplorare                   ││                                                │
 │ q          esci                                ││                                                │
-│                                                ││                                                │
 │                                                ││                                                │
 │                                                ││                                                │
 │                                                ││                                                │

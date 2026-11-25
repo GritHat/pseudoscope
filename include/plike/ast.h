@@ -92,6 +92,7 @@ struct Expr {
     Symbol *symbol;     /* EX_NAME; the callee of a call */
     bool is_call;       /* EX_APPLY, or EX_NAME calling without parentheses */
     bool is_method;     /* the receiver is the first argument */
+    bool is_static;     /* super.m(), Base.m(): this very method, whatever the object is */
 };
 
 /* ---- declarations ---- */
@@ -109,6 +110,8 @@ struct VarDecl {
     bool spec_inherited;/* "a" in "a, b : real" inside a parameter list */
     ParamMode mode;
     Symbol *symbol;
+    const VarDecl *origin;  /* of a field that was inherited: where it was written */
+    const Class *from;      /* and the class it comes from */
     VarDecl *next;
 };
 
@@ -129,6 +132,8 @@ struct Function {
     bool is_procedure;
     bool is_handler;
     bool is_test;
+    bool is_abstract;       /* only its signature: the classes that extend say what it does */
+    bool is_virtual;        /* replaced in some class, or replacing: chosen by the object */
     StateName *guards;
     Class *owner;
     TypeSpec *result;   /* NULL for procedures or when declared in the body */
@@ -140,11 +145,24 @@ struct Function {
 };
 
 /* A class, or a component: a class that also has states and gets messages. */
+typedef struct BaseName {
+    Loc loc;
+    const char *name;
+    Class *klass;           /* set by the analysis; NULL if wrong */
+    struct BaseName *next;
+} BaseName;
+
 struct Class {
     Loc loc;
     int last_line;
     const char *name;
     bool is_component;
+    bool is_abstract;       /* cannot have objects of its own */
+    bool is_interface;      /* only signatures */
+    bool has_derived;       /* some class extends it */
+    BaseName *bases;        /* the classes it extends */
+    const Function *pending;/* an abstract method nobody has written yet, if any */
+    int mark;
     Record *record;
     StateName *states;
     Function *methods;      /* handlers too */

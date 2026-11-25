@@ -1,0 +1,26 @@
+ ◆ PSEUDOSCOPE  release_plan.mmd ▸ piano (Gantt) ▸ Releasing version 2
+
+╭─ Releasing version 2 ──────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                            │
+│                 01-05          01-10          01-15          01-20          01-25          01-30           │
+│                 ╷              ╷              ╷              ╷     ▼        ╷              ╷               │
+│ Design                                                                                                     │
+│ ✓ Requirements   5                                                                                         │
+│ ✓ Architecture                  4                                                                          │
+│ Build                                                                                                      │
+│ ▶ Core                                      10                                                             │
+│ ✓ Interface                                 8                                                              │
+│   Integration                                                             4                                │
+│ Release                                                                                                    │
+│   Testing                                                                             5                    │
+│   Go live                                                                                           ◆      │
+│                                                                                                            │
+│                                                                                                            │
+│                                                                                                            │
+│ ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │
+│  2026-01-22   finite 3 / 7                                                                                 │
+│ in corso: Core                                                                                             │
+│ Architecture  2026-01-10 → 2026-01-13   aspetta Requirements                                               │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+  →  avanti nel tempo   ←  indietro   Spazio  va da solo   ↑↓  attività   0  da capo   Esc  file   ?  aiuto

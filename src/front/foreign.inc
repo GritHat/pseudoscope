@@ -841,12 +841,18 @@ static int infer_expr(Infer *in, const Expr *e) {
             const char *n = e->base->text;
             Function *f = function_named(in->p, n);
             if (f) return spec_kind(f->result);
-            if (strcmp(n, "random") == 0 || strcmp(n, "random_below") == 0 || strcmp(n, "length") == 0 ||
-                strcmp(n, "trunc") == 0 || strcmp(n, "round") == 0)
-                return IN_INT;
-            if (strcmp(n, "upper") == 0 || strcmp(n, "lower") == 0 || strcmp(n, "substring") == 0 || strcmp(n, "concat") == 0)
-                return IN_TEXT;
-            if (strcmp(n, "abs") == 0 && e->args.count) return infer_expr(in, e->args.items[0]);
+            const Builtin *b = builtin_named(n);
+            if (b && b->result == 'i') return IN_INT;
+            if (b && b->result == 't') return IN_TEXT;
+            if (b && b->result == 'b') return IN_BOOL;
+            if (b && b->result == 'n' && e->args.count) {
+                int widest = IN_UNKNOWN;
+                for (int i = 0; i < e->args.count; i++) {
+                    int kind = infer_expr(in, e->args.items[i]);
+                    if (kind > widest) widest = kind;
+                }
+                return widest;
+            }
             return IN_REAL;
         }
         case EX_UNARY: return e->op == TOK_NOT ? IN_BOOL : infer_expr(in, e->base);

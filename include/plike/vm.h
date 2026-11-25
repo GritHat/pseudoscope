@@ -262,6 +262,28 @@ int vm_sizeof(const Config *config, const Type *type, int *align);
 /* Byte offset and type of a slot inside a type. */
 const Type *vm_slot_type(const Config *config, const Type *type, int slot, int *byte);
 
+/* ---- what the libraries leave ---- */
+
+/* A stroke of a drawing. */
+typedef struct {
+    char kind;      /* r rectangle, e ellipse, l line, p point, t text, c clear, s show */
+    int x, y, w, h; /* of a line: where it ends */
+    int color;      /* 0xRRGGBB */
+    bool fill;
+    int text;
+} DrawOp;
+
+int vm_draw_count(const Vm *vm);
+const DrawOp *vm_draw(const Vm *vm, int index);
+const char *vm_draw_text(const Vm *vm, const DrawOp *op);
+void vm_canvas_size(const Vm *vm, int *width, int *height);
+/* The drawing as it is now, on a grid of width x height: a colour each, or -1. */
+void vm_render(const Vm *vm, int width, int height, int *pixels);
+
+/* The files the program has written: they reach the disk only if asked. */
+int vm_file_count(const Vm *vm);
+const char *vm_file(const Vm *vm, int index, const char **data, int *length, bool *written);
+
 /* ---- text ---- */
 
 /* A value as the source would write it. */

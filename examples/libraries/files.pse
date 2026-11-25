@@ -1,0 +1,19 @@
+// Cambridge pseudocode: writing a file, and reading it again
+DECLARE Line : STRING
+DECLARE Count : INTEGER
+
+OPENFILE "marks.txt" FOR WRITE
+WRITEFILE "marks.txt", "Ada 91"
+WRITEFILE "marks.txt", "Linus 78"
+WRITEFILE "marks.txt", "Grace 85"
+CLOSEFILE "marks.txt"
+
+Count <- 0
+OPENFILE "marks.txt" FOR READ
+WHILE NOT EOF("marks.txt")
+    READFILE "marks.txt", Line
+    Count <- Count + 1
+    OUTPUT Count, ": ", UCASE(LEFT(Line, 3)), " has ", RIGHT(Line, 2)
+ENDWHILE
+CLOSEFILE "marks.txt"
+OUTPUT LENGTH("pseudocode"), " ", MID("pseudocode", 1, 6), " ", ASC("A"), " ", CHR(66)

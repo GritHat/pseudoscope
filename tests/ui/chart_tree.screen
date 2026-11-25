@@ -1,0 +1,26 @@
+ ◆ PSEUDOSCOPE  algorithms_mindmap.mmd ▸ mappa mentale
+
+╭────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                            │
+│ Algorithms                                                            │ Come ci si arriva                  │
+│  ├─ Sorting                                                           │                                    │
+│  │  ├─ Bubble sort                                                    │ Algorithms                         │
+│  │  ├─ Merge sort                                                     │  Sorting                           │
+│  │  └─  Quicksort                                                     │    Quicksort                       │
+│  ├─ Searching                                                         │                                    │
+│  │  ├─ Linear                                                         │ 0 rami, 0 in tutto sotto           │
+│  │  └─ Binary                                                         │                                    │
+│  └─ Graphs                                                            │                                    │
+│     ├─ Shortest paths                                                 │                                    │
+│     │  ├─ Dijkstra                                                    │                                    │
+│     │  └─ Bellman-Ford                                                │                                    │
+│     └─ Spanning trees                                                 │                                    │
+│                                                                       │                                    │
+│                                                                       │                                    │
+│                                                                       │                                    │
+│                                                                       │                                    │
+│                                                                       │                                    │
+│                                                                       │                                    │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+  ↑↓  scorri   →  dentro   ←  fuori   Spazio  va da solo   0  da capo   Esc  file   ?  aiuto

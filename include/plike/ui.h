@@ -14,6 +14,7 @@ typedef struct {
     const char *keys;
     int width, height;
     bool colors;
+    int target;            /* the language translations are shown in (a Lang) */
 } UiOptions;
 
 int run_ui(const UiOptions *options);

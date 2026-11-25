@@ -1,0 +1,13 @@
+outline
+  lesson.md
+    Lesson 3: searching
+      The idea
+      The algorithm
+      The same, as students in Spain would write it
+      Who talks to whom
+      Planning the homework
+#1  line 10  diagram  mermaid  The idea
+#2  line 22  program  pseudocode  The algorithm
+#3  line 54  program  pseint  The same, as students in Spain would write it
+#4  line 66  diagram  plantuml  Who talks to whom
+#5  line 77  diagram  mermaid  Planning the homework

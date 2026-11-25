@@ -1,0 +1,52 @@
+\documentclass{article}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{pgfgantt}
+\title{Two classics}
+\begin{document}
+\maketitle
+
+\section{Euclid}
+The greatest common divisor, as it has been computed for two thousand years.
+
+\begin{algorithm}
+\caption{Euclid's algorithm}
+\begin{algorithmic}[1]
+\Function{Gcd}{a, b}
+    \While{$b \neq 0$}
+        \State $t \gets b$
+        \State $b \gets a \bmod b$ \Comment{the remainder}
+        \State $a \gets t$
+    \EndWhile
+    \State \Return $a$
+\EndFunction
+\Function{Power}{x, n}
+    \State $r \gets 1$
+    \For{$i \gets 1$ \textbf{to} $n$}
+        \State $r \gets r \cdot x$
+    \EndFor
+    \If{$r \geq 1000$}
+        \State \Return $1000$
+    \ElsIf{$r \leq 0$}
+        \State \Return $0$
+    \Else
+        \State \Return $r$
+    \EndIf
+\EndFunction
+\State \textbf{print} \Call{Gcd}{48, 18}
+\State \textbf{print} \Call{Power}{2, 8}
+\end{algorithmic}
+\end{algorithm}
+
+\section{The plan}
+\subsection{When}
+\begin{ganttchart}{1}{12}
+  \gantttitle{Weeks}{12} \\
+  \ganttgroup{Writing}{1}{9} \\
+  \ganttbar{Draft}{1}{4} \\
+  \ganttbar{Experiments}{3}{8} \\
+  \ganttbar{Revision}{9}{11} \\
+  \ganttmilestone{Submission}{12}
+  \ganttlink{elem1}{elem3}
+\end{ganttchart}
+\end{document}

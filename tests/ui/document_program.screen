@@ -1,0 +1,26 @@
+ ◆ PSEUDOSCOPE  paper.tex#1                 ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
+  ‖ fermo   main ▸ Gcd
+╭─ Gcd ──────────────────────────────────────────╮╭─ Dati ───────────────────────────────────────────────────╮
+│   15 Funcion res_ <- Gcd(a, b)                 ││                                                          │
+│   16 Mientras b <> 0 Hacer                     ││ a  48    b  12    ⇒ Gcd  0    t  18    res_  ·           │
+│   17 t <- b                                    ││                                                          │
+│   18 b <- a  MOD  b  // the remainder          ││                                                          │
+│▶  19 a <- t                                    ││                                                          │
+│   20 FinMientras                               ││                                                          │
+│   21 res_ <- a; Retornar                       ││                                                          │
+│   22 FinFuncion                                ││                                                          │
+│                                                ││                                                          │
+│                                                ││                                                          │
+│                                                ││                                                          │
+│                                                ││                                                          │
+│                                                ││                                                          │
+│                                                ││                                                          │
+│                                                ││                                                          │
+│                                                ││                                                          │
+╰────────────────────────────────────────────────╯╰──────────────────────────────────────────────────────────╯
+╭─ Cosa è successo ──────────────────────────────────────────────────────────────────────────────────────────╮
+│ ? b != 0  →  18 != 0   vero   si entra nel ciclo                                                           │
+│ ✎ t diventa  18                                                                                            │
+│ ✎ b diventa  12   prima era 18                                                                             │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+  →  passo   ←  indietro   Spazio  vai   Invio  dettagli   Esc  riassunto   n  salta   ?  aiuto

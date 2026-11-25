@@ -1,4 +1,4 @@
- ◆ PSEUDOSCOPE  basic.plike       ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
+ ◆ PSEUDOSCOPE  basic.pscope      ▐ Sistema ▌▸▐ Programma ▌▸▐ Funzione ▌▸▐ Istruzione ▌▸▐ Memoria ▌
   ‖ fermo   BubbleSort
 ╭─ Istruzione ─────────────────────────────────────────────────────────────────────────────────────╮
 │    35                     A(j+1) := temp                                                         │

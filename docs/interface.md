@@ -26,6 +26,9 @@ line, with the levels on the right.
     files > map > code > C                         exploring (blue)
     system > program > function > statement > memory        running (yellow)
 
+Markdown and LaTeX documents open like folders, of the programs and diagrams they
+hold. Files need no extension: those that begin like a program or a diagram are listed.
+
 `r` runs: from `main` the whole program; from another subprogram, only that one, after
 asking for its values. Tab changes how arrays are filled: random, increasing, decreasing,
 all equal. `t` runs the tests of the program.
@@ -52,6 +55,8 @@ diagrams that were only drawn in [diagrams.md](diagrams.md).
 | PgUp PgDn | scrolls the sequence |
 | v | arrays as cells or as bars |
 | o | what was printed |
+| d | what was drawn |
+| T | the translation in another language |
 | c | everything that happened |
 | x | back to exploring |
 

@@ -41,6 +41,12 @@ typedef struct {
     int life_count, message_count, check_count, expect_row, step_row;
     bool stopped;
     int pool_count;
+    /* libraries: drawings and files grow only, so that a replay finds them again */
+    int draw_count, pen, canvas_w, canvas_h;
+    struct {
+        int pos, length, mode;
+        bool open;
+    } files[8];
 } State;
 
 typedef struct {
@@ -72,6 +78,15 @@ struct Vm {
     bool has_classes;
     char **pool;      /* texts; the first is empty */
     int pool_capacity;
+    DrawOp *draws;
+    int draw_capacity;
+    struct {
+        char path[256];
+        char *data;
+        int capacity;
+        bool written, loaded;
+    } files[8];
+    int file_count;
 
     ARRAY(Touch) touched;
     Level event;      /* of the instruction just executed */
@@ -514,7 +529,275 @@ static Value unary(Vm *vm, TokenKind op, Value v) {
 
 static int32_t random_between(Vm *vm, int32_t lo, int32_t hi);
 
+/* ---- libraries ---- */
+
+static void draw(Vm *vm, DrawOp op) {
+    State *s = &vm->s;
+    if (s->draw_count >= 200000) return;
+    vm->draws = grow(vm->draws, &vm->draw_capacity, s->draw_count + 1, sizeof *vm->draws);
+    op.color = s->pen;
+    vm->draws[s->draw_count++] = op;
+}
+
+/* The file an argument names: by its number, or by its path. */
+static int file_of(Vm *vm, Value v, const Type *type) {
+    if (type->kind == TY_STRING) {
+        char path[TEXT_SIZE];
+        text_of(vm, v, type, path, sizeof path);
+        for (int i = 0; i < vm->file_count; i++)
+            if (strcmp(vm->files[i].path, path) == 0) return i;
+        return -1;
+    }
+    int n = as_int(vm, v) - 1;
+    return n >= 0 && n < vm->file_count ? n : -1;
+}
+
+static int open_file(Vm *vm, const char *path, int mode) {
+    int index = -1;
+    for (int i = 0; i < vm->file_count; i++)
+        if (strcmp(vm->files[i].path, path) == 0) index = i;
+    if (index < 0) {
+        if (vm->file_count == 8) {
+            fail(vm, "too many files are open");
+            return -1;
+        }
+        index = vm->file_count++;
+        snprintf(vm->files[index].path, sizeof vm->files[index].path, "%.255s", path);
+    }
+    if (mode != 1 && !vm->files[index].loaded && !vm->files[index].written) { /* what is on the disk, read once */
+        FILE *file = fopen(path, "rb");
+        vm->files[index].loaded = true;
+        if (file) {
+            char chunk[4096];
+            size_t n;
+            int length = 0;
+            while ((n = fread(chunk, 1, sizeof chunk, file)) > 0 && length < (4 << 20)) {
+                vm->files[index].data = grow(vm->files[index].data, &vm->files[index].capacity, length + (int)n + 1, 1);
+                memcpy(vm->files[index].data + length, chunk, n);
+                length += (int)n;
+            }
+            fclose(file);
+            vm->s.files[index].length = length;
+        } else if (mode == 0) {
+            fail(vm, "the file cannot be opened");
+            return -1;
+        }
+    }
+    if (mode == 1) vm->s.files[index].length = 0;
+    if (mode != 0) vm->files[index].written = true;
+    vm->s.files[index].pos = 0;
+    vm->s.files[index].mode = mode;
+    vm->s.files[index].open = true;
+    return index;
+}
+
+static void write_file(Vm *vm, int index, const char *text) {
+    if (index < 0 || !vm->s.files[index].open || vm->s.files[index].mode == 0) {
+        fail(vm, "the file is not open for writing");
+        return;
+    }
+    int n = (int)strlen(text), length = vm->s.files[index].length;
+    vm->files[index].data = grow(vm->files[index].data, &vm->files[index].capacity, length + n + 2, 1);
+    memcpy(vm->files[index].data + length, text, (size_t)n);
+    vm->files[index].data[length + n] = '\n';
+    vm->s.files[index].length = length + n + 1;
+}
+
+/* The functions of the libraries. Sets *done when the name is one of them. */
+static Value library(Vm *vm, const char *name, Value *args, const Expr *expr, bool *done) {
+    State *s = &vm->s;
+    Value nothing = {.kind = V_INT, .known = true};
+    char a[TEXT_SIZE], b[TEXT_SIZE], c[TEXT_SIZE], out[TEXT_SIZE * 2];
+    int base = vm->config->index_base;
+#define TEXT(i, buffer) text_of(vm, args[i], expr->args.items[i]->type, buffer, sizeof buffer)
+#define REAL(x) ((Value){.kind = V_DOUBLE, .known = true, .as.d = (x)})
+#define IS(word) (strcmp(name, word) == 0)
+    *done = true;
+    /* texts */
+    if (IS("text_of")) {
+        TEXT(0, a);
+        return make_text(vm, a);
+    }
+    if (IS("number_of") || IS("whole_of") || IS("whole_from") || IS("is_number") || IS("is_whole")) {
+        TEXT(0, a);
+        char *end;
+        if (IS("whole_of") || IS("whole_from") || IS("is_whole")) {
+            long n = strtol(a, &end, IS("whole_of") ? 10 : as_int(vm, args[1]));
+            if (IS("is_whole")) return make_int(end != a && !*end);
+            return make_int((int32_t)n);
+        }
+        double x = strtod(a, &end);
+        if (IS("is_number")) return make_int(end != a && !*end);
+        return REAL(x);
+    }
+    if (IS("whole_text")) {
+        int32_t n = as_int(vm, args[0]), radix = as_int(vm, args[1]);
+        snprintf(out, sizeof out, radix == 16 ? "%X" : radix == 8 ? "%o" : "%d", n);
+        return make_text(vm, out);
+    }
+    if (IS("char_code")) {
+        TEXT(0, a);
+        return make_int((unsigned char)a[0]);
+    }
+    if (IS("char_of")) {
+        a[0] = (char)as_int(vm, args[0]);
+        a[1] = '\0';
+        return make_text(vm, a);
+    }
+    if (IS("position") || IS("position_from")) {
+        TEXT(0, a);
+        TEXT(1, b);
+        int from = IS("position_from") ? as_int(vm, args[2]) - base : 0;
+        if (from < 0) from = 0;
+        const char *found = from <= (int)strlen(b) ? strstr(b + from, a) : NULL;
+        return make_int(found ? (int32_t)(found - b) + base : base - 1);
+    }
+    if (IS("left") || IS("right") || IS("mid") || IS("slice") || IS("char_at")) {
+        TEXT(0, a);
+        int n = (int)strlen(a), from = 0, count = 0;
+        if (IS("left")) count = as_int(vm, args[1]);
+        else if (IS("right")) count = as_int(vm, args[1]), from = n - count;
+        else if (IS("mid")) from = as_int(vm, args[1]) - base, count = as_int(vm, args[2]);
+        else if (IS("slice")) from = as_int(vm, args[1]) - base, count = as_int(vm, args[2]) - base - from;
+        else from = as_int(vm, args[1]) - base, count = 1;
+        if (from < 0) count += from, from = 0;
+        if (from > n) from = n;
+        if (count > n - from) count = n - from;
+        if (count < 0) count = 0;
+        a[from + count] = '\0';
+        return make_text(vm, a + from);
+    }
+    if (IS("replace")) {
+        TEXT(0, a);
+        TEXT(1, b);
+        TEXT(2, c);
+        size_t used = 0, n = strlen(b);
+        for (const char *p = a; *p && used + strlen(c) + 2 < sizeof out;) {
+            if (n && strncmp(p, b, n) == 0) {
+                used += (size_t)snprintf(out + used, sizeof out - used, "%s", c);
+                p += n;
+            } else {
+                out[used++] = *p++;
+            }
+        }
+        out[used < TEXT_SIZE ? used : TEXT_SIZE - 1] = '\0';
+        return make_text(vm, out);
+    }
+    /* numbers */
+    if (IS("pi")) return REAL(3.14159265358979323846);
+    if (IS("radians")) return REAL(as_double(args[0]) * 3.14159265358979323846 / 180);
+    if (IS("degrees")) return REAL(as_double(args[0]) * 180 / 3.14159265358979323846);
+    if (IS("root")) return REAL(pow(as_double(args[0]), 1 / as_double(args[1])));
+    if (IS("log_base")) return REAL(log(as_double(args[0])) / log(as_double(args[1])));
+    if (IS("real_of")) return REAL(as_double(args[0]));
+    if (IS("round_to")) {
+        double scale = pow(10, as_double(args[1]));
+        return REAL(round(as_double(args[0]) * scale) / scale);
+    }
+    if (IS("square") || IS("min") || IS("max")) {
+        double x = as_double(args[0]), y = IS("square") ? x : as_double(args[1]);
+        double r = IS("square") ? x * x : IS("min") ? (x < y ? x : y) : (x > y ? x : y);
+        if (expr->type->kind == TY_INT) return make_int((int32_t)r);
+        return REAL(r);
+    }
+    if (IS("quotient") || IS("remainder")) {
+        int32_t x = as_int(vm, args[0]), y = as_int(vm, args[1]);
+        if (y == 0) {
+            fail(vm, "division by zero");
+            return nothing;
+        }
+        if (y == -1) return make_int(IS("quotient") ? (int32_t)(0u - (uint32_t)x) : 0);
+        return make_int(IS("quotient") ? x / y : x % y);
+    }
+    /* time: nothing really waits, and the clock is the work done */
+    if (IS("wait") || IS("canvas_on") || IS("canvas_off") || IS("canvas_title")) return nothing;
+    if (IS("clock")) return make_int((int32_t)(s->steps / 1000));
+    /* files */
+    if (IS("file_open")) {
+        TEXT(0, a);
+        return make_int(open_file(vm, a, as_int(vm, args[1])) + 1);
+    }
+    if (IS("file_exists")) {
+        TEXT(0, a);
+        bool known = false;
+        for (int i = 0; i < vm->file_count; i++) known |= strcmp(vm->files[i].path, a) == 0 && vm->files[i].written;
+        FILE *file = known ? NULL : fopen(a, "rb");
+        if (file) fclose(file);
+        return make_int(known || file != NULL);
+    }
+    if (IS("file_read") || IS("file_eof") || IS("file_close")) {
+        int index = file_of(vm, args[0], expr->args.items[0]->type);
+        if (index < 0 || !s->files[index].open) {
+            if (IS("file_close")) return nothing;
+            fail(vm, "the file is not open");
+            return nothing;
+        }
+        if (IS("file_close")) {
+            s->files[index].open = false;
+            return nothing;
+        }
+        if (IS("file_eof")) return make_int(s->files[index].pos >= s->files[index].length);
+        int pos = s->files[index].pos, length = s->files[index].length, n = 0;
+        const char *data = vm->files[index].data;
+        while (pos + n < length && data[pos + n] != '\n' && n < TEXT_SIZE - 1) n++;
+        memcpy(a, data + pos, (size_t)n);
+        if (n && a[n - 1] == '\r') a[n - 1] = '\0';
+        a[n] = '\0';
+        s->files[index].pos = pos + n + (pos + n < length);
+        return make_text(vm, a);
+    }
+    if (IS("file_write") || IS("file_put")) {
+        int file = IS("file_write") ? 0 : 1, what = 1 - file;
+        text_of(vm, args[what], expr->args.items[what]->type, a, sizeof a);
+        write_file(vm, file_of(vm, args[file], expr->args.items[file]->type), a);
+        return nothing;
+    }
+    /* drawings */
+    if (IS("canvas")) {
+        s->canvas_w = as_int(vm, args[0]);
+        s->canvas_h = as_int(vm, args[1]);
+        return nothing;
+    }
+    if (IS("canvas_width")) return make_int(s->canvas_w > 0 ? s->canvas_w : 400);
+    if (IS("canvas_height")) return make_int(s->canvas_h > 0 ? s->canvas_h : 300);
+    if (IS("rgb")) return make_int((as_int(vm, args[0]) & 255) << 16 | (as_int(vm, args[1]) & 255) << 8 | (as_int(vm, args[2]) & 255));
+    if (IS("color")) {
+        s->pen = as_int(vm, args[0]) & 0xFFFFFF;
+        return nothing;
+    }
+    if (IS("clear") || IS("show")) {
+        draw(vm, (DrawOp){.kind = name[0]});
+        return nothing;
+    }
+    if (IS("rect") || IS("ellipse") || IS("rounded_rect")) {
+        draw(vm, (DrawOp){.kind = name[0] == 'e' ? 'e' : 'r', .x = as_int(vm, args[0]), .y = as_int(vm, args[1]), .w = as_int(vm, args[2]),
+                          .h = as_int(vm, args[3]), .fill = truth(args[name[1] == 'o' ? 5 : 4])});
+        return nothing;
+    }
+    if (IS("line")) {
+        draw(vm, (DrawOp){.kind = 'l', .x = as_int(vm, args[0]), .y = as_int(vm, args[1]), .w = as_int(vm, args[2]), .h = as_int(vm, args[3])});
+        return nothing;
+    }
+    if (IS("point")) {
+        draw(vm, (DrawOp){.kind = 'p', .x = as_int(vm, args[0]), .y = as_int(vm, args[1])});
+        return nothing;
+    }
+    if (IS("draw_text")) {
+        TEXT(2, a);
+        draw(vm, (DrawOp){.kind = 't', .x = as_int(vm, args[0]), .y = as_int(vm, args[1]), .text = make_text(vm, a).as.i});
+        return nothing;
+    }
+#undef TEXT
+#undef REAL
+#undef IS
+    *done = false;
+    return nothing;
+}
+
 static Value builtin(Vm *vm, const char *name, Value *args, const Expr *expr) {
+    bool done;
+    Value given = library(vm, name, args, expr, &done);
+    if (done) return given;
     if (strcmp(name, "random_below") == 0) return make_int(random_between(vm, 0, as_int(vm, args[0]) - 1));
     if (strcmp(name, "trunc") == 0) return make_int(as_int(vm, (Value){.kind = V_DOUBLE, .as.d = trunc(as_double(args[0]))}));
     if (strcmp(name, "round") == 0) return make_int(as_int(vm, (Value){.kind = V_DOUBLE, .as.d = round(as_double(args[0]))}));
@@ -558,6 +841,10 @@ static Value builtin(Vm *vm, const char *name, Value *args, const Expr *expr) {
     else if (strcmp(name, "log") == 0) r = log(x);
     else if (strcmp(name, "floor") == 0) r = floor(x);
     else if (strcmp(name, "ceil") == 0) r = ceil(x);
+    else if (strcmp(name, "asin") == 0) r = asin(x);
+    else if (strcmp(name, "acos") == 0) r = acos(x);
+    else if (strcmp(name, "atan") == 0) r = atan(x);
+    else if (strcmp(name, "log10") == 0) r = log10(x);
     else if (strcmp(name, "pow") == 0) r = pow(x, as_double(args[1]));
     else r = fabs(x);
     return (Value){.kind = V_DOUBLE, .known = true, .as.d = r};
@@ -658,7 +945,9 @@ static int add_life(Vm *vm, Life life) {
     return vm->s.life_count++;
 }
 
-static const Class *class_at(const Vm *vm, Pointer p) {
+/* The class of the object there; with `wanted`, the one that is of that class
+ * or extends it (an object may begin with another). */
+static const Class *class_at(const Vm *vm, Pointer p, const Class *wanted) {
     const Object *object = object_of(vm, p);
     if (!object || !object->type) return NULL;
     const Type *type = object->type;
@@ -670,7 +959,8 @@ static const Class *class_at(const Vm *vm, Pointer p) {
             offset %= per;
             type = type->base;
         } else if (type->kind == TY_RECORD) {
-            if (offset == 0 && type->record->klass) return type->record->klass;
+            if (offset == 0 && type->record->klass && (!wanted || derives_from(type->record->klass, wanted)))
+                return type->record->klass;
             const VarDecl *f = type->record->fields;
             while (f && offset >= vm_slots(vm->config, f->symbol->type)) {
                 offset -= vm_slots(vm->config, f->symbol->type);
@@ -687,7 +977,7 @@ static const Class *class_at(const Vm *vm, Pointer p) {
 /* klass tells apart an object from its own first field. */
 static int life_of(Vm *vm, Pointer at, const Class *klass) {
     if (!object_of(vm, at)) return 0;
-    if (!klass) klass = class_at(vm, at);
+    if (!klass) klass = class_at(vm, at, NULL);
     for (int i = 1; i < vm->s.life_count; i++) {
         const Life *l = &vm->lives[i];
         if (l->klass == klass && l->at.object == at.object && l->at.offset == at.offset && l->at.serial == at.serial)
@@ -742,7 +1032,10 @@ static void enter_function(Vm *vm, const Function *function, const Expr *expr, i
                    .objects = s->objects.count, .bounds = s->bounds.count, .stack = first_arg,
                    .evals = s->evals.count, .return_pc = return_pc, .node = s->node,
                    .life = s->frames.items[s->frames.count - 1].life, .message = -1};
-    if (function->owner) frame.life = life_of(vm, s->stack.items[first_arg].as.p, function->owner);
+    if (function->owner) {
+        const Class *real = class_at(vm, s->stack.items[first_arg].as.p, function->owner);
+        frame.life = life_of(vm, s->stack.items[first_arg].as.p, real ? real : function->owner);
+    }
     else if (!vm->has_classes && strcmp(function->name, "main") != 0) frame.life = function_life(vm, function);
     PUSH(s->frames, frame);
     RESERVE(s->vars, vars + 1);
@@ -1251,7 +1544,7 @@ static void loop(Vm *vm, const Instr *in) {
     s->pc--;
     vm->event = LEVEL_SYSTEM;
 
-    const Class *klass = class_at(vm, e.to);
+    const Class *klass = class_at(vm, e.to, NULL);
     const Function *handler = NULL;
     for (const Function *f = vm->program->functions; f && !handler && !e.lost; f = f->next)
         if (f->owner == klass && f->is_handler && strcmp(f->name, e.name) == 0 && guarded(vm, f, e.to)) handler = f;
@@ -1496,7 +1789,13 @@ static void step(Vm *vm) {
                 fail(vm, "null pointer");
                 break;
             }
-            v.as.p.offset += in->a;
+            int slot = in->a;
+            if (in->b) { /* where the class of this object keeps it */
+                const Class *klass = in->type->record->klass, *real = class_at(vm, v.as.p, klass);
+                for (const VarDecl *f = real && real != klass ? real->record->fields : NULL; f; f = f->next)
+                    if (strcmp(f->name, in->symbol->name) == 0) slot = f->symbol->slot;
+            }
+            v.as.p.offset += slot;
             push(vm, v);
             break;
         }
@@ -1513,7 +1812,8 @@ static void step(Vm *vm) {
         case OP_TRUTH: push(vm, make_int(truth(pop(vm)))); break;
         case OP_BUILTIN: {
             s->stack.count -= in->a;
-            push(vm, builtin(vm, in->symbol->builtin, &s->stack.items[s->stack.count], in->expr));
+            Value given = builtin(vm, in->symbol->builtin, &s->stack.items[s->stack.count], in->expr);
+            if (in->symbol->type->kind != TY_VOID) push(vm, given);
             break;
         }
         case OP_JUMP: s->pc = in->a; break;
@@ -1532,7 +1832,21 @@ static void step(Vm *vm) {
             break;
         }
         case OP_POP: pop(vm); break;
-        case OP_CALL: enter_function(vm, in->symbol->function, in->expr, s->pc); break;
+        case OP_CALL: {
+            const Function *function = in->symbol->function;
+            if (function->is_virtual && !in->b) { /* the object chooses */
+                Value receiver = s->stack.items[s->stack.count - in->a];
+                const Class *real = receiver.kind == V_POINTER ? class_at(vm, receiver.as.p, function->owner) : NULL;
+                const Function *chosen = real ? find_method(vm->program, real, function->name, false) : NULL;
+                if (chosen && !chosen->is_abstract && chosen->symbol) function = chosen;
+            }
+            if (function->is_abstract) {
+                fail(vm, "this method is abstract: there is nothing to execute");
+                break;
+            }
+            enter_function(vm, function, in->expr, s->pc);
+            break;
+        }
         case OP_RETURN: leave_function(vm, in->type); break;
         case OP_ENTER: announce_call(vm); break;
         case OP_PARAM_BOUNDS: param_bounds(vm, in->symbol); break;
@@ -1794,6 +2108,11 @@ static void reset(Vm *vm) {
     vm->input_length = 0;
     vm->input_ended = false;
     vm->touched.count = 0;
+    for (int i = 0; i < vm->file_count; i++) { /* files are read again */
+        free(vm->files[i].data);
+        memset(&vm->files[i], 0, sizeof vm->files[i]);
+    }
+    vm->file_count = 0;
     vm->event = vm->last_stop = LEVEL_NONE;
     vm->trial_base = vm->trial_count = 0;
     vm->has_classes = vm->program->classes != NULL;
@@ -1981,6 +2300,8 @@ void vm_destroy(Vm *vm) {
     free(vm->lives);
     free(vm->messages);
     free(vm->checks);
+    free(vm->draws);
+    for (int i = 0; i < 8; i++) free(vm->files[i].data);
     for (int i = 0; i < vm->pool_capacity; i++) free(vm->pool[i]);
     free(vm->pool);
     free(vm);
@@ -2075,6 +2396,70 @@ const Eval *vm_evals(const Vm *vm, int *count) {
 const Touch *vm_touched(const Vm *vm, int *count) {
     *count = vm->touched.count;
     return vm->touched.items;
+}
+
+int vm_draw_count(const Vm *vm) { return vm->s.draw_count; }
+const DrawOp *vm_draw(const Vm *vm, int index) { return index >= 0 && index < vm->s.draw_count ? &vm->draws[index] : NULL; }
+const char *vm_draw_text(const Vm *vm, const DrawOp *op) { return op->text < vm->s.pool_count ? vm->pool[op->text] : ""; }
+
+void vm_canvas_size(const Vm *vm, int *width, int *height) {
+    *width = vm->s.canvas_w > 0 ? vm->s.canvas_w : 400;
+    *height = vm->s.canvas_h > 0 ? vm->s.canvas_h : 300;
+}
+
+static void plot(int *pixels, int width, int height, int x, int y, int color) {
+    if (x >= 0 && x < width && y >= 0 && y < height) pixels[y * width + x] = color;
+}
+
+void vm_render(const Vm *vm, int width, int height, int *pixels) {
+    int cw, ch, first = 0;
+    vm_canvas_size(vm, &cw, &ch);
+    for (int i = 0; i < width * height; i++) pixels[i] = -1;
+    for (int i = 0; i < vm->s.draw_count; i++)
+        if (vm->draws[i].kind == 'c') first = i + 1;
+    for (int i = first; i < vm->s.draw_count; i++) {
+        const DrawOp *op = &vm->draws[i];
+        long x0 = (long)op->x * width / cw, y0 = (long)op->y * height / ch;
+        long x1 = (long)(op->x + op->w) * width / cw, y1 = (long)(op->y + op->h) * height / ch;
+        if (op->kind == 'p') {
+            plot(pixels, width, height, (int)x0, (int)y0, op->color);
+        } else if (op->kind == 'l') {
+            long ex = (long)op->w * width / cw, ey = (long)op->h * height / ch;
+            long dx = labs(ex - x0), dy = -labs(ey - y0), sx = x0 < ex ? 1 : -1, sy = y0 < ey ? 1 : -1, error = dx + dy;
+            for (long x = x0, y = y0, guard = 0; guard < 100000; guard++) {
+                plot(pixels, width, height, (int)x, (int)y, op->color);
+                if (x == ex && y == ey) break;
+                long twice = 2 * error;
+                if (twice >= dy) error += dy, x += sx;
+                if (twice <= dx) error += dx, y += sy;
+            }
+        } else if (op->kind == 'r' || op->kind == 'e') {
+            if (x1 <= x0) x1 = x0 + 1;
+            if (y1 <= y0) y1 = y0 + 1;
+            double cx = (x0 + x1 - 1) / 2.0, cy = (y0 + y1 - 1) / 2.0, rx = (x1 - x0) / 2.0, ry = (y1 - y0) / 2.0;
+            for (long y = y0 < 0 ? 0 : y0; y < y1 && y < height; y++) {
+                for (long x = x0 < 0 ? 0 : x0; x < x1 && x < width; x++) {
+                    bool edge = x == x0 || x == x1 - 1 || y == y0 || y == y1 - 1, inside = true;
+                    if (op->kind == 'e') {
+                        double ux = (x - cx) / rx, uy = (y - cy) / ry, d = ux * ux + uy * uy;
+                        double in_x = rx > 1 ? (x - cx) / (rx - 1) : 2, in_y = ry > 1 ? (y - cy) / (ry - 1) : 2;
+                        inside = d <= 1.0;
+                        edge = inside && in_x * in_x + in_y * in_y > 1.0;
+                    }
+                    if (inside && (op->fill || edge)) pixels[y * width + x] = op->color;
+                }
+            }
+        }
+    }
+}
+
+int vm_file_count(const Vm *vm) { return vm->file_count; }
+
+const char *vm_file(const Vm *vm, int index, const char **data, int *length, bool *written) {
+    *data = vm->files[index].data ? vm->files[index].data : "";
+    *length = vm->s.files[index].length;
+    *written = vm->files[index].written;
+    return vm->files[index].path;
 }
 
 const char *vm_output(const Vm *vm, size_t *length) {
