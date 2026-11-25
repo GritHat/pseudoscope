@@ -5,3 +5,4 @@
 *.d
 .vscode/
 output.c
+__pycache__/

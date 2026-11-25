@@ -5,13 +5,14 @@ Usage: make.py OUTPUT.mp4 [POSTER.png]      (needs Pillow and ffmpeg)
        make.py --check                      (durations only)
 """
 import glob
+import os
 import re
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
-from PIL import Image, ImageChops, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 BIN = ROOT / "bin" / "pseudoscope"
@@ -58,7 +59,7 @@ def screen(session, keys, cache={}):
     key = (path, options, keys)
     if key not in cache:
         out = subprocess.run([str(BIN), "ui", path, f"--size={COLS}x{ROWS}", "--color=always", "--keys=" + keys, *options],
-                             cwd=ROOT, capture_output=True, text=True, check=True).stdout
+                             cwd=ROOT, env=dict(os.environ, HOME=str(ROOT.parent)), capture_output=True, text=True, check=True).stdout
         rows = []
         fg = bg = None
         at = set()
@@ -193,7 +194,7 @@ class Film:
         if output:
             self.pipe = subprocess.Popen(
                 ["ffmpeg", "-loglevel", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
-                 "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "slow", "-crf", "24", "-pix_fmt", "yuv420p",
+                 "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "veryslow", "-crf", "31", "-g", "300", "-pix_fmt", "yuv420p",
                  "-tune", "animation", "-movflags", "+faststart", output], stdin=subprocess.PIPE)
 
     def put(self, im, seconds):
@@ -245,8 +246,6 @@ class Film:
         self.fade(previous, im)
         self.put(im, seconds)
         self.last = im
-        if scene.get("poster") and self.poster:
-            im.resize((1280, 720), Image.LANCZOS).save(self.poster)
 
     def frame(self, term, words, keys, hot, hole=None, strength=0.0, shade=None):
         im = Image.new("RGB", (W, H), BG)
@@ -332,6 +331,8 @@ class Film:
                     self.put(self.last if self.pipe else None, 1 / FPS)
             elif self.pipe and keys:
                 self.last = self.frame(term, words, label, False)
+            if step.get("poster") and self.poster and self.pipe:
+                self.save_poster(self.last)
             # enough to read, and to look at the result
             settle = step.get("hold", 1.6 if keys or spot else 0)
             self.put(self.last if self.pipe else None, max(settle, needed - (self.time - start)))
@@ -341,6 +342,14 @@ class Film:
                 self.last = self.after
             elif spot:
                 self.put(None, 0.25)
+
+    def save_poster(self, im):
+        im = im.copy()
+        d = ImageDraw.Draw(im, "RGBA")
+        x, y, r = W // 2, TY + ROWS * CH * 2 // 3, 80
+        d.ellipse([x - r, y - r, x + r, y + r], fill=(255, 215, 95, 235))
+        d.polygon([(x - 26, y - 44), (x - 26, y + 44), (x + 48, y)], fill=(20, 20, 24, 255))
+        im.resize((1280, 720), Image.LANCZOS).quantize(128).save(self.poster, optimize=True)
 
     def marks_now(self, name):
         if not self.pipe:

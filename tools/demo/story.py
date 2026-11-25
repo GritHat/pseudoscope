@@ -16,12 +16,12 @@ LEVELS = (57, 0, 66, 1)
 
 STORY = [
     {"title": "Pseudoscope", "sub": "Pseudocodice e progetti che prendono vita",
-     "en": "Pseudocode and designs, brought to life", "seconds": 4.5, "poster": True},
+     "en": "Pseudocode and designs, brought to life", "seconds": 4.5},
 
     # ------------------------------------------------------------------
     {"title": "Il primo algoritmo", "tag": "1 · primo anno", "sub": "Ordinare un array, e capire perché funziona",
      "en": "First year: sorting an array, and understanding why it works"},
-    {"name": "1 · Il primo algoritmo", "open": "examples", "start": "<down>", "steps": [
+    {"name": "1 · Il primo algoritmo", "open": "examples", "start": "", "steps": [
         {"it": "Si parte dai file: a destra c'è l'anteprima di quello scelto.",
          "en": "It starts from the files, with a preview of the chosen one.", "spot": (40, 2, 84, 24)},
     ]},
@@ -36,7 +36,7 @@ STORY = [
          "spot": (1, 5, 120, 7)},
         {"it": "Ogni → è un'istruzione. A sinistra il codice, a destra i dati mentre cambiano.",
          "en": "Each → is a statement: the code on the left, the data changing on the right.",
-         "keys": "<enter>" + R(8), "spot": DATA},
+         "keys": "<enter>" + R(8)},
         {"it": "In basso, a parole, cosa è appena successo.", "en": "At the bottom, in words, what has just happened.",
          "keys": R(5), "spot": BOTTOM},
         {"it": "Non è chiaro? Con ← si torna indietro, quanto si vuole.",
@@ -117,7 +117,7 @@ STORY = [
         {"it": "Con t si lanciano tutte le prove. Invio ne mostra una mentre gira.",
          "en": "t runs all the tests. Enter shows one while it runs.", "keys": "t<enter>", "pace": 1.6},
         {"it": "Livello Sistema: il diagramma di sequenza si disegna da solo, un messaggio per passo.",
-         "en": "System level: the sequence diagram draws itself, one message per step.", "keys": R(10), "pace": 0.8, "spot": SEQ},
+         "en": "System level: the sequence diagram draws itself, one message per step.", "keys": R(10), "pace": 0.8, "spot": SEQ, "poster": True},
         {"it": "Invio entra in ciò che il server sta facendo adesso, fino alla singola istruzione…",
          "en": "Enter goes into what the server is doing right now, down to a statement…", "keys": "<enter><enter>" + R(2), "pace": 0.9,
          "spot": CODE},

@@ -8,6 +8,8 @@ backwards, from the outside or in every detail; test it; translate it to C.
 
 [![Demo](docs/demo/poster.png)](docs/demo/pseudoscope.mp4)
 
+*Seven minutes, no sound; captions in Italian and English. Made with `tools/demo/make.py`.*
+
 It started as `plike-translator`, a first-year project to run the pseudocode used in our
 lectures. That pseudocode never had a fixed syntax, so all the spellings are accepted:
 `A[i,j]`, `A[i][j]` or `A(i,j)`, `and`, `.AND.` or `&&`, `end f` or `endfunction`, and so

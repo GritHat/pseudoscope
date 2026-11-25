@@ -24,8 +24,8 @@
 │  ● variabili globali             ││               ── Crash ──▶ Crashed                                     │
 │                                  ││                                                                        │
 │ Prove                            ││  ╭───────────╮── Timeout ──▶ Candidate                                 │
-│  ✓ one leader, and another one … ││  │ Candidate │── RequestVote ──▶ Follower                              │
-│  ✓ never two leaders in the sam… ││  ╰───────────╯── Vote ──▶ Leader                                       │
+│  ◇ one leader, and another one … ││  │ Candidate │── RequestVote ──▶ Follower                              │
+│  ◇ never two leaders in the sam… ││  ╰───────────╯── Vote ──▶ Leader                                       │
 │                                  ││               ── Heartbeat ──▶ Follower                                │
 │                                  ││               ── Crash ──▶ Crashed                                     │
 │                                  ││                                                                        │

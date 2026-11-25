@@ -146,7 +146,12 @@ static void draw_preview(const Document *doc, int x, int y, int w, int h) {
 void files_draw(App *app) {
     Files *f = &app->files;
     int w = screen_width(), h = screen_height();
-    draw_header(f->directory ? f->directory : "", NULL, 0, 0, 0);
+    const char *home = getenv("HOME"), *where = f->directory ? f->directory : "";
+    size_t n = home && home[0] && home[1] ? strlen(home) : 0;
+    char place[600];
+    bool inside = n && strncmp(where, home, n) == 0 && (where[n] == '/' || where[n] == '\0');
+    snprintf(place, sizeof place, "%s%s", inside ? "~" : "", inside ? where + n : where);
+    draw_header(place, NULL, 0, 0, 0);
     int list = w / 3 < 26 ? 26 : w / 3, rows = h - 5;
     draw_box(0, 2, list, h - 4, C_READ, L("File", "Files"));
     f->top = scroll_to(f->top, f->selected, 0, f->count - 1, rows - 1);

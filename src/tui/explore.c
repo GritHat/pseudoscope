@@ -353,7 +353,7 @@ static void draw_map(App *app, int w, int h) {
         }
         if (row >= 3 && row < h - 3) {
             const char *icon = item->kind == ITEM_COMPONENT || item->kind == ITEM_CLASS ? M_TYPE "▣"
-                             : item->kind == ITEM_TEST ? M_WRITE "✓"
+                             : item->kind == ITEM_TEST ? M_WRITE "◇"
                              : item->function && item->function->is_handler ? M_READ "  →"
                              : item->function && item->function->owner ? M_CALL "  ■" : item->kind == ITEM_RECORD ? M_TYPE "▦" : item->kind == ITEM_GLOBALS ? M_READ "●"
                              : item->function->is_procedure ? M_CALL "■" : M_CALL "ƒ";

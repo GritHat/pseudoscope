@@ -9,6 +9,8 @@ in C.
 
 [![Demo](docs/demo/poster.png)](docs/demo/pseudoscope.mp4)
 
+*Sette minuti, senza audio; testi in italiano e in inglese. Fatto con `tools/demo/make.py`.*
+
 È nato come `plike-translator`, un progetto del primo anno per eseguire lo pseudocodice
 usato a lezione. Quello pseudocodice non ha mai avuto una sintassi fissa, quindi si
 accettano tutte le grafie: `A[i,j]`, `A[i][j]` o `A(i,j)`, `and`, `.AND.` o `&&`, `end f`
