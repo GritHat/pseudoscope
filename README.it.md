@@ -1,3 +1,5 @@
+<img src="docs/logo.svg" alt="" width="96" align="right">
+
 # Pseudoscope
 
 *[English](README.md)*
@@ -192,8 +194,9 @@ make fuzz       # programmi e diagrammi alterati, tasti a caso
 ## Il video
 
 `tools/demo/make.py` riprende la vera interfaccia, guidata dai tasti scritti in
-`tools/demo/story.py`, e i veri comandi: `--preview` fa quello breve qui sopra. Il video
-intero non sta nel repository.
+`tools/demo/story.py`, e i veri comandi: `--preview` fa quello breve qui sopra. La musica
+la scrive nota per nota `tools/demo/music.py`, quindi non è di nessun altro, e
+`tools/demo/logo.py` disegna il simbolo. Il video intero non sta nel repository.
 
 ## Licenza
 

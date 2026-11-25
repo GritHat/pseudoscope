@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """Makes the demo video: the real interface, driven by keys, with captions.
 
-Usage: make.py OUTPUT.mp4 [POSTER.png]      (needs Pillow and ffmpeg)
+Usage: make.py OUTPUT.mp4 [THUMBNAIL.png] [--music=FILE|none]
        make.py --preview OUTPUT.gif         (the short one, which plays by itself in a README)
+       make.py --thumbnail OUTPUT.png       (only the picture that stands for the video)
+       make.py --soundtrack OUTPUT.wav      (only the music, to listen to it)
        make.py --check                      (durations and chapters only)
 
-The scenes in a terminal run the real commands: the last chapter needs rustc,
-java and python3.
+Needs Pillow, numpy and ffmpeg. The scenes in a terminal run the real commands:
+the last chapter needs rustc, java and python3. The music is written by
+music.py, so it is nobody else's; --music takes a file instead, or none.
 """
 import glob
 import os
@@ -17,11 +20,13 @@ import sys
 import tempfile
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 BIN = ROOT / "bin" / "pseudoscope"
 sys.path.insert(0, str(Path(__file__).parent))
+import logo  # noqa: E402
+import music  # noqa: E402
 from story import STORY, TRAILER  # noqa: E402
 
 # Programs that write files write them here, not among the examples.
@@ -216,29 +221,29 @@ def ease(t):
 
 
 class Film:
-    def __init__(self, story, output, poster=None, preview=False):
+    def __init__(self, story, output, preview=False, sound=None):
         self.story = story
         self.time = 0.0
         self.frames = 0
         self.output = output
-        self.poster = poster
         self.preview = preview  # a GIF: cuts, since each frame of a fade would weigh as much as a picture
         self.pipe = None
         self.total = 1.0
         self.marks = []
         self.chapters = []
         self.raw = None
-        for path in (output, poster):
-            if path:
-                os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+        if output:
+            os.makedirs(os.path.dirname(os.path.abspath(output)), exist_ok=True)
         source = ["ffmpeg", "-loglevel", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-"]
         if output and preview:
             self.raw = os.path.join(WORK, "preview.mkv")
             self.pipe = subprocess.Popen(source + ["-c:v", "libx264rgb", "-preset", "ultrafast", "-crf", "0", self.raw], stdin=subprocess.PIPE)
         elif output:
+            heard = ["-i", sound] if sound else []
+            mixed = ["-c:a", "aac", "-b:a", "160k", "-map", "0:v", "-map", "1:a"] if sound else []
             self.pipe = subprocess.Popen(
-                source + ["-c:v", "libx264", "-preset", "veryslow", "-crf", "31", "-g", "300", "-pix_fmt", "yuv420p",
-                          "-tune", "animation", "-movflags", "+faststart", output], stdin=subprocess.PIPE)
+                source + heard + ["-c:v", "libx264", "-preset", "veryslow", "-crf", "31", "-g", "300", "-pix_fmt", "yuv420p",
+                                  "-tune", "animation"] + mixed + ["-movflags", "+faststart", output], stdin=subprocess.PIPE)
 
     def put(self, im, seconds):
         n = round((self.time + seconds) * FPS) - self.frames
@@ -270,6 +275,9 @@ class Film:
         im = Image.new("RGB", (W, H), BG)
         d = ImageDraw.Draw(im)
         y = 300 - 30 * len(scene.get("lines", []))
+        if scene.get("logo"):
+            size = 160 if y >= 300 else 120
+            logo.draw(im, W // 2 - size // 2, y - size - 30, size)
         if scene.get("tag"):
             w = d.textlength(scene["tag"], font=BOLD[34]) + 60
             d.rounded_rectangle([(W - w) / 2, y, (W + w) / 2, y + 62], 31, fill=scene.get("color", BLUE))
@@ -341,8 +349,6 @@ class Film:
                 self.put(self.last, 1 / FPS)
         elif self.pipe and acted:
             self.last = self.frame(term, words, label, False)
-        if step.get("poster") and self.poster and self.pipe:
-            self.save_poster(term)
         settle = step.get("hold", 1.6 if acted or spot else 0)
         self.put(self.last, max(settle, needed - (self.time - start)))
         if spot:
@@ -430,19 +436,6 @@ class Film:
             label = (pressed[:-1] + [pressed[-1] + (f" ×{self.repeat}" if self.repeat > 1 else "")]) if pressed else []
             self.settle(term, rows, words, label, step, start, needed, bool(keys))
 
-    def save_poster(self, term):
-        """The picture that stands for the video where it is published: a screen, and the name."""
-        self.chapter, chapter = "", self.chapter
-        im = self.frame(term, None, [], False)
-        self.chapter = chapter
-        d = ImageDraw.Draw(im)
-        d.rectangle([0, BAND - 6, W, H], fill=BG)
-        d.text((TX, BAND + 2), "Pseudoscope", font=BOLD[84], fill=TEXT)
-        x = TX + d.textlength("Pseudoscope", font=BOLD[84]) + 44
-        d.text((x, BAND + 14), "Pseudocodice e progetti che prendono vita", font=SANS[34], fill=YELLOW)
-        d.text((x, BAND + 62), "Pseudocode and designs, brought to life in the terminal", font=SANS[30], fill=DIM)
-        im.resize((1280, 720), Image.LANCZOS).quantize(128).save(self.poster, optimize=True)
-
     def marks_now(self, name):
         if not self.pipe:
             self.marks.append((self.time, name))
@@ -482,6 +475,56 @@ class Film:
                                 "-loop", "0", self.output], check=True)
 
 
+def thumbnail(path):
+    """The picture that stands for the video where it is published: the mark and the name,
+    large enough to be read when it is small, over the screen of the step marked `poster`."""
+    term = None
+    for scene in STORY:
+        typed = scene.get("start", "")
+        for step in scene.get("steps", []):
+            typed += step.get("keys", "")
+            if step.get("poster"):
+                term = paint(screen((scene["open"], tuple(scene.get("options", ()))), typed))
+    w, h = 2560, 1440  # twice the size, then reduced
+    scale = max(w / term.width, h / term.height) * 1.12
+    back = term.resize((round(term.width * scale), round(term.height * scale)), Image.LANCZOS)
+    back = back.crop((60, 150, 60 + w, 150 + h)).filter(ImageFilter.GaussianBlur(5))
+    im = Image.blend(back, Image.new("RGB", (w, h), BG), 0.74)
+    d = ImageDraw.Draw(im)
+    name, said = font("DejaVuSans-Bold.ttf", 236), font("DejaVuSans.ttf", 92)
+    small = font("DejaVuSansMono-Bold.ttf", 60)
+    mark, gap = 420, 70
+    width = mark + gap + d.textlength("Pseudoscope", font=name)
+    x, y = (w - width) / 2, 330
+    logo.draw(im, x, y, mark)
+    d.text((x + mark + gap, y + mark / 2 - 16), "Pseudoscope", font=name, fill=TEXT, anchor="lm")
+    d.text((w / 2, y + mark + 130), "Pseudocode, brought to life", font=said, fill=YELLOW, anchor="mm")
+    # what it speaks, each on its plate
+    names = ["C", "C++", "Java", "Rust", "TypeScript", "JavaScript", "Python"]
+    plates = [d.textlength(n, font=small) + 72 for n in names]
+    x, y = (w - sum(plates) - 28 * (len(names) - 1)) / 2, y + mark + 290
+    for n, plate in zip(names, plates):
+        d.rounded_rectangle([x, y, x + plate, y + 116], 58, fill=PANEL, outline=BLUE, width=5)
+        d.text((x + plate / 2, y + 58), n, font=small, fill=TEXT, anchor="mm")
+        x += plate + 28
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    im.resize((1280, 720), Image.LANCZOS).save(path, optimize=True)
+
+
+def soundtrack(choice, seconds, starts):
+    """The music, as long as the video: the one written here, or somebody else's file."""
+    path = os.path.join(WORK, "music.wav")
+    if choice == "none":
+        return None
+    if choice:
+        fades = f"afade=t=in:d=1.5,afade=t=out:st={seconds - 5:.2f}:d=5"
+        subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-stream_loop", "-1", "-i", choice, "-t", f"{seconds:.3f}",
+                        "-af", fades, "-ar", "48000", "-ac", "2", path], check=True)
+    else:
+        music.write(path, seconds, starts)
+    return path
+
+
 def clock(t):
     return f"{int(t // 60)}:{int(t % 60):02d}"
 
@@ -497,7 +540,15 @@ def chapters(plan):
 
 
 def main():
-    preview = sys.argv[1:2] == ["--preview"]
+    words = [w for w in sys.argv[1:] if not w.startswith("--music=")]
+    chosen = [w.split("=", 1)[1] for w in sys.argv[1:] if w.startswith("--music=")]
+    mode = words.pop(0) if words and words[0].startswith("--") else ""
+    if mode not in ("", "--preview", "--thumbnail", "--soundtrack", "--check") or (mode != "--check" and not words):
+        raise SystemExit(__doc__)
+    if mode == "--thumbnail":
+        thumbnail(words[0])
+        return
+    preview = mode == "--preview"
     story = TRAILER if preview else STORY
     plan = Film(story, None, preview=preview)
     plan.run()
@@ -506,11 +557,18 @@ def main():
         print()
         for chapter in chapters(plan):
             print(f"{clock(chapter[0])} {chapter[which]}")
-    if sys.argv[1:] == ["--check"]:
+    starts = [chapter[0] for chapter in chapters(plan)]
+    if mode == "--check":
         return
-    film = Film(story, sys.argv[2] if preview else sys.argv[1], sys.argv[2] if len(sys.argv) > 2 and not preview else None, preview)
+    if mode == "--soundtrack":
+        music.write(words[0], plan.time, starts)
+        return
+    sound = None if preview else soundtrack(chosen[0] if chosen else "", plan.time, starts)
+    film = Film(story, words[0], preview, sound)
     film.total, film.marks = plan.time, plan.marks
     film.run()
+    if len(words) > 1 and not preview:
+        thumbnail(words[1])
 
 
 try:

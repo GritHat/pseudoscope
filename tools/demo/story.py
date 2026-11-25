@@ -24,7 +24,7 @@ OTHER = (62, 2, 62, 26)   # the translation, beside the pseudocode
 CALLS = (0, 2, 74, 10)
 
 STORY = [
-    {"title": "Pseudoscope", "sub": "Pseudocodice e progetti che prendono vita",
+    {"title": "Pseudoscope", "logo": True, "sub": "Pseudocodice e progetti che prendono vita",
      "en": "Pseudocode and designs, brought to life", "seconds": 4.5},
 
     # ------------------------------------------------------------------
@@ -296,7 +296,7 @@ STORY = [
     ]},
 
     # ------------------------------------------------------------------
-    {"title": "Pseudoscope", "chapter": "Per cominciare", "title_en": "Getting started", "sub": "Dal primo ciclo ai sistemi distribuiti, in qualunque terminale",
+    {"title": "Pseudoscope", "logo": True, "chapter": "Per cominciare", "title_en": "Getting started", "sub": "Dal primo ciclo ai sistemi distribuiti, in qualunque terminale",
      "en": "From the first loop to distributed systems, in any terminal", "seconds": 9,
      "lines": [("make && bin/pseudoscope", "apri la cartella e comincia"),
                ("pseudoscope test file.pscope", "lancia le prove"),

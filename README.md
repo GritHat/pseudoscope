@@ -1,3 +1,5 @@
+<img src="docs/logo.svg" alt="" width="96" align="right">
+
 # Pseudoscope
 
 *[Italiano](README.it.md)*
@@ -188,7 +190,8 @@ make fuzz       # mutated programs and diagrams, random keys
 
 `tools/demo/make.py` films the real interface, driven by the keys in
 `tools/demo/story.py`, and the real commands: `--preview` makes the short one above.
-The full tour is not kept in the repository.
+The music is written note by note by `tools/demo/music.py`, so it is nobody else's, and
+`tools/demo/logo.py` draws the mark. The full tour is not kept in the repository.
 
 ## License
 
