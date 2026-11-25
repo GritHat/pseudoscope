@@ -1,8 +1,22 @@
 # The interface
 
-`plike` opens the current folder, `plike ui PATH` a folder or a program. It needs a
-terminal of at least 80x24 characters, with 256 colours (on the Linux console it makes do
-with 16; `PLIKE_BASIC=1` forces that).
+`pseudoscope` opens the current folder, `pseudoscope ui PATH` a folder, a program or a
+diagram. `pseudoscope-window` does it in a new window, in the terminal it is run from or
+the first one installed (`PSEUDOSCOPE_TERMINAL` chooses).
+
+## Terminals
+
+At least 80x24 characters. The rest adapts:
+
+| Terminal | Colours | Characters |
+|---|---|---|
+| kitty, GNOME Terminal, Ptyxis, Konsole, Alacritty, foot, WezTerm, xterm, tmux, screen... | 256, or 16 | Unicode |
+| Linux console | 16 | those of code page 437 |
+| a locale that is not UTF-8 | as above | ASCII |
+| vt100, `NO_COLOR` | none: bold and reverse | as above |
+
+`PSEUDOSCOPE_COLORS` (`256`, `16`, `0`) and `PSEUDOSCOPE_GLYPHS` (`unicode`, `console`,
+`ascii`) decide instead.
 
 ## Finding the way
 
@@ -10,11 +24,14 @@ Enter goes deeper, Esc comes back up, everywhere. The position is always in the 
 line, with the levels on the right.
 
     files > map > code > C                         exploring (blue)
-    program > function > statement > memory        running (yellow)
+    system > program > function > statement > memory        running (yellow)
 
 `r` runs: from `main` the whole program; from another subprogram, only that one, after
 asking for its values. Tab changes how arrays are filled: random, increasing, decreasing,
-all equal.
+all equal. `t` runs the tests of the program.
+
+Systems and the diagrams of the System level are in [systems.md](systems.md), the
+diagrams that were only drawn in [diagrams.md](diagrams.md).
 
 ## Running
 
@@ -28,8 +45,11 @@ all equal.
 | g | to the end, or to the next breakpoint |
 | 0 | from the beginning |
 | b | breakpoint on the current line |
-| 1 2 3 4, Enter, Esc | level |
-| Tab | scrolls to another variable |
+| 1 2 3 4 5, Enter, Esc | level |
+| Tab | another variable; at the System level, another view |
+| f | the function as code or as an activity diagram |
+| m | another component (States) |
+| PgUp PgDn | scrolls the sequence |
 | v | arrays as cells or as bars |
 | o | what was printed |
 | c | everything that happened |
@@ -56,5 +76,5 @@ has two such fields.
 
 ## For the tests
 
-`plike ui PATH --keys="<down><enter>r" --size=100x30` presses the keys without a terminal
+`pseudoscope ui PATH --keys="<down><enter>r" --size=100x30` presses the keys without a terminal
 and prints the screen.

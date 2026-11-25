@@ -1,0 +1,115 @@
+// Shortest paths from a node, with tests of what it promises.
+// Run "shortest paths" at the Function level and watch dist and done;
+// the tests (t) check the result, and a property that must always hold.
+
+function nearest(in dist: array [1..6] of integer, in done: array [1..6] of logical): integer
+var i: integer
+begin
+    nearest := 0
+    for i := 1 to 6 do
+        if not done[i] and dist[i] < 1000000 then
+            if nearest = 0 then
+                nearest := i
+            elseif dist[i] < dist[nearest] then
+                nearest := i
+            endif
+        endif
+    endfor
+end nearest
+
+procedure dijkstra(in w: array [1..6, 1..6] of integer, in source: integer,
+                   out dist: array [1..6] of integer, out prev: array [1..6] of integer)
+var done: array [1..6] of logical
+var i, u, v: integer
+begin
+    for i := 1 to 6 do
+        dist[i] := 1000000
+        prev[i] := 0
+        done[i] := false
+    endfor
+    dist[source] := 0
+    u := source
+    while u <> 0 do
+        done[u] := true
+        for v := 1 to 6 do
+            if w[u, v] > 0 then
+                if dist[u] + w[u, v] < dist[v] then
+                    dist[v] := dist[u] + w[u, v]
+                    prev[v] := u
+                endif
+            endif
+        endfor
+        u := nearest(dist, done)
+    endwhile
+end dijkstra
+
+procedure arc(inout w: array [1..6, 1..6] of integer, in a, b, cost: integer)
+begin
+    w[a, b] := cost
+    w[b, a] := cost
+end arc
+
+procedure build(out w: array [1..6, 1..6] of integer)
+var i, j: integer
+begin
+    for i := 1 to 6 do
+        for j := 1 to 6 do
+            w[i, j] := 0
+        endfor
+    endfor
+    arc(w, 1, 2, 7)
+    arc(w, 1, 3, 9)
+    arc(w, 1, 6, 14)
+    arc(w, 2, 3, 10)
+    arc(w, 2, 4, 15)
+    arc(w, 3, 4, 11)
+    arc(w, 3, 6, 2)
+    arc(w, 4, 5, 6)
+    arc(w, 5, 6, 9)
+end build
+
+test "the known distances"
+var w: array [1..6, 1..6] of integer
+var dist, prev: array [1..6] of integer
+begin
+    build(w)
+    dijkstra(w, 1, dist, prev)
+    step "from node 1"
+    check dist[1] = 0
+    check dist[3] = 9
+    check dist[6] = 11
+    check dist[5] = 20
+    check prev[6] = 3, "6 is reached through 3"
+end test
+
+test "no arc could make a path shorter"
+var w: array [1..6, 1..6] of integer
+var dist, prev: array [1..6] of integer
+var source, a, b, wrong: integer
+begin
+    build(w)
+    wrong := 0
+    for source := 1 to 6 do
+        dijkstra(w, source, dist, prev)
+        for a := 1 to 6 do
+            for b := 1 to 6 do
+                if w[a, b] > 0 and dist[a] + w[a, b] < dist[b] then
+                    wrong := wrong + 1
+                endif
+            endfor
+        endfor
+    endfor
+    check wrong = 0, "triangle inequality, from every source"
+end test
+
+procedure main()
+var w: array [1..6, 1..6] of integer
+var dist, prev: array [1..6] of integer
+var i: integer
+begin
+    build(w)
+    dijkstra(w, 1, dist, prev)
+    for i := 1 to 6 do
+        print(i, dist[i], prev[i])
+    endfor
+end main

@@ -7,7 +7,8 @@ Semicolons are optional. Comments are `// ...` and `/* ... */`.
 ## Programs
 
 A file holds procedures, functions, global variables and record types, in any order;
-they can be used before they are declared.
+they can be used before they are declared. It can also hold classes, components and
+tests: see [systems.md](systems.md). For other pseudocodes see [dialects.md](dialects.md).
 
 ```pascal
 procedure name(parameters)
@@ -60,7 +61,7 @@ pointer itself.
 
 ## Types
 
-`integer` (C `int`), `real` (`float`), `logical` (`bool`), `character` (`char`),
+`integer` (C `int`), `real` (`float`), `logical` (`bool`), `character` (`char`), `string`,
 pointers (`integer*`, `*integer`, `*x: integer`), arrays and records.
 
 ```pascal
@@ -97,6 +98,7 @@ return e
 print(a, b)        // blanks in between, a new line at the end
 read(a, b)
 name(arguments)
+...                // still to be written: does nothing
 var x: integer     // in the middle of a body
 ```
 

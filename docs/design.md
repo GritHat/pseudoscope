@@ -4,11 +4,13 @@
 flowchart LR
     source --> lexer --> parser --> sema[semantic analysis] --> codegen[code generator] --> C
     sema --> vm[virtual machine] --> ui[interface]
+    diagrams[PlantUML, Mermaid] --> uml --> ui
 ```
 
 | Directory | Content |
 |---|---|
-| `src/front` | lexer, parser |
+| `src/front` | lexer, parser, the keywords of the other pseudocodes |
+| `src/uml` | diagrams written as text |
 | `src/sema` | names, types, checks |
 | `src/back` | C output, dumps of tokens and tree |
 | `src/vm` | bytecode compiler and virtual machine |
@@ -23,6 +25,11 @@ be a call or an array access, and the declaration may come later: the tree has a
 for "applied to", which the analysis settles. After a syntax error the parser skips to
 the next statement, to report more than one error per run. Nesting is limited, so that
 no input can exhaust the stack.
+
+**Other pseudocodes.** A table for each turns its words into the tokens of the language
+(`dialect.c`); what is really different, such as declarations, has its own small parser
+(`foreign.inc`). The tree is the same, so nothing after the parser knows which one it
+was, except to infer the types that were not written.
 
 **Analysis.** Parameters are typed in two rounds, scalars first, because the bounds of
 an array may use parameters that come after it. Types declared in the body for a
@@ -47,7 +54,13 @@ output and history only ever grow, so doing it again writes the same things.
 Memory is made of objects (a variable each) of slots (a number or pointer each). A pointer
 is an object, an offset and a serial number, which tells when the object is gone.
 
+Components add a queue of messages, ordered by time and then by arrival, and a generator
+of pseudo-random numbers: both are part of the state, so a system can be run backwards
+too. Every message, call and change of state is also a row of a list, which all of the
+diagrams are drawn from.
+
 **Interface.** `screen.c` draws cells and sends the ones that changed; it comes from
 [reliable-over-unreliable](https://github.com/GritHat/reliable-over-unreliable). The views
 only read: the state of a run is all in the virtual machine, so any of them can be drawn
-at any moment.
+at any moment. What a terminal cannot show (colours, characters) is replaced when a cell
+is sent to it: the views do not know.
