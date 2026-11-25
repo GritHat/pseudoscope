@@ -1,0 +1,114 @@
+// Records are values, texts, and subprograms that change their arguments.
+type Point: record
+    x, y: integer
+end
+
+type Line: record
+    a, b: Point
+    tags: array [1..3] of integer
+end
+
+class Counter
+    var n: integer
+    var name: string
+    procedure add(in k: integer)
+    begin
+        n := n + k
+    end add
+    function next(out before: integer): integer
+    begin
+        before := n
+        n := n + 1
+        next := n
+    end next
+end Counter
+
+function moved(in p: Point, in dx: integer): Point
+begin
+    p.x := p.x + dx
+    moved := p
+end moved
+
+procedure reset(out p: Point)
+var zero: Point
+begin
+    zero.x := 0
+    zero.y := 0
+    p := zero
+end reset
+
+function divide(in a, b: integer; out rest: integer): integer
+begin
+    rest := a mod b
+    divide := a / b
+end divide
+
+procedure bump(inout x: integer, inout word: string)
+begin
+    x := x + 1
+    word := word + "!"
+end bump
+
+procedure main()
+var p, q: Point
+var l, m: Line
+var c: Counter
+var r, i, old: integer
+var s, t: string
+var x: real
+var ch: character
+begin
+    p.x := 1
+    p.y := 2
+    q := moved(p, 10)
+    print(p.x, q.x, q.y)
+    l.a := p
+    l.b := q
+    l.tags[2] := 5
+    m := l
+    m.a.x := 99
+    m.tags[2] := 6
+    print(l.a.x, m.a.x, l.tags[2], m.tags[2])
+    reset(q)
+    print(q.x, q.y)
+
+    i := divide(17, 5, r)
+    print(i, r)
+    if divide(9, 4, r) = 2 then
+        print("two and", r)
+    endif
+    i := divide(20, 6, r) + divide(7, 2, old)
+    print(i, r, old)
+
+    c.add(5)
+    c.name := "ticks"
+    i := c.next(old)
+    print(i, old, c.name)
+
+    s := "abc"
+    t := s + "def"
+    bump(i, t)
+    print(i, t, length(t), upper(s), substring(t, 2, 4))
+    if s < t and s != "abd" then
+        print("ordered")
+    endif
+
+    begin
+        var i: integer
+        i := 1000
+        print(i)
+    end
+    print(i)
+
+    for i := 10 to 1 step -3 do
+        print(i)
+    endfor
+    x := 0
+    repeat
+        x := x + 0.25
+    until x >= 1
+    print(x, -7 / 2, -7 mod 2, 7 mod -2)
+    ch := 'a'
+    ch := ch + 1
+    print(ch, ch > 'a')
+end main

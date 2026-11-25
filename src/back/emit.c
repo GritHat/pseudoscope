@@ -1,4 +1,5 @@
 #include "plike/target.h"
+#include "plike/vm.h"
 
 #include <string.h>
 
@@ -102,6 +103,7 @@ static bool is_main(const Function *f) { return !f->owner && !f->is_test && f->s
 
 static const char *function_name(Gen *g, const Function *f) {
     if (f->owner) return safe(g, f->name);
+    if (f->is_handler) return arena_printf(g->arena, "on_%s", f->name);
     if (f->is_test) return f->symbol->c_name;
     if (is_main(f) && (RUST || JAVA || CPP)) return "run";
     return safe(g, f->symbol->c_name);
@@ -682,7 +684,7 @@ static void name(Gen *g, const Expr *e) {
     switch (sym->kind) {
         case SYM_STATE: put(g, state_text(g, sym)); return;
         case SYM_NOW: put(g, RUST ? "(*SIM).now" : "sim.now"); return;
-        case SYM_SENDER: put(g, RUST ? "(*SIM).sender" : "sim.sender"); return;
+        case SYM_SENDER: put(g, RUST ? "sim_who((*SIM).sender)" : "sim.sender"); return;
         default: break;
     }
     if (is_self(e)) put(g, CPP ? "(*this)" : self_name(g));
@@ -1619,6 +1621,9 @@ static void assign(Gen *g, const Stmt *s) {
         end(g);
         return;
     }
+    if (RUST && target->type->kind == TY_RECORD && target->kind == EX_NAME && target->symbol && target->symbol->by_reference &&
+        !is_self(target))
+        put(g, "*"); /* what the reference leads to */
     expr(g, target, P_LOWEST);
     put(g, " = ");
     value(g, v, target->type, P_LOWEST);
@@ -2314,6 +2319,33 @@ static void result_record_decl(Gen *g, const Function *f) {
     put(g, ") {}\n\n");
 }
 
+static bool can_simulate(const Gen *g);
+
+static bool sends_in(const Gen *g, const Expr *e, int depth);
+
+/* Does it send or cancel messages, by itself or through what it calls? */
+static bool sends(const Gen *g, const Stmt *s, int depth) {
+    for (; s; s = s->next) {
+        if (s->kind == ST_SEND || s->kind == ST_CANCEL) return true;
+        if (sends_in(g, s->value, depth) || sends_in(g, s->target, depth)) return true;
+        for (int i = 0; i < s->args.count; i++)
+            if (sends_in(g, s->args.items[i], depth)) return true;
+        if (sends(g, s->body, depth)) return true;
+        for (const Stmt *o = s->otherwise; o; o = o->otherwise)
+            if (sends_in(g, o->value, depth) || sends(g, o->body, depth)) return true;
+    }
+    return false;
+}
+
+static bool sends_in(const Gen *g, const Expr *e, int depth) {
+    if (!e || depth > 4) return false;
+    if (e->is_call && e->symbol && e->symbol->function && sends(g, e->symbol->function->body, depth + 1)) return true;
+    if (sends_in(g, e->base, depth) || sends_in(g, e->right, depth)) return true;
+    for (int i = 0; i < e->args.count; i++)
+        if (sends_in(g, e->args.items[i], depth)) return true;
+    return false;
+}
+
 static void function(Gen *g, const Function *f) {
     g->function = f;
     g->serial = g->rename_count = g->seen_count = 0;
@@ -2333,7 +2365,39 @@ static void function(Gen *g, const Function *f) {
     indent(g);
     header(g, f, false);
     open(g);
+    /* a method of a component called from outside: what it sends comes from the component */
+    bool acting = f->owner && f->owner->is_component && !f->is_handler && can_simulate(g) && sends(g, f->body, 0);
+    if (acting && CPP) {
+        indent(g);
+        put(g, "Acting acting(this);\n");
+    } else if (acting && RUST) {
+        indent(g);
+        put(g, "let _acting = Acting::new(self.sim_id);\n");
+    } else if (acting) {
+        indent(g);
+        putf(g, JAVA ? "Component before = sim.current;\n" : PY ? "before = sim.current\n" : "const before = sim.current;\n");
+        indent(g);
+        putf(g, "sim.current = %s", self_name(g));
+        end(g);
+        indent(g);
+        put(g, PY ? "try:\n" : "try {\n");
+        g->indent++;
+    }
     body(g, f);
+    if (acting && !CPP && !RUST) {
+        g->indent--;
+        indent(g);
+        put(g, PY ? "finally:\n" : "} finally {\n");
+        g->indent++;
+        indent(g);
+        put(g, "sim.current = before");
+        end(g);
+        g->indent--;
+        if (!PY) {
+            indent(g);
+            put(g, "}\n");
+        }
+    }
     close(g);
     put(g, PY ? "\n" : "\n\n");
     g->function = NULL;
@@ -2528,11 +2592,13 @@ static void type_decl(Gen *g, const Record *record) {
         }
         put(g, any ? "):\n" : ":\n");
     } else {
+        if (c && c->is_component) component_parts(g, c, 2);
         putf(g, "#[derive(Clone)]\nstruct %s {\n", name);
+        if (c && c->is_component) put(g, "    sim_id: i32,\n    sim_name: String,\n");
     }
     g->indent = 1;
     size_t inside = g->out->length;
-    if (c && c->is_component) component_parts(g, c, 0);
+    if (c && c->is_component && !RUST) component_parts(g, c, 0);
 
     /* its variables */
     if (PY) {
@@ -2553,11 +2619,12 @@ static void type_decl(Gen *g, const Record *record) {
     if (RUST) {
         g->indent = 0;
         putf(g, "}\n\nimpl %s {\n    fn new() -> %s {\n        %s {", name, name, name);
+        if (c && c->is_component) put(g, record->fields ? " sim_id: -1, sim_name: String::new()," : " sim_id: -1, sim_name: String::new() ");
         for (const VarDecl *f = record->fields; f; f = f->next) {
             putf(g, "%s%s: ", f == record->fields ? " " : ", ", safe(g, f->symbol->c_name));
             zero(g, f->symbol->type, 0);
         }
-        put(g, record->fields ? " }\n    }\n" : "}\n    }\n");
+        put(g, record->fields || (c && c->is_component) ? " }\n    }\n" : "}\n    }\n");
         g->indent = 1;
     }
 
@@ -2582,7 +2649,7 @@ static void type_decl(Gen *g, const Record *record) {
         function(g, f);
         g->in_class = false;
     }
-    if (c && c->is_component) component_parts(g, c, 1);
+    if (c && c->is_component && !RUST) component_parts(g, c, 1);
     copy_methods(g, record);
     if (PY && g->out->length == inside) put(g, "    pass\n\n");
     g->indent = 0;
@@ -2593,6 +2660,7 @@ static void type_decl(Gen *g, const Record *record) {
     }
     put(g, PY ? "\n" : CPP ? "};\n\n" : "}\n\n");
 
+    if (RUST && c && c->is_component) component_parts(g, c, 3);
     /* Rust: what an interface asks for is written apart, for each */
     for (const Class *k = g->program->classes; RUST && c && k; k = k->next) {
         if (!k->is_interface || !derives_from(c, k)) continue;
@@ -2624,15 +2692,15 @@ static void types_in_order(Gen *g, const Record *record, const Record **done, in
 
 /* ---- systems: components, messages, tests ---- */
 
-#include "emit_sim.inc"
-
-/* ---- the whole program ---- */
-
 static bool has_main_function(const Program *program) {
     for (const Function *f = program->functions; f; f = f->next)
         if (is_main(f)) return true;
     return false;
 }
+
+#include "emit_sim.inc"
+
+/* ---- the whole program ---- */
 
 static void globals(Gen *g) {
     const Program *p = g->program;
@@ -2709,7 +2777,7 @@ static void whole(Gen *g) {
 
 static Gen new_gen(const Program *program, const Config *config, Arena *arena, Lang lang, StrBuf *out) {
     Gen g = {.lang = lang, .program = program, .config = config, .arena = arena, .out = out};
-    g.unsafe = lang == LANG_RUST && (program->globals || uses_pointers(program) || has_components(program));
+    g.unsafe = lang == LANG_RUST && (program->globals || uses_pointers(program) || has_components(program) || has_tests(program));
     return g;
 }
 

@@ -334,6 +334,10 @@ static int translate(const Options *options, const Source *source, Arena *arena,
             fputs("pseudoscope: there are no tests in this program\n", stderr);
             return EXIT_PROBLEMS;
         }
+        if (lang == LANG_C) {
+            fputs("pseudoscope: tests are not translated to C yet: choose another language with --to\n", stderr);
+            return EXIT_PROBLEMS;
+        }
         return build_and_run(options, lang, out, arena, class_name, "test");
     }
     if (!has_main(program) && !has_components(program)) return no_main();

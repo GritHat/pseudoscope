@@ -1,0 +1,63 @@
+// Interfaces only: what every language with classes can say, Rust too.
+interface Shape
+    function area(): real
+    function corners(): integer
+end Shape
+
+interface Named extends Shape
+    function label(): integer
+end Named
+
+class Square implements Named
+    var side: real
+    function area(): real
+    begin
+        area := side * side
+    end area
+    function corners(): integer
+    begin
+        corners := 4
+    end corners
+    function label(): integer
+    begin
+        label := 100 + corners()
+    end label
+    procedure grow(in by: real)
+    begin
+        side := side + by
+    end grow
+end Square
+
+class Circle implements Shape
+    var r: real
+    function area(): real
+    begin
+        area := 3 * r * r
+    end area
+    function corners(): integer
+    begin
+        corners := 0
+    end corners
+end Circle
+
+procedure show(inout s: Shape)
+begin
+    print(s.corners(), s.area())
+end show
+
+function bigger(inout a: Shape, inout b: Shape): logical
+begin
+    bigger := a.area() > b.area()
+end bigger
+
+procedure main()
+var q: Square
+var c: Circle
+begin
+    q.side := 2
+    c.r := 1
+    q.grow(1)
+    show(q)
+    show(c)
+    print(bigger(q, c), bigger(c, q), q.label())
+end main

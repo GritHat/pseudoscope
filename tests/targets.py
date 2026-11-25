@@ -74,6 +74,22 @@ def same(expected, got):
     return True
 
 
+def ends(path, options):
+    """Some systems go on for ever: there is nothing to compare."""
+    base = path[: -len(".plike")]
+    stdin = open(base + ".in") if os.path.exists(base + ".in") else subprocess.DEVNULL
+    try:
+        result = subprocess.run([tool, "exec", "--steps=3000000", *options, path], stdin=stdin, capture_output=True, timeout=60)
+    except subprocess.TimeoutExpired:
+        return False
+    return result.returncode == 0
+
+
+# The examples that some language cannot say, and why.
+REFUSED = {
+}
+
+
 def cases():
     found = []
     for folder, pattern in (("programs", r"\.plike$"), ("targets", r"\.plike$"), ("dialects", r"\.(psc|alg|por|pse)$")):
@@ -91,7 +107,30 @@ def cases():
             refused = open(base + ".not").read().split() if os.path.exists(base + ".not") else []
             test = os.path.exists(base + ".test")
             found.append((folder, name, os.path.join(path, name), base, options, refused, test))
+    # the examples: their tests, and what their main prints
+    examples = os.path.join(here, "..", "examples")
+    for folder in ["."] + sorted(d for d in os.listdir(examples) if os.path.isdir(os.path.join(examples, d))):
+        for name in sorted(os.listdir(os.path.join(examples, folder))):
+            path = os.path.normpath(os.path.join(examples, folder, name))
+            if not name.endswith(".plike") or (word and word not in name):
+                continue
+            text = open(path).read()
+            options = ["--indexing=zero"] if "plike run --indexing=zero" in text else []
+            refused = REFUSED.get(os.path.join(folder, name).lstrip("./"), "").split()
+            label = "examples" if folder == "." else "examples/" + folder
+            if re.search(r"^\s*test\s+\"", text, re.M):
+                found.append((label, name + " tests", path, path[: -len(".plike")], options, refused, True))
+            if re.search(r"^\s*procedure\s+main\b", text, re.M | re.I) and ends(path, options):
+                found.append((label, name, path, path[: -len(".plike")], options, refused, False))
     return found
+
+
+def here_it_does(path, base, test, options):
+    """What the program does without being translated: (output, exit status)."""
+    stdin = open(base + ".in") if os.path.exists(base + ".in") else subprocess.DEVNULL
+    result = subprocess.run([tool, "test" if test else "exec", *options, path], stdin=stdin, capture_output=True, text=True,
+                            timeout=120)
+    return result.stdout, result.returncode
 
 
 def run(job):
@@ -99,8 +138,22 @@ def run(job):
     label = f"{folder}/{name} ({language})"
     command = [tool, "test" if test else "run", "--to=" + language, *options, path]
     stdin = open(base + ".in") if os.path.exists(base + ".in") else subprocess.DEVNULL
+    if folder.startswith("examples"):  # compared with what happens here
+        expected, status = here_it_does(path, base, test, options)
+        try:
+            result = subprocess.run(command, stdin=stdin, capture_output=True, text=True, timeout=120)
+        except subprocess.TimeoutExpired:
+            return label, "timeout"
+        if language in refused:
+            ok = result.returncode == 1 and "error:" in result.stderr and "compiler failed" not in result.stderr
+            return label, None if ok else "should have been refused:\n" + (result.stderr or result.stdout)[:1500]
+        if result.returncode != status:
+            return label, f"exit status {result.returncode}, here {status}\n" + result.stderr[:3000] + result.stdout[:2000]
+        if not same(expected, result.stdout):
+            return label, "here:\n" + expected[:1200] + "\ntranslated:\n" + result.stdout[:1200]
+        return label, None
     try:
-        result = subprocess.run(command, stdin=stdin, capture_output=True, text=True, timeout=300)
+        result = subprocess.run(command, stdin=stdin, capture_output=True, text=True, timeout=120)
     except subprocess.TimeoutExpired:
         return label, "timeout"
     if language in refused:

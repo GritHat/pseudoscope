@@ -1543,9 +1543,10 @@ static void check_concrete(Sema *s, const Type *type, Loc loc) {
     if (c->pending)
         diag_error(s->diag, loc, "there can be no '%s': nobody has written '%s' (use a class that extends it, or a pointer)",
                    c->name, c->pending->full_name);
+    else if (c->is_interface)
+        diag_error(s->diag, loc, "there can be no '%s': it is an interface (use a class that extends it, or a pointer)", c->name);
     else
-        diag_error(s->diag, loc, "there can be no '%s': it is %s (use a class that extends it, or a pointer)", c->name,
-                   c->is_interface ? "an interface" : "abstract");
+        diag_error(s->diag, loc, "there can be no '%s': it is abstract (use a class that extends it, or a pointer)", c->name);
 }
 
 /* A method that replaces one must be usable in its place. */

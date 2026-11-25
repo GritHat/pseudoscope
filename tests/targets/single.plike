@@ -1,0 +1,98 @@
+// One class to extend, and interfaces: what Java and TypeScript can say.
+abstract class Shape
+    var id: integer
+    abstract function area(): real
+    function twice(): real
+    begin
+        twice := 2 * area()
+    end twice
+    procedure describe()
+    begin
+        print(id, area())
+    end describe
+end Shape
+
+interface Named
+    function label(): integer
+end Named
+
+class Rectangle extends Shape
+    var w, h: real
+    function area(): real
+    begin
+        area := w * h
+    end area
+end Rectangle
+
+class Square extends Rectangle implements Named
+    procedure side(in s: real)
+    begin
+        w := s
+        h := s
+    end side
+    procedure describe()
+    begin
+        print(4)
+        super.describe()
+    end describe
+    function label(): integer
+    begin
+        label := 400 + id
+    end label
+end Square
+
+class Circle extends Shape
+    var r: real
+    function area(): real
+    begin
+        area := 3 * r * r
+    end area
+end Circle
+
+procedure show(inout s: Shape)
+begin
+    s.describe()
+    print(s.twice())
+end show
+
+function total(in n: integer, in all: array [1..n] of Shape*): real
+var i: integer
+begin
+    total := 0
+    for i := 1 to n do
+        total := total + all[i].area()
+    endfor
+end total
+
+function tag(inout n: Named): integer
+begin
+    tag := n.label()
+end tag
+
+procedure main()
+var r: Rectangle
+var q: Square
+var c: Circle
+var all: array [1..3] of Shape*
+var p: Shape*
+begin
+    r.id := 1
+    r.w := 2
+    r.h := 3
+    q.id := 2
+    q.side(2)
+    c.id := 3
+    c.r := 1
+    show(r)
+    show(q)
+    show(c)
+    all[1] := &r
+    all[2] := &q
+    all[3] := &c
+    print(total(3, all))
+    p := &q
+    p.describe()
+    if p != 0 then
+        print(tag(q), p.id)
+    endif
+end main

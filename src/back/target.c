@@ -142,6 +142,13 @@ static void check_statements(Check *c, const Stmt *s) {
         check_expr(c, s->step, true);
         for (int i = 0; i < s->args.count; i++) check_expr(c, s->args.items[i], false);
         if (s->kind == ST_VAR) check_decls(c, s->vars);
+        if (s->kind == ST_EXPECT && s->limit && s->limit->type) {
+            const Class *to = class_of(s->limit->type);
+            if (!to || !find_method(c->program, to, s->name, true)) {
+                diag_error(c->diag, s->loc, "this expects a call between objects, which only the program run here keeps track of (exec, test, ui)");
+                c->problems++;
+            }
+        }
         check_statements(c, s->body);
         for (const Stmt *o = s->otherwise; o; o = o->otherwise) {
             check_expr(c, o->value, true);
@@ -187,6 +194,12 @@ bool translatable(const Program *program, const Config *config, Lang lang, Diag 
     (void)config;
     Check c = {.program = program, .lang = lang, .diag = diag};
     check_classes(&c);
+    for (const Class *k = program->classes; k && lang == LANG_C; k = k->next) {
+        if (!k->is_component) continue;
+        diag_error(diag, k->loc, "components and tests are not translated to C yet: choose another language with --to");
+        c.problems++;
+        break;
+    }
     if (lang == LANG_C) return c.problems == 0;
     check_decls(&c, program->globals);
     for (const Record *r = program->records; r; r = r->next) check_decls(&c, r->fields);
