@@ -4,10 +4,10 @@
 │  ▪ ../                           ││ ƒ 9 subprograms   ▦ 1 record   119 lines                               │
 │  ◆ btree.clrs                    ││ ✓ no errors                                                     Cormen │
 │▸ ◆ graphs.clrs                   ││ ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │
-│  ◆ sorting.clrs                  ││    1 // Graphs, as in "Introduction to Algorithms": a graph G has it…┃ │
-│  ◆ structures.clrs               ││    2 // G.V and, for each vertex u, its neighbours in G.Adj[u]. Vert…  │
-│                                  ││    3 // sets are written as in mathematics: ∅, {a, b}, ∪, −, ∈. Noth…  │
-│                                  ││    4 BFS(G, s)                                                         │
+│  ◆ heap.clrs                     ││    1 // Graphs, as in "Introduction to Algorithms": a graph G has it…┃ │
+│  ◆ kruskal.clrs                  ││    2 // G.V and, for each vertex u, its neighbours in G.Adj[u]. Vert…  │
+│  ◆ sorting.clrs                  ││    3 // sets are written as in mathematics: ∅, {a, b}, ∪, −, ∈. Noth…  │
+│  ◆ structures.clrs               ││    4 BFS(G, s)                                                         │
 │                                  ││    5     for each vertex u ∈ G.V − {s}                                 │
 │                                  ││    6         u.color = WHITE                                           │
 │                                  ││    7         u.d = ∞                                                   │

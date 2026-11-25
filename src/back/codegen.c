@@ -583,9 +583,30 @@ static void gen_for(Gen *g, const Stmt *stmt) {
     put(g, "\n");
 }
 
+static bool has_call(const Expr *e) {
+    if (!e) return false;
+    if (e->is_call) return true;
+    for (int i = 0; i < e->args.count; i++)
+        if (has_call(e->args.items[i])) return true;
+    return has_call(e->base) || has_call(e->right);
+}
+
 static void gen_print(Gen *g, const Stmt *stmt) {
     if (stmt->args.count == 0) {
         put(g, "printf(\"\\n\");\n");
+        return;
+    }
+    int calling = 0;
+    for (int i = 0; i < stmt->args.count; i++) calling += has_call(stmt->args.items[i]);
+    if (calling > 1) { /* C does not say which is worked out first: one at a time, in the order written */
+        for (int i = 0; i < stmt->args.count; i++) {
+            Stmt one = *stmt;
+            one.args = (ExprList){&stmt->args.items[i], 1, 1};
+            one.same_line = i + 1 < stmt->args.count || stmt->same_line;
+            if (i > 0) indent(g);
+            if (i > 0 && !stmt->joined) put(g, "printf(\" \"); ");
+            gen_print(g, &one);
+        }
         return;
     }
     put(g, "printf(\"");
@@ -981,7 +1002,10 @@ void generate(const Program *program, const Config *config, Arena *arena, StrBuf
             "    exit(1);\n"
             "}\n\n");
     }
-    if (g->uses_text) {
+    bool makes_text = false; /* comparing texts makes none: nothing would call what makes room for one */
+    for (size_t i = 0; i < sizeof TEXT_HELPERS / sizeof TEXT_HELPERS[0]; i++)
+        makes_text |= strstr(body.data, TEXT_HELPERS[i].name) && strstr(TEXT_HELPERS[i].code, "pscope_new_text");
+    if (g->uses_text && makes_text) {
         strbuf_puts(out,
             "static inline char *pscope_new_text(size_t length) {\n"
             "    char *text = malloc(length + 1);\n"
@@ -989,6 +1013,8 @@ void generate(const Program *program, const Config *config, Arena *arena, StrBuf
             "    text[length] = '\\0';\n"
             "    return text;\n"
             "}\n\n");
+    }
+    if (g->uses_text) {
         for (size_t i = 0; i < sizeof TEXT_HELPERS / sizeof TEXT_HELPERS[0]; i++)
             if (strstr(body.data, TEXT_HELPERS[i].name)) strbuf_puts(out, TEXT_HELPERS[i].code);
     }

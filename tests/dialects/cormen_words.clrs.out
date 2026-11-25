@@ -1,0 +1,11 @@
+{(a, c), (c, b), (d, e), (b, d)}
+weighs 11
+TRUE TRUE FALSE TRUE
+a 0
+b 3
+c 1
+d 8
+e 11
+relaxed 6
+{a, b, c, d, e} {b, c}
+{(a, b): 4, (b, a): 4, (a, c): 1, (c, a): 1, (c, b): 2, (b, c): 2, (b, d): 5, (d, b): 5, (c, d): 8, (d, c): 8, (d, e): 3, (e, d): 3}

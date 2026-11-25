@@ -101,7 +101,7 @@ have generated. Every access is checked, and errors say what happened.
 | Plans, entities, mind maps | `examples/diagrams` | a Gantt chart day by day |
 | Lecture notes and papers | `examples/documents` | Markdown and LaTeX, opened like folders |
 | Files and drawings | `examples/libraries` | `d`: what a Portugol program draws |
-| As in Cormen's book | `examples/cormen` | `r` on a procedure: nothing is declared; `graphs.clrs` for sets, `G.V` and `G.Adj[u]`, `btree.clrs` for arrays inside objects |
+| As in Cormen's book | `examples/cormen` | `r` on a procedure: nothing is declared; `graphs.clrs` for sets, `G.V` and `G.Adj[u]`, `btree.clrs` for arrays inside objects, `heap.clrs` for `A.heap-size` and `S.top`, `kruskal.clrs` for the lines the book writes in words |
 
 Components exchange messages over links that delay and lose them; tests say what must
 happen from one end to the other:

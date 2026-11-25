@@ -54,12 +54,15 @@ cli "an algorithm in LaTeX" 1 "$pseudoscope" check bad.tex; has "its line as it 
 printf 'INSIDE(A, B)\n    if A ⊆ B\n        print 1\n' > graph.clrs
 cli "what is not read of Cormen" 1 "$pseudoscope" check graph.clrs; has "said, with the line as written" err "if A ⊆ B"
 cli "Cormen typeset with codebox" 0 "$pseudoscope" check "$here/dialects/codebox.tex"; has "the three procedures" err "3 programs and diagrams checked"
-printf 'S = {1, 2}\nprint S\n' > set.clrs
-cli "a collection printed whole" 1 "$pseudoscope" check set.clrs; has "said how to print it" err "one thing at a time"
+printf 'S = {1, 2}\nprint S, "has", |S|\n' > set.clrs
+cli "a collection printed whole" 0 "$pseudoscope" exec set.clrs; has "as mathematics writes it" out "{1, 2} has 2"
+printf 'x = 1\ncompute the answer to everything\nprint x\n' > words.clrs
+cli "a line in words nobody reads" 0 "$pseudoscope" exec words.clrs; has "said that it is not run" err "this line is in words"; has "and the rest runs" out "1"
+cli "a line in words, with warnings as errors" 1 "$pseudoscope" check -W words.clrs
 printf 'Q = ∅\nfor i = 1 to 5000\n    ENQUEUE(Q, i)\n' > full.clrs
 cli "more elements than there is room for" 1 "$pseudoscope" exec full.clrs; has "said where it was asked" err "line 3: no room is left"
-printf 'let S[1:5] be a new array\nS.top = 0\n' > top.clrs
-cli "an attribute of an array" 1 "$pseudoscope" check top.clrs; has "said what to do instead" err "an array has no attributes here ('top')"
+printf 'BUMP(S)\n    S.top = S.top + 1\n\nlet S[1:5] be a new array\nS.top = 0\nBUMP(S)\nBUMP(S)\nprint S.top\n' > top.clrs
+cli "a number beside an array" 0 "$pseudoscope" exec top.clrs; has "goes where the array goes" out "2"
 printf 'let A[1:2] be a new array\nif 2 ∈ A\n    print 1\n' > member.clrs
 cli "membership in an array" 1 "$pseudoscope" check member.clrs; has "said in words of the writer" err "this is not a collection"
 cli "portuguese" 1 "$pseudoscope" check --lang=pt_BR.UTF-8 bad.plike; has "portuguese text" err "erro: 'x' não está declarado"

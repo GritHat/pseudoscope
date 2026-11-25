@@ -2580,17 +2580,28 @@ static void collection_text(const Vm *vm, Pointer set, const Type *type, int dep
         Pointer c = at->as.p;
         char part[2][40] = {"", ""};
         bool pair = false;
-        for (int i = 0; i < 2; i++) {
-            const Type *object_type = NULL;
+        for (int i = 0; i < 2; i++) { /* an object, a collection, a text, a real: else a whole number */
+            const Type *object_type = NULL, *set_type = NULL, *real_type = NULL;
             const Value *k = slot_at(vm, c, field_slot(cell, i ? "k2_" : "k1_", NULL));
             const Value *o = slot_at(vm, c, field_slot(cell, i ? "o2_" : "o1_", &object_type));
+            const Value *inner = slot_at(vm, c, field_slot(cell, i ? "s2_" : "s1_", &set_type));
+            const Value *t = slot_at(vm, c, field_slot(cell, i ? "t2_" : "t1_", NULL));
+            const Value *x = slot_at(vm, c, field_slot(cell, i ? "r2_" : "r1_", &real_type));
+            bool there = true;
             if (o && o->known && o->kind == V_POINTER && o->as.p.object) {
                 object_word(vm, o->as.p, object_type, part[i], sizeof part[i]);
-                pair |= i == 1;
+            } else if (inner && inner->known && inner->kind == V_POINTER && inner->as.p.object) {
+                if (depth < 2) collection_text(vm, inner->as.p, set_type, depth + 1, part[i], sizeof part[i]);
+                else snprintf(part[i], sizeof part[i], "{\xe2\x80\xa6}");
+            } else if (t && t->known && t->kind == V_TEXT && t->as.i < vm->s.pool_count && vm->pool[t->as.i][0]) {
+                snprintf(part[i], sizeof part[i], "%s", vm->pool[t->as.i]);
+            } else if (x && x->known && (x->kind == V_FLOAT || x->kind == V_DOUBLE) && as_double(*x) != 0) {
+                snprintf(part[i], sizeof part[i], "%.6g", as_double(*x));
             } else {
                 snprintf(part[i], sizeof part[i], "%d", k && k->known ? k->as.i : 0);
-                pair |= i == 1 && k && k->known && k->as.i != 0;
+                there = k && k->known && k->as.i != 0;
             }
+            pair |= i == 1 && there;
         }
         char value[40] = "";
         static const char *const VALUES[] = {"vs_", "vo_", "vt_", "vr_", "vi_", "vb_", NULL};

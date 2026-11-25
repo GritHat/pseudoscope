@@ -262,7 +262,7 @@ msgid "the length of '%s' is not known here: it is neither made here nor taken b
 msgstr ""
 
 #: src/front/cormen.c
-msgid "an array has no attributes here ('%s'): keep that number in a name of its own, and hand it on beside the array"
+msgid "'%s' takes an array with a number beside it: hand it an array by its name"
 msgstr ""
 
 #: src/front/cormen.c
@@ -283,6 +283,10 @@ msgstr ""
 
 #: src/front/cormen.c
 msgid "'%s' gives back a different number of values here than elsewhere"
+msgstr ""
+
+#: src/front/cormen.c
+msgid "this line is in words, and is not one of the sentences that are read: it is not run, and stays to be done"
 msgstr ""
 
 #: src/front/cormen.c
@@ -314,11 +318,23 @@ msgid "unexpected byte 0x%02x"
 msgstr ""
 
 #: src/front/foreign.inc
-msgid "a collection holds whole numbers and objects, and is indexed by them: nothing else"
+msgid "this cannot be kept in a collection, nor be an index"
 msgstr ""
 
 #: src/front/foreign.inc
 msgid "what is indexed by anything takes one index, or two"
+msgstr ""
+
+#: src/front/foreign.inc
+msgid "a collection is sorted in words like these: an array is sorted by a procedure"
+msgstr ""
+
+#: src/front/foreign.inc
+msgid "collections are sorted by whole numbers, or by reals: not by both in one program"
+msgstr ""
+
+#: src/front/foreign.inc
+msgid "to sort by '%s' it must be what the objects have, or where a number is kept for each: and one only in a program"
 msgstr ""
 
 #: src/front/foreign.inc
@@ -334,15 +350,15 @@ msgid "the least of a collection of objects is the one with the least 'key', or 
 msgstr ""
 
 #: src/front/foreign.inc
+msgid "the least and the greatest are of numbers, or of objects with a 'key'"
+msgstr ""
+
+#: src/front/foreign.inc
 msgid "this is not something done with a collection"
 msgstr ""
 
 #: src/front/foreign.inc
 msgid "collections are joined, met, taken away from one another and compared: nothing else"
-msgstr ""
-
-#: src/front/foreign.inc
-msgid "a collection is printed one thing at a time: go through it with 'for each'"
 msgstr ""
 
 #: src/front/foreign.inc src/front/parser.c

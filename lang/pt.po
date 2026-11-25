@@ -262,8 +262,8 @@ msgid "the length of '%s' is not known here: it is neither made here nor taken b
 msgstr "aqui o comprimento de '%s' não é conhecido: não é criado aqui nem recebido pelo procedimento"
 
 #: src/front/cormen.c
-msgid "an array has no attributes here ('%s'): keep that number in a name of its own, and hand it on beside the array"
-msgstr "aqui um vetor não tem atributos ('%s'): guarde esse número em um nome próprio, e passe-o junto com o vetor"
+msgid "'%s' takes an array with a number beside it: hand it an array by its name"
+msgstr "'%s' recebe um vetor com um número ao lado: passe um vetor pelo nome"
 
 #: src/front/cormen.c
 msgid "an array begins at 0 or at 1 here, not at '%s'"
@@ -284,6 +284,10 @@ msgstr "'%s' não tem nada acima com que combinar"
 #: src/front/cormen.c
 msgid "'%s' gives back a different number of values here than elsewhere"
 msgstr "aqui '%s' devolve um número de valores diferente do que em outros lugares"
+
+#: src/front/cormen.c
+msgid "this line is in words, and is not one of the sentences that are read: it is not run, and stays to be done"
+msgstr "esta linha está em palavras, e não é uma das frases que são lidas: não é executada, e fica por fazer"
 
 #: src/front/cormen.c
 msgid "several values at once come from a procedure that gives back several%.0s"
@@ -314,12 +318,24 @@ msgid "unexpected byte 0x%02x"
 msgstr "byte inesperado 0x%02x"
 
 #: src/front/foreign.inc
-msgid "a collection holds whole numbers and objects, and is indexed by them: nothing else"
-msgstr "uma coleção contém números inteiros e objetos, e tem por índices esses: nada mais"
+msgid "this cannot be kept in a collection, nor be an index"
+msgstr "isto não pode ficar em uma coleção, nem servir de índice"
 
 #: src/front/foreign.inc
 msgid "what is indexed by anything takes one index, or two"
 msgstr "o que tem por índice qualquer coisa leva um índice, ou dois"
+
+#: src/front/foreign.inc
+msgid "a collection is sorted in words like these: an array is sorted by a procedure"
+msgstr "com palavras como estas ordena-se uma coleção: um vetor é ordenado por um procedimento"
+
+#: src/front/foreign.inc
+msgid "collections are sorted by whole numbers, or by reals: not by both in one program"
+msgstr "as coleções são ordenadas por números inteiros, ou por reais: não por ambos no mesmo programa"
+
+#: src/front/foreign.inc
+msgid "to sort by '%s' it must be what the objects have, or where a number is kept for each: and one only in a program"
+msgstr "para ordenar por '%s' deve ser um atributo dos objetos, ou onde se guarda um número para cada um: e um só por programa"
 
 #: src/front/foreign.inc
 msgid "whether something is in a collection can be asked: this is not a collection"
@@ -334,16 +350,16 @@ msgid "the least of a collection of objects is the one with the least 'key', or 
 msgstr "o mínimo de uma coleção de objetos é o de menor 'key', ou 'd': estes não têm nem um nem outro"
 
 #: src/front/foreign.inc
+msgid "the least and the greatest are of numbers, or of objects with a 'key'"
+msgstr "o mínimo e o máximo são de números, ou de objetos com um 'key'"
+
+#: src/front/foreign.inc
 msgid "this is not something done with a collection"
 msgstr "isto não se faz com uma coleção"
 
 #: src/front/foreign.inc
 msgid "collections are joined, met, taken away from one another and compared: nothing else"
 msgstr "as coleções se unem, se intersectam, se subtraem e se comparam: nada mais"
-
-#: src/front/foreign.inc
-msgid "a collection is printed one thing at a time: go through it with 'for each'"
-msgstr "uma coleção se escreve um elemento de cada vez: percorra-a com 'for each'"
 
 #: src/front/foreign.inc src/front/parser.c
 msgid "a variable name"

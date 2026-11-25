@@ -229,6 +229,11 @@ static Stmt *foreign_statement(Parser *p, bool *handled) {
     Stmt *stmt;
     *handled = true;
     if (p->config->dialect == DIALECT_PORTUGOL) return portugol_statement(p);
+    if (p->config->cormen && check(p, TOK_IDENT) && strcmp(cur(p)->text, "todo_") == 0) { /* a line in words: left to do */
+        stmt = new_stmt(p, ST_TODO);
+        advance(p);
+        return stmt;
+    }
     switch (cur(p)->kind) {
         case TOK_DECLARE:
             advance(p);
@@ -784,7 +789,7 @@ static void foreign_program(Parser *p) {
 
 /* What a name holds. A collection also says what is in it, when that is known:
  * IN_SET alone, IN_SET + IN_INT, IN_SET + IN_OBJECT. */
-enum { IN_UNKNOWN, IN_BOOL, IN_INT, IN_REAL, IN_TEXT, IN_OBJECT, IN_CELL, IN_SET = 8 };
+enum { IN_UNKNOWN, IN_BOOL, IN_INT, IN_REAL, IN_TEXT, IN_OBJECT, IN_CELL, IN_SET = 8, IN_PAIRS = IN_SET + 6 /* of two objects: edges */ };
 
 /* Objects: what has attributes (x.key, x.next) and can be nothing (nil_). No
  * pseudocode without declarations says what they are made of, so there is one
@@ -806,6 +811,7 @@ static struct {
 } object_fields[64];
 static int object_field_count;
 static bool objects_used, collections_used;
+static bool zeros_used;   /* zero_(): nothing, of whatever kind it is put into */
 static Loc objects_loc;
 static bool infer_changed;
 static bool infer_last;   /* nothing more will tell: what comes out of a collection of who knows what is a whole number */
@@ -861,12 +867,23 @@ static int spec_kind(const TypeSpec *spec) {
     }
 }
 
-/* What a collection of this is said to hold: whole numbers, objects, or it is not known. */
-static int elem_of(int kind) { return kind == IN_OBJECT ? IN_OBJECT : kind == IN_INT || kind == IN_BOOL ? IN_INT : IN_UNKNOWN; }
-static int held(int kind) { return kind >= IN_SET ? kind - IN_SET : IN_UNKNOWN; }
+/* What a collection of this is said to hold: numbers, texts, objects, other collections (7), or it is not known. */
+static int elem_of(int kind) {
+    if (kind >= IN_SET) return 7;
+    return kind == IN_BOOL ? IN_INT : kind == IN_CELL ? IN_UNKNOWN : kind;
+}
+static int held(int kind) { return kind < IN_SET || kind == IN_PAIRS ? IN_UNKNOWN : kind - IN_SET == 7 ? IN_SET : kind - IN_SET; }
 
 static bool calls(const Expr *e, const char *name) {
     return e && e->kind == EX_APPLY && e->base->kind == EX_NAME && strcmp(e->base->text, name) == 0;
+}
+
+static int infer_expr(Infer *in, const Expr *e);
+
+/* What a collection holds, from one thing that goes into it: two objects together are an edge. */
+static int elem_from(Infer *in, const Expr *e) {
+    if (!calls(e, "pair_")) return elem_of(infer_expr(in, e));
+    return e->args.count == 2 && infer_expr(in, e->args.items[0]) == IN_OBJECT && infer_expr(in, e->args.items[1]) == IN_OBJECT ? 6 : IN_UNKNOWN;
 }
 
 static VarDecl *find_in_statements(Stmt *s, const char *name) {
@@ -917,19 +934,25 @@ static int infer_expr(Infer *in, const Expr *e) {
         if (strcmp(n, "set_of_") == 0) {
             int elem = IN_UNKNOWN;
             for (int i = 0; i < e->args.count; i++) {
-                int kind = calls(e->args.items[i], "pair_") ? IN_UNKNOWN : elem_of(infer_expr(in, e->args.items[i]));
+                int kind = elem_from(in, e->args.items[i]);
                 if (kind > elem) elem = kind;
             }
             return IN_SET + elem;
         }
-        if (strcmp(n, "in_") == 0 || strcmp(n, "empty_") == 0 || strcmp(n, "more_") == 0) return IN_BOOL;
+        if (strcmp(n, "in_") == 0 || strcmp(n, "empty_") == 0 || strcmp(n, "more_") == 0 || strcmp(n, "inside_") == 0) return IN_BOOL;
+        if ((strcmp(n, "copy_of_") == 0 || strncmp(n, "sort_", 5) == 0) && first) {
+            int kind = infer_expr(in, first);
+            return kind >= IN_SET ? kind : IN_SET;
+        }
         if (strcmp(n, "count_") == 0) return IN_INT;
         if (strcmp(n, "first_") == 0 || strcmp(n, "next_") == 0) return IN_CELL;
         if (strcmp(n, "item_") == 0) return e->args.count > 1 ? held(infer_expr(in, e->args.items[1])) : IN_UNKNOWN;
-        if (strcmp(n, "item2_") == 0 || strcmp(n, "pair_") == 0) return IN_UNKNOWN;
+        if (strcmp(n, "item1_") == 0 || strcmp(n, "item2_") == 0)
+            return e->args.count > 1 && infer_expr(in, e->args.items[1]) == IN_PAIRS ? IN_OBJECT : IN_UNKNOWN;
+        if (strcmp(n, "pair_") == 0) return IN_UNKNOWN;
         if (strcmp(n, "put_last_") == 0 && e->args.count == 2) {
             int was = infer_expr(in, first);
-            int now = IN_SET + (calls(e->args.items[1], "pair_") ? IN_UNKNOWN : elem_of(infer_expr(in, e->args.items[1])));
+            int now = IN_SET + elem_from(in, e->args.items[1]);
             return was > now ? was : now;
         }
         if (strncmp(n, "take_", 5) == 0 && first) return held(infer_expr(in, first));
@@ -1040,7 +1063,8 @@ static void infer_store(Infer *in, const Expr *target, int kind) {
 
 static bool is_ours(const char *name) {
     static const char *const OURS[] = {"set_", "set_of_", "in_", "empty_", "more_", "count_", "first_", "next_", "item_", "item2_", "pair_",
-                                       "put_last_", "take_first_", "take_last_", "take_min_", "take_max_", NULL};
+                                       "put_last_", "take_first_", "take_last_", "take_min_", "take_max_", "inside_", "copy_of_", "sort_", "item1_",
+                                       "sort_by_", NULL};
     for (int i = 0; OURS[i]; i++)
         if (strcmp(OURS[i], name) == 0) return true;
     return false;
@@ -1078,6 +1102,7 @@ static void infer_uses(Infer *in, const Expr *e) {
             infer_changed = true;
         }
     }
+    if (calls(e, "zero_")) zeros_used = true;
     if (e->kind == EX_APPLY && e->base->kind == EX_NAME && is_ours(e->base->text)) {
         ours_at(e->loc);
         collections_used = true;
@@ -1089,7 +1114,7 @@ static void infer_uses(Infer *in, const Expr *e) {
         }
         if (calls(e, "in_") && e->args.count == 2) { /* x ∈ S: S holds what x is, and x is what S holds */
             const Expr *x = e->args.items[0], *s = e->args.items[1];
-            int kx = calls(x, "pair_") ? IN_UNKNOWN : elem_of(infer_expr(in, x)), ks = infer_expr(in, s);
+            int kx = elem_from(in, x), ks = infer_expr(in, s);
             VarDecl *array = s->kind == EX_NAME ? infer_find(in, s->text) : NULL;
             if (is_place(in, s) && IN_SET + kx > ks && !(array && array->has_dims)) infer_store(in, s, IN_SET + kx);
             if (held(ks) == IN_OBJECT && kx != IN_OBJECT && is_place(in, x)) infer_store(in, x, IN_OBJECT);
@@ -1119,6 +1144,18 @@ static void infer_uses(Infer *in, const Expr *e) {
             if (given && given->is_map != param->is_map) { /* indexed by anything on one side: on the other too */
                 mark_map(given, arg->loc);
                 mark_map(param, arg->loc);
+            }
+            /* what is kept under the keys is what who fills them in puts there */
+            if (given && given->is_map && param->is_map && kind == IN_UNKNOWN && wanted != IN_UNKNOWN) infer_store(in, arg, wanted);
+            /* an array handed to who never looks inside it is an array there too; and what an array holds
+             * is what who fills it in puts there */
+            if (given && !given->is_map && (given->has_dims || (given->spec && given->spec->is_array))) {
+                if (!param->is_map && !param->has_dims && !(param->spec && param->spec->is_array)) {
+                    param->has_dims = true;
+                    for (int k = 0; k < (given->dims.count ? given->dims.count : 1); k++) dim_add(in->p, &param->dims, (Dim){NULL, NULL});
+                    infer_changed = true;
+                }
+                if (kind == IN_UNKNOWN && wanted != IN_UNKNOWN && wanted < IN_OBJECT) infer_store(in, arg, wanted);
             }
             /* what is handed on as an array is one, even where nobody looks inside it */
             if (param->has_dims && arg->kind == EX_NAME) {
@@ -1162,11 +1199,19 @@ static void infer_statements(Infer *in, Stmt *s) {
                     if (place) infer_store(in, b->value, IN_OBJECT);
                     /* and what an object is taken from holds objects */
                     if (calls(b->value, "item_") && b->value->args.count > 1) infer_store(in, b->value->args.items[1], IN_SET + IN_OBJECT);
+                    if ((calls(b->value, "item1_") || calls(b->value, "item2_")) && b->value->args.count > 1 && is_place(in, b->value->args.items[1]))
+                        infer_store(in, b->value->args.items[1], IN_PAIRS);
                     if (b->value->kind == EX_APPLY && b->value->base->kind == EX_NAME && strncmp(b->value->base->text, "take_", 5) == 0 &&
                         b->value->args.count)
                         infer_store(in, b->value->args.items[0], IN_SET + IN_OBJECT);
                 }
                 if (target >= IN_SET && value < target && place) infer_store(in, b->value, target);
+                if ((target == IN_REAL || target == IN_TEXT || target >= IN_SET) && value == IN_UNKNOWN) {
+                    if (calls(b->value, "item_") && b->value->args.count > 1) infer_store(in, b->value->args.items[1], IN_SET + elem_of(target));
+                    if (b->value->kind == EX_APPLY && b->value->base->kind == EX_NAME && strncmp(b->value->base->text, "take_", 5) == 0 &&
+                        b->value->args.count)
+                        infer_store(in, b->value->args.items[0], IN_SET + elem_of(target));
+                }
                 bool taken = b->value->kind == EX_APPLY && b->value->base->kind == EX_NAME &&
                              (strncmp(b->value->base->text, "item", 4) == 0 || strncmp(b->value->base->text, "take_", 5) == 0);
                 if (infer_last && taken && target == IN_UNKNOWN) infer_store(in, b->target, IN_INT);
@@ -1195,6 +1240,7 @@ typedef struct {
 
 static const char OURS_TYPES[] =
     "type cell_ : record\n    k1_ : integer\n    k2_ : integer\n?o{    o1_ : object*\n    o2_ : object*\n}"
+    "?R{    r1_ : real\n    r2_ : real\n}?T{    t1_ : string\n    t2_ : string\n}?S{    s1_ : set_*\n    s2_ : set_*\n}?Q{    rank_ : real\n}"
     "?b{    vb_ : logical\n}?i{    vi_ : integer\n}?r{    vr_ : real\n}?t{    vt_ : string\n}?p{    vo_ : object*\n}?s{    vs_ : set_*\n}"
     "    next_ : cell_*\n    free_ : cell_*\nend\n"
     "type set_ : record\n    first_ : cell_*\n    last_ : cell_*\n    count_ : integer\nend\n"
@@ -1210,6 +1256,7 @@ static const Helper HELPERS[] = {
      "function append_(s : set_*, $K) : set_*\nvar c : cell_*\nbegin\n    if s = 0 then\n        s := new_set_()\n    endif\n"
      "    if spare_ != 0 then\n        c := spare_\n        spare_ := c.free_\n    else\n        cells_used_ := cells_used_ + 1\n"
      "        c := &cells_[cells_used_]\n    endif\n    c.k1_ := k1\n    c.k2_ := k2\n?o{    c.o1_ := o1\n    c.o2_ := o2\n}"
+     "?R{    c.r1_ := r1\n    c.r2_ := r2\n}?T{    c.t1_ := t1\n    c.t2_ := t2\n}?S{    c.s1_ := s1\n    c.s2_ := s2\n}"
      "?b{    c.vb_ := false\n}?i{    c.vi_ := 0\n}?r{    c.vr_ := 0\n}?t{    c.vt_ := \"\"\n}?p{    c.vo_ := 0\n}?s{    c.vs_ := 0\n}"
      "    c.next_ := 0\n    if s.last_ = 0 then\n        s.first_ := c\n    else\n        s.last_.next_ := c\n    endif\n"
      "    s.last_ := c\n    s.count_ := s.count_ + 1\n    append_ := s\nend append_\n"},
@@ -1273,19 +1320,71 @@ static const Helper HELPERS[] = {
     {"get_", "find_",
      "function get_(s : set_*, $K) : cell_*\nvar c : cell_*\nbegin\n    c := find_(s, $A)\n    if c = 0 then\n        c := &none_\n    endif\n"
      "    get_ := c\nend get_\n"},
+    {"take_least_real_", "first_ unlink_",
+     "function take_least_real_(s : set_*, largest : integer) : cell_*\nvar c, best : cell_*\nvar value, least : real\nbegin\n    best := 0\n"
+     "    least := 0\n    c := first_(s)\n    while c != 0 do\n        value := c.r1_\n        if largest = 1 then\n            value := -value\n"
+     "        endif\n        if best = 0 or value < least then\n            best := c\n            least := value\n        endif\n"
+     "        c := c.next_\n    endwhile\n    take_least_real_ := &none_\n    if best != 0 then\n        take_least_real_ := unlink_(s, best)\n"
+     "    endif\nend take_least_real_\n"},
+    {"inside_", "first_ has_",
+     "function inside_(a : set_*, b : set_*) : logical\nvar c : cell_*\nbegin\n    inside_ := true\n    c := first_(a)\n"
+     "    while c != 0 do\n        if not has_(b, $C) then\n            inside_ := false\n        endif\n        c := c.next_\n    endwhile\n"
+     "end inside_\n"},
+    {"rank_self_", "first_",
+     "function rank_self_(s : set_*) : set_*\nvar c : cell_*\nbegin\n    c := first_(s)\n    while c != 0 do\n"
+     "        c.rank_ := c.k1_?R{ + c.r1_}\n        c := c.next_\n    endwhile\n    rank_self_ := s\nend rank_self_\n"},
+    {"rank_by_map_", "first_ get_",
+     "function rank_by_map_(s : set_*, w : set_*) : set_*\nvar c : cell_*\nbegin\n    c := first_(s)\n    while c != 0 do\n"
+     "        c.rank_ := get_(w, $C).$V\n        c := c.next_\n    endwhile\n    rank_by_map_ := s\nend rank_by_map_\n"},
+    {"rank_by_attr_", "first_",
+     "function rank_by_attr_(s : set_*) : set_*\nvar c : cell_*\nbegin\n    c := first_(s)\n    while c != 0 do\n"
+     "        c.rank_ := c.o1_.$Z\n        c := c.next_\n    endwhile\n    rank_by_attr_ := s\nend rank_by_attr_\n"},
+    {"order_", "",
+     "function order_(s : set_*, descending : integer) : set_*\nvar rest, best, before, prev, c : cell_*\nbegin\n    if s != 0 then\n"
+     "        rest := s.first_\n        s.first_ := 0\n        s.last_ := 0\n        while rest != 0 do\n            best := rest\n"
+     "            before := 0\n            prev := rest\n            c := rest.next_\n            while c != 0 do\n"
+     "                if (descending = 0 and c.rank_ < best.rank_) or (descending = 1 and c.rank_ > best.rank_) then\n"
+     "                    best := c\n                    before := prev\n                endif\n                prev := c\n"
+     "                c := c.next_\n            endwhile\n            if before = 0 then\n                rest := best.next_\n"
+     "            else\n                before.next_ := best.next_\n            endif\n            best.next_ := 0\n"
+     "            if s.last_ = 0 then\n                s.first_ := best\n            else\n                s.last_.next_ := best\n"
+     "            endif\n            s.last_ := best\n        endwhile\n    endif\n    order_ := s\nend order_\n"},
+    {"show_part_", "",
+     "procedure show_part_(k : integer?o{, o : object*}?R{, r : real}?T{, t : string}?S{, s : set_*})\nvar shown : logical\nbegin\n"
+     "    shown := false\n?o{    if o != 0 then\n?n{        print(o.$N)\n}?u{        print(\"\xe2\x80\xa2\")\n}        shown := true\n    endif\n}"
+     "?S{    if not shown and s != 0 then\n        show_(s)\n        shown := true\n    endif\n}"
+     "?T{    if not shown and t != \"\" then\n        print(t)\n        shown := true\n    endif\n}"
+     "?R{    if not shown and r != 0 then\n        print(r)\n        shown := true\n    endif\n}"
+     "    if not shown then\n        print(k)\n    endif\nend show_part_\n"},
+    {"show_", "first_ show_part_",
+     "procedure show_(s : set_*)\nvar c : cell_*\nvar pair : logical\nbegin\n    print(\"{\")\n    c := first_(s)\n    while c != 0 do\n"
+     "        pair := c.k2_ != 0?o{ or c.o2_ != 0}?R{ or c.r2_ != 0}?T{ or c.t2_ != \"\"}?S{ or c.s2_ != 0}\n"
+     "        if pair then\n            print(\"(\")\n        endif\n        show_part_($P)\n        if pair then\n"
+     "            print(\", \")\n            show_part_($p)\n            print(\")\")\n        endif\n"
+     "?i{        if c.vi_ != 0 then\n            print(\": \", c.vi_)\n        endif\n}"
+     "?r{        if c.vr_ != 0 then\n            print(\": \", c.vr_)\n        endif\n}"
+     "?t{        if c.vt_ != \"\" then\n            print(\": \", c.vt_)\n        endif\n}"
+     "?p{        if c.vo_ != 0 then\n            print(\": \")\n            show_part_(0, c.vo_?R{, 0}?T{, \"\"}?S{, 0})\n        endif\n}"
+     "?s{        if c.vs_ != 0 then\n            print(\": \")\n            show_(c.vs_)\n        endif\n}"
+     "        c := c.next_\n        if c != 0 then\n            print(\", \")\n        endif\n    endwhile\n    print(\"}\")\nend show_\n"},
 };
 enum { HELPER_COUNT = sizeof HELPERS / sizeof HELPERS[0] };
 
-static unsigned helpers_needed;
+static unsigned long helpers_needed;
 static unsigned values_needed;   /* which of b i r t p s are kept under keys */
+static unsigned keys_needed;     /* which keys there are besides whole numbers and objects: 1 reals, 2 texts, 4 collections */
 static const char *least_key;    /* the attribute objects are ordered by, when the least of them is taken */
+static const char *shown_by;     /* the attribute an object is printed by */
+static const char *sort_value;   /* where the weights are, when a collection is sorted by them */
+static const char *sort_attr;    /* the attribute objects are sorted by */
+static bool sort_used;
 
 static void need(const char *name) {
     for (int i = 0; i < HELPER_COUNT; i++) {
         size_t n = strlen(HELPERS[i].name);
         if (strncmp(HELPERS[i].name, name, n) != 0 || (name[n] && name[n] != ' ')) continue;
-        if (helpers_needed & (1u << i)) return;
-        helpers_needed |= 1u << i;
+        if (helpers_needed & (1ul << i)) return;
+        helpers_needed |= 1ul << i;
         for (const char *more = HELPERS[i].needs; *more; more += strcspn(more, " "), more += *more == ' ') need(more);
         return;
     }
@@ -1297,18 +1396,37 @@ static void ours_text(StrBuf *out, const char *text, size_t length) {
         if (text[i] == '$' && i + 1 < length) {
             const char *macro = NULL;
             switch (text[++i]) {
-                case 'K': macro = "k1 : integer, k2 : integer?o{, o1 : object*, o2 : object*}"; break;
-                case 'A': macro = "k1, k2?o{, o1, o2}"; break;
-                case 'C': macro = "c.k1_, c.k2_?o{, c.o1_, c.o2_}"; break;
-                case 'M': macro = "c.k1_ = k1 and c.k2_ = k2?o{ and c.o1_ = o1 and c.o2_ = o2}"; break;
+                case 'K':
+                    macro = "k1 : integer, k2 : integer?o{, o1 : object*, o2 : object*}?R{, r1 : real, r2 : real}?T{, t1 : string, t2 : string}"
+                            "?S{, s1 : set_*, s2 : set_*}";
+                    break;
+                case 'A': macro = "k1, k2?o{, o1, o2}?R{, r1, r2}?T{, t1, t2}?S{, s1, s2}"; break;
+                case 'C': macro = "c.k1_, c.k2_?o{, c.o1_, c.o2_}?R{, c.r1_, c.r2_}?T{, c.t1_, c.t2_}?S{, c.s1_, c.s2_}"; break;
+                case 'M':
+                    macro = "c.k1_ = k1 and c.k2_ = k2?o{ and c.o1_ = o1 and c.o2_ = o2}?R{ and c.r1_ = r1 and c.r2_ = r2}"
+                            "?T{ and c.t1_ = t1 and c.t2_ = t2}?S{ and same_(c.s1_, s1) and same_(c.s2_, s2)}";
+                    break;
+                case 'P': macro = "c.k1_?o{, c.o1_}?R{, c.r1_}?T{, c.t1_}?S{, c.s1_}"; break;
+                case 'p': macro = "c.k2_?o{, c.o2_}?R{, c.r2_}?T{, c.t2_}?S{, c.s2_}"; break;
+                case 'N': macro = shown_by ? shown_by : "key"; break;
+                case 'V': macro = sort_value ? sort_value : "vi_"; break;
+                case 'Z': macro = sort_attr ? sort_attr : "key"; break;
                 default: macro = least_key ? least_key : "key"; break;
             }
             ours_text(out, macro, strlen(macro));
         } else if (text[i] == '?' && i + 2 < length && text[i + 2] == '{') {
             char what = text[i + 1];
-            const char *close = memchr(text + i + 3, '}', length - i - 3), *value = strchr(VALUES, what);
+            const char *close = NULL, *value = strchr(VALUES, what);
+            int depth = 1; /* one may be inside another */
+            for (size_t k = i + 3; k < length && !close; k++) {
+                if (text[k] == '?' && k + 2 < length && text[k + 2] == '{') depth++;
+                else if (text[k] == '}' && --depth == 0) close = text + k;
+            }
             if (!close) return;
             bool kept = what == 'o' ? objects_used : value && (values_needed & (1u << (value - VALUES)));
+            if (what == 'R' || what == 'T' || what == 'S') kept = keys_needed & (what == 'R' ? 1u : what == 'T' ? 2u : 4u);
+            if (what == 'Q') kept = sort_used;
+            if (what == 'n' || what == 'u') kept = objects_used && (what == 'n') == (shown_by != NULL);
             if (kept) ours_text(out, text + i + 3, (size_t)(close - text - i - 3));
             i = (size_t)(close - text);
         } else {
@@ -1368,23 +1486,74 @@ static const char *value_field(int kind) {
 
 static Expr *lower(Infer *in, Expr *e, int want);
 
-/* A key, as the procedures of ours take it: two whole numbers, then two objects. */
-static void keys(Infer *in, Expr *call, Expr *first, Expr *second) {
+/* A key, as the procedures of ours take it: two whole numbers, then, where
+ * the program has them, two objects, two reals, two texts, two collections.
+ * Which of those there are is known when everything has been looked at: until
+ * then each key is kept aside, with the call it goes into. */
+typedef struct KeyUse {
+    Expr *call;
+    Expr *parts[5][2]; /* whole numbers, objects, reals, texts, collections */
+    struct KeyUse *next;
+} KeyUse;
+static KeyUse *key_uses;
+
+static void keys(Infer *in, Expr *call, Expr *first, Expr *second, int holds) {
     Parser *p = in->p;
-    if (!second && calls(first, "pair_") && first->args.count == 2) second = first->args.items[1], first = first->args.items[0];
-    Expr *parts[2] = {first, second}, *numbers[2], *objects[2];
+    if (!second && calls(first, "pair_") && first->args.count == 2) second = first->args.items[1], first = first->args.items[0], holds = IN_UNKNOWN;
+    Expr *parts[2] = {first, second};
+    KeyUse *use = ARENA_NEW(p->arena, KeyUse);
+    use->call = call;
+    use->next = key_uses;
+    key_uses = use;
     for (int i = 0; i < 2; i++) {
-        int kind = parts[i] ? infer_expr(in, parts[i]) : IN_INT;
-        bool object = parts[i] && kind == IN_OBJECT;
-        if (parts[i] && (kind == IN_TEXT || kind == IN_REAL || kind >= IN_CELL))
-            diag_error(p->diag, parts[i]->loc, "a collection holds whole numbers and objects, and is indexed by them: nothing else");
-        numbers[i] = objects[i] = NULL;
-        if (object) objects[i] = lower(in, parts[i], -1);
-        else if (parts[i] && (kind == IN_INT || kind == IN_BOOL)) numbers[i] = lower(in, parts[i], -1);
-        else if (parts[i]) numbers[i] = ours_call(p, parts[i]->loc, "trunc", lower(in, parts[i], -1), NULL);
+        if (!parts[i]) continue;
+        int kind = infer_expr(in, parts[i]);
+        if (kind == IN_CELL) {
+            diag_error(p->diag, parts[i]->loc, "this cannot be kept in a collection, nor be an index");
+        } else if (kind == IN_OBJECT) {
+            use->parts[1][i] = lower(in, parts[i], -1);
+        } else if (kind >= IN_SET) { /* a collection in a collection: as it is now */
+            keys_needed |= 4;
+            Expr *inner = lower(in, parts[i], -1);
+            use->parts[4][i] = is_place(in, parts[i]) ? ours_call(p, parts[i]->loc, "copy_", inner, NULL) : inner;
+        } else if (kind == IN_TEXT) {
+            keys_needed |= 2;
+            use->parts[3][i] = lower(in, parts[i], -1);
+        } else if (kind == IN_REAL || holds == IN_REAL) {
+            keys_needed |= 1;
+            use->parts[2][i] = lower(in, parts[i], -1);
+        } else if (kind == IN_INT || kind == IN_BOOL) {
+            use->parts[0][i] = lower(in, parts[i], -1);
+        } else {
+            use->parts[0][i] = ours_call(p, parts[i]->loc, "trunc", lower(in, parts[i], -1), NULL);
+        }
     }
-    for (int i = 0; i < 2; i++) list_add(p, &call->args, numbers[i] ? numbers[i] : int_expr(p, call->loc, "0"));
-    for (int i = 0; i < 2 && objects_used; i++) list_add(p, &call->args, objects[i] ? objects[i] : int_expr(p, call->loc, "0"));
+}
+
+static void finish_keys(Parser *p) {
+    for (KeyUse *use = key_uses; use; use = use->next) {
+        for (int kind = 0; kind < 5; kind++) {
+            bool there = kind == 0 || (kind == 1 ? objects_used : (keys_needed & (1u << (kind - 2))) != 0);
+            for (int i = 0; i < 2 && there; i++) {
+                Expr *part = use->parts[kind][i];
+                if (!part) {
+                    part = new_expr(p, kind == 2 ? EX_FLOAT : kind == 3 ? EX_STRING : EX_INT, use->call->loc, NULL, NULL);
+                    part->text = kind == 2 ? "0.0" : kind == 3 ? "" : "0";
+                    part->op = kind == 2 ? TOK_FLOAT : kind == 3 ? TOK_STRING : TOK_INT;
+                }
+                list_add(p, &use->call->args, part);
+            }
+        }
+    }
+    key_uses = NULL;
+}
+
+/* The part of a cell where something of this kind is. */
+static const char *key_field(int kind, bool second) {
+    static const char *const FIELDS[][2] = {{"k1_", "k2_"}, {"o1_", "o2_"}, {"r1_", "r2_"}, {"t1_", "t2_"}, {"s1_", "s2_"}};
+    int which = kind == IN_OBJECT ? 1 : kind == IN_REAL ? 2 : kind == IN_TEXT ? 3 : kind >= IN_SET ? 4 : 0;
+    if (which >= 2) keys_needed |= 1u << (which - 2);
+    return FIELDS[which][second];
 }
 
 static bool is_map_access(Infer *in, const Expr *e) {
@@ -1400,7 +1569,7 @@ static Expr *map_access(Infer *in, Expr *e, bool store) {
     int kind = infer_expr(in, e);
     if (e->args.count > 2) diag_error(p->diag, e->loc, "what is indexed by anything takes one index, or two");
     Expr *call = ours_call(p, e->loc, store ? "slot_" : "get_", lower(in, e->base, -1), NULL);
-    keys(in, call, e->args.items[0], e->args.count > 1 ? e->args.items[1] : NULL);
+    keys(in, call, e->args.items[0], e->args.count > 1 ? e->args.items[1] : NULL, IN_UNKNOWN);
     return ours_field(p, call, value_field(kind));
 }
 
@@ -1420,11 +1589,41 @@ static Expr *lower(Infer *in, Expr *e, int want) {
         if (strcmp(n, "set_") == 0) return ours_call(p, loc, "new_set_", NULL, NULL);
         if (strcmp(n, "set_of_") == 0) {
             Expr *made = ours_call(p, loc, "new_set_", NULL, NULL);
+            int holds = held(infer_expr(in, e)); /* 1 beside 2.5 is a real too, and so it is in a set of reals */
+            if (want >= IN_SET && held(want) > holds) holds = held(want);
             for (int i = 0; i < count; i++) {
                 made = ours_call(p, loc, "add_", made, NULL);
-                keys(in, made, a[i], NULL);
+                keys(in, made, a[i], NULL, holds);
             }
             return made;
+        }
+        if (strcmp(n, "inside_") == 0 && count == 2) return ours_call(p, loc, "inside_", lower(in, a[0], -1), lower(in, a[1], -1));
+        if (strcmp(n, "copy_of_") == 0) return ours_call(p, loc, "copy_", lower(in, a[0], -1), NULL);
+        if (strncmp(n, "sort_", 5) == 0) { /* put in order: by what each is, by an attribute, or by what is kept under it somewhere */
+            if (infer_expr(in, a[0]) < IN_SET) {
+                diag_error(p->diag, loc, "a collection is sorted in words like these: an array is sorted by a procedure");
+                return int_expr(p, loc, "0");
+            }
+            const char *by = n[5] == 'b' && count == 3 ? a[1]->text : NULL;
+            Expr *ranked = NULL, *down = a[count - 1];
+            VarDecl *weights = by ? infer_find(in, by) : NULL;
+            sort_used = true;
+            if (!by) {
+                ranked = ours_call(p, loc, "rank_self_", lower(in, a[0], -1), NULL);
+            } else if (weights && weights->is_map) {
+                const char *field = value_field(spec_kind(weights->spec));
+                if (sort_value && strcmp(sort_value, field) != 0) diag_error(p->diag, loc, "collections are sorted by whole numbers, or by reals: not by both in one program");
+                sort_value = field;
+                ranked = ours_call(p, loc, "rank_by_map_", lower(in, a[0], -1), ours_name(p, loc, weights->name));
+            } else {
+                bool attribute = false;
+                for (int i = 0; i < object_field_count; i++) attribute |= strcmp(object_fields[i].name, by) == 0;
+                if (!attribute || (sort_attr && strcmp(sort_attr, by) != 0))
+                    diag_error(p->diag, loc, "to sort by '%s' it must be what the objects have, or where a number is kept for each: and one only in a program", by);
+                sort_attr = by;
+                ranked = ours_call(p, loc, "rank_by_attr_", lower(in, a[0], -1), NULL);
+            }
+            return ours_call(p, loc, "order_", ranked, down);
         }
         if (strcmp(n, "in_") == 0 && count == 2) {
             if (infer_expr(in, a[1]) < IN_SET) {
@@ -1432,7 +1631,7 @@ static Expr *lower(Infer *in, Expr *e, int want) {
                 return int_expr(p, loc, "0");
             }
             Expr *has = ours_call(p, loc, "has_", lower(in, a[1], -1), NULL);
-            keys(in, has, a[0], NULL);
+            keys(in, has, a[0], NULL, held(infer_expr(in, a[1])));
             return has;
         }
         if (strcmp(n, "count_") == 0) return ours_call(p, loc, "count_", lower(in, a[0], -1), NULL);
@@ -1449,17 +1648,21 @@ static Expr *lower(Infer *in, Expr *e, int want) {
             return ours_call(p, loc, "first_", lower(in, a[0], -1), NULL);
         }
         if (strcmp(n, "next_") == 0) return ours_field(p, a[0], "next_");
-        if (strcmp(n, "item_") == 0 || strcmp(n, "item2_") == 0) {
-            bool object = want == IN_OBJECT || (want < 0 && count > 1 && held(infer_expr(in, a[1])) == IN_OBJECT);
-            return ours_field(p, a[0], n[4] == '2' ? (object ? "o2_" : "k2_") : (object ? "o1_" : "k1_"));
+        if (strncmp(n, "item", 4) == 0) { /* by what the collection holds; else by where it goes */
+            int whole = count > 1 ? infer_expr(in, a[1]) : IN_UNKNOWN, kind = n[4] == '_' ? held(whole) : whole == IN_PAIRS ? IN_OBJECT : IN_UNKNOWN;
+            if (kind == IN_UNKNOWN && want >= 0) kind = want;
+            return ours_field(p, a[0], key_field(kind, n[4] == '2'));
         }
         if (strcmp(n, "put_last_") == 0 && count == 2) {
+            int holds = held(infer_expr(in, e));
             Expr *put = ours_call(p, loc, "append_", lower(in, a[0], -1), NULL);
-            keys(in, put, a[1], NULL);
+            keys(in, put, a[1], NULL, holds);
             return put;
         }
         if (strncmp(n, "take_", 5) == 0) {
-            bool object = want == IN_OBJECT || (want < 0 && held(infer_expr(in, a[0])) == IN_OBJECT);
+            int kind = held(infer_expr(in, a[0]));
+            if (kind == IN_UNKNOWN && want >= 0) kind = want;
+            bool object = kind == IN_OBJECT;
             Expr *taken;
             if (strcmp(n, "take_first_") == 0 || strcmp(n, "take_last_") == 0) {
                 taken = ours_call(p, loc, n, lower(in, a[0], -1), NULL);
@@ -1471,10 +1674,11 @@ static Expr *lower(Infer *in, Expr *e, int want) {
                         if (strcmp(object_fields[i].name, "d") == 0) least_key = "d";
                     if (!least_key) diag_error(p->diag, loc, "the least of a collection of objects is the one with the least 'key', or 'd': these have neither");
                 }
-                taken = ours_call(p, loc, object ? "take_least_object_" : "take_least_", lower(in, a[0], -1),
+                if (kind == IN_TEXT || kind >= IN_SET) diag_error(p->diag, loc, "the least and the greatest are of numbers, or of objects with a 'key'");
+                taken = ours_call(p, loc, object ? "take_least_object_" : kind == IN_REAL ? "take_least_real_" : "take_least_", lower(in, a[0], -1),
                                   int_expr(p, loc, strcmp(n, "take_max_") == 0 ? "1" : "0"));
             }
-            return ours_field(p, taken, object ? "o1_" : "k1_");
+            return ours_field(p, taken, key_field(kind, false));
         }
         diag_error(p->diag, loc, "this is not something done with a collection");
         return e;
@@ -1483,7 +1687,8 @@ static Expr *lower(Infer *in, Expr *e, int want) {
         int left = infer_expr(in, e->base), right = infer_expr(in, e->right);
         if (left >= IN_SET || right >= IN_SET) {
             const char *joined = e->op == TOK_PLUS ? "union_" : e->op == TOK_MINUS ? "minus_" : e->op == TOK_STAR ? "common_" : NULL;
-            if (joined) return ours_call(p, loc, joined, lower(in, e->base, -1), lower(in, e->right, -1));
+            int whole = left > right ? left : right; /* 1 joined to a set of reals is a real */
+            if (joined) return ours_call(p, loc, joined, lower(in, e->base, whole), lower(in, e->right, whole));
             if (e->op == TOK_EQ || e->op == TOK_NE) {
                 if (is_nothing(e->base) || is_nothing(e->right)) { /* S = ∅: there is nothing in it */
                     Expr *count = ours_call(p, loc, "count_", lower(in, is_nothing(e->right) ? e->base : e->right, -1), NULL);
@@ -1521,14 +1726,20 @@ static void lower_assign(Infer *in, Stmt **at) {
         bool plus = v->op == TOK_PLUS;
         Expr *made = lower(in, v->base, -1);
         if (calls(v->right, "set_of_")) {
+            int holds = held(target > value ? target : value);
             for (int i = 0; i < v->right->args.count; i++) {
                 made = ours_call(p, v->loc, plus ? "add_" : "remove_", made, NULL);
-                keys(in, made, v->right->args.items[i], NULL);
+                keys(in, made, v->right->args.items[i], NULL, holds);
             }
         } else {
             made = ours_call(p, v->loc, plus ? "add_all_" : "remove_all_", made, lower(in, v->right, -1));
         }
         s->value = made;
+    } else if (calls(v, "zero_")) {
+        Expr *zero = new_expr(p, target == IN_REAL ? EX_FLOAT : target == IN_TEXT ? EX_STRING : target == IN_BOOL ? EX_BOOL : EX_INT, v->loc, NULL, NULL);
+        zero->text = target == IN_REAL ? "0.0" : target == IN_TEXT ? "" : target == IN_BOOL ? "false" : "0";
+        zero->op = target == IN_REAL ? TOK_FLOAT : target == IN_TEXT ? TOK_STRING : target == IN_BOOL ? TOK_FALSE : TOK_INT;
+        s->value = zero;
     } else if (collections && !ours && is_place(in, v)) {
         s->value = ours_call(p, v->loc, "copy_", lower(in, v, -1), NULL);
     } else {
@@ -1546,19 +1757,72 @@ static void lower_assign(Infer *in, Stmt **at) {
     s->target = map_access(in, t, true);
 }
 
+static bool is_collection_value(Infer *in, const Expr *e) {
+    if (infer_expr(in, e) >= IN_SET) return true;
+    VarDecl *d = e->kind == EX_NAME ? infer_find(in, e->text) : NULL;
+    return (d && d->is_map) || (e->kind == EX_FIELD && field_is_indexed(e->text));
+}
+
+/* print S: what is before it, then S as mathematics writes it, then what is after. */
+static Stmt *lower_print(Infer *in, Stmt **at) {
+    Parser *p = in->p;
+    Stmt *s = *at, *first = NULL, *last = NULL, *run = NULL;
+    for (int i = 0; i < s->args.count; i++) {
+        Expr *arg = s->args.items[i];
+        Stmt *one = run;
+        if (is_collection_value(in, arg)) {
+            one = ARENA_NEW(p->arena, Stmt);
+            one->kind = ST_CALL;
+            one->loc = s->loc;
+            one->value = ours_call(p, arg->loc, "show_", lower(in, arg, -1), NULL);
+            run = NULL;
+        } else if (!run) {
+            one = run = ARENA_NEW(p->arena, Stmt);
+            *run = *s;
+            run->args = (ExprList){0};
+            run->same_line = true;
+        }
+        if (one == run && run) list_add(p, &run->args, lower(in, arg, -1));
+        if (one != last) {
+            if (last) last->next = one;
+            else first = one;
+            last = one;
+        }
+    }
+    if (last->kind == ST_PRINT) {
+        last->same_line = s->same_line;
+    } else if (!s->same_line) { /* the end of the line */
+        Stmt *end = ARENA_NEW(p->arena, Stmt);
+        *end = *s;
+        end->args = (ExprList){0};
+        Expr *nothing = new_expr(p, EX_STRING, s->loc, NULL, NULL);
+        nothing->text = "";
+        nothing->op = TOK_STRING;
+        list_add(p, &end->args, nothing);
+        last->next = end;
+        last = end;
+    }
+    last->next = s->next;
+    *at = first;
+    return last;
+}
+
 static void lower_statements(Infer *in, Stmt **list) {
-    for (Stmt **at = list; *at; at = &(*at)->next) {
+    Stmt **at = list;
+    while (*at) {
         Stmt *s = *at;
         if (s->kind == ST_ASSIGN) {
-            lower_assign(in, at);
-            if (*at != s) at = &(*at)->next; /* past what was put before it */
+            lower_assign(in, at); /* something may have been put before it */
+            at = &s->next;
+            continue;
+        }
+        bool whole = false;
+        for (int i = 0; s->kind == ST_PRINT && i < s->args.count; i++) whole |= is_collection_value(in, s->args.items[i]);
+        if (whole) {
+            at = &lower_print(in, at)->next;
             continue;
         }
         for (Stmt *b = s; b; b = b->otherwise) {
-            if (b->kind == ST_PRINT)
-                for (int i = 0; i < b->args.count; i++)
-                    if (infer_expr(in, b->args.items[i]) >= IN_SET)
-                        diag_error(in->p->diag, b->args.items[i]->loc, "a collection is printed one thing at a time: go through it with 'for each'");
             b->target = lower(in, b->target, -1);
             b->value = lower(in, b->value, -1);
             b->limit = lower(in, b->limit, -1);
@@ -1566,6 +1830,7 @@ static void lower_statements(Infer *in, Stmt **list) {
             for (int i = 0; i < b->args.count; i++) b->args.items[i] = lower(in, b->args.items[i], -1);
             lower_statements(in, &b->body);
         }
+        at = &s->next;
     }
 }
 
@@ -1595,6 +1860,15 @@ static void objects_statements(Stmt *s) {
     }
 }
 
+static void ours_prints(Stmt *s) {
+    for (; s; s = s->next) {
+        for (Stmt *b = s; b; b = b->otherwise) {
+            if (b->kind == ST_PRINT) b->same_line = b->joined = true;
+            ours_prints(b->body);
+        }
+    }
+}
+
 /* The kind of object there is, the store objects are taken from, what
  * collections are made of and the procedures that work on them: written in
  * the base language, which has all it takes, and added to the program. */
@@ -1613,9 +1887,15 @@ static void add_ours(Parser *p) {
                            "    new_object_ := &objects_[objects_used_]\nend new_object_\n");
     }
     if (collections_used) {
+        static const char *const BY[] = {"name", "key", "id", NULL};
+        shown_by = NULL;
+        for (int k = 0; BY[k] && !shown_by; k++)
+            for (int i = 0; i < object_field_count; i++)
+                if (strcmp(object_fields[i].name, BY[k]) == 0 && !object_fields[i].indexed && object_fields[i].kind < IN_OBJECT) shown_by = BY[k];
+        if (keys_needed & 4) need("same_");
         ours_text(&text, OURS_TYPES, strlen(OURS_TYPES));
         for (int i = 0; i < HELPER_COUNT; i++)
-            if (helpers_needed & (1u << i)) ours_text(&text, HELPERS[i].text, strlen(HELPERS[i].text));
+            if (helpers_needed & (1ul << i)) ours_text(&text, HELPERS[i].text, strlen(HELPERS[i].text));
     }
     Source source = {"objects", arena_strndup(p->arena, text.data, text.length), text.length, NULL};
     strbuf_free(&text);
@@ -1635,6 +1915,7 @@ static void add_ours(Parser *p) {
     for (Function *f = more->functions; f; f = f->next) {
         f->loc = objects_loc;
         f->is_quiet = true;
+        if (strncmp(f->name, "show_", 5) == 0) ours_prints(f->body); /* piece after piece, on one line */
     }
     for (Function *f = p->program->functions; f; f = f->next) objects_statements(f->body);
 }
@@ -1674,9 +1955,11 @@ static void finish_maps(Parser *p, VarDecl *d, Function *maker) {
 
 static void infer_types(Parser *p) {
     object_field_count = 0;
-    objects_used = collections_used = false;
-    helpers_needed = values_needed = 0;
-    least_key = NULL;
+    objects_used = collections_used = zeros_used = false;
+    helpers_needed = values_needed = keys_needed = 0;
+    least_key = sort_value = sort_attr = NULL;
+    sort_used = false;
+    key_uses = NULL;
     for (const char *name = p->config->cormen ? p->config->shared : NULL; name && *name; name += strcspn(name, " "), name += *name == ' ') {
         VarDecl *d = ARENA_NEW(p->arena, VarDecl); /* what the procedures of Cormen's book share */
         d->name = arena_strndup(p->arena, name, strcspn(name, " "));
@@ -1711,7 +1994,7 @@ static void infer_types(Parser *p) {
     finish_decls(p, p->program->globals);
     for (int i = 0; i < object_field_count; i++)
         if (object_fields[i].kind == IN_UNKNOWN) object_fields[i].kind = IN_INT;
-    if (collections_used) {
+    if (collections_used || zeros_used) {
         for (Function *f = p->program->functions; f; f = f->next) {
             Infer in = {p, f};
             lower_statements(&in, &f->body);
@@ -1721,6 +2004,7 @@ static void infer_types(Parser *p) {
             finish_maps(p, f->locals, f);
         }
         finish_maps(p, p->program->globals, main_function);
+        finish_keys(p);
     }
     if (objects_used || collections_used) add_ours(p);
 }

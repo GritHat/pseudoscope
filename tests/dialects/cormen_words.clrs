@@ -1,0 +1,107 @@
+// What the book says in words: making a list of the edges, sorting it by
+// weight, going through it in order, asking what a call changed. And sets
+// printed whole, compared, and one inside another.
+MAKE-SET(x)
+    x.p = x
+    x.rank = 0
+
+FIND-SET(x)
+    if x ≠ x.p
+        x.p = FIND-SET(x.p)
+    return x.p
+
+LINK(x, y)
+    if x.rank > y.rank
+        y.p = x
+    else x.p = y
+        if x.rank == y.rank
+            y.rank = y.rank + 1
+
+UNION(x, y)
+    LINK(FIND-SET(x), FIND-SET(y))
+
+MST-KRUSKAL(G, w)
+    A = ∅
+    for each vertex v ∈ G.V
+        MAKE-SET(v)
+    create a single list of the edges in G.E
+    sort the list of edges into monotonically increasing order by weight w
+    for each edge (u, v) taken from the sorted list in order
+        if FIND-SET(u) ≠ FIND-SET(v)
+            A = A ∪ {(u, v)}
+            UNION(u, v)
+    return A
+
+MST-KRUSKAL-OLD(G, w)
+    A = ∅
+    for each vertex v ∈ G.V
+        MAKE-SET(v)
+    sort the edges of G.E into nondecreasing order by weight w
+    for each edge (u, v) ∈ G.E, taken in nondecreasing order by weight
+        if FIND-SET(u) ≠ FIND-SET(v)
+            A = A ∪ {(u, v)}
+            UNION(u, v)
+    return A
+
+INITIALIZE-SINGLE-SOURCE(G, s)
+    for each vertex v ∈ G.V
+        v.d = ∞
+        v.π = NIL
+    s.d = 0
+
+RELAX(u, v, w)
+    if v.d > u.d + w(u, v)
+        v.d = u.d + w(u, v)
+        v.π = u
+
+DIJKSTRA(G, w, s)
+    INITIALIZE-SINGLE-SOURCE(G, s)
+    S = ∅
+    Q = ∅
+    for each vertex u ∈ G.V
+        INSERT(Q, u)
+    while Q ≠ ∅
+        u = EXTRACT-MIN(Q)
+        S = S ∪ {u}
+        for each vertex v in G.Adj[u]
+            RELAX(u, v, w)
+            if the call of RELAX decreased v.d
+                DECREASE-KEY(Q, v, v.d)
+                changes = changes + 1
+
+EDGE(G, w, u, v, weight)
+    G.E = G.E ∪ {(u, v)}
+    G.Adj[u] = G.Adj[u] ∪ {v}
+    G.Adj[v] = G.Adj[v] ∪ {u}
+    w[u, v] = weight
+    w[v, u] = weight
+
+let G be a new graph
+let a, b, c, d, e be new vertices
+a.name = "a"
+b.name = "b"
+c.name = "c"
+d.name = "d"
+e.name = "e"
+G.V = {a, b, c, d, e}
+EDGE(G, w, a, b, 4)
+EDGE(G, w, a, c, 1)
+EDGE(G, w, c, b, 2)
+EDGE(G, w, b, d, 5)
+EDGE(G, w, c, d, 8)
+EDGE(G, w, d, e, 3)
+T = MST-KRUSKAL(G, w)
+print T
+total = 0
+for each edge (u, v) ∈ T
+    total = total + w(u, v)
+print "weighs", total
+T3 = MST-KRUSKAL-OLD(G, w)
+print T3 == T, T3 ⊆ G.E, G.E ⊆ T3, T3 ⊂ G.E
+changes = 0
+DIJKSTRA(G, w, a)
+for each vertex v ∈ G.V
+    print v.name, v.d
+print "relaxed", changes
+print G.V, G.Adj[a]
+print w

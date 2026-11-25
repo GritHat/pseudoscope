@@ -103,7 +103,7 @@ aconteceu.
 | Planos, entidades, mapas mentais | `examples/diagrams` | um Gantt dia a dia |
 | Anotações e artigos | `examples/documents` | Markdown e LaTeX, abertos como pastas |
 | Arquivos e desenhos | `examples/libraries` | `d`: o que um programa em Portugol desenha |
-| Como no livro de Cormen | `examples/cormen` | `r` sobre um procedimento: nada é declarado; `graphs.clrs` para conjuntos, `G.V` e `G.Adj[u]`, `btree.clrs` para os vetores dentro dos objetos |
+| Como no livro de Cormen | `examples/cormen` | `r` sobre um procedimento: nada é declarado; `graphs.clrs` para conjuntos, `G.V` e `G.Adj[u]`, `btree.clrs` para os vetores dentro dos objetos, `heap.clrs` para `A.heap-size` e `S.top`, `kruskal.clrs` para as linhas que o livro escreve em palavras |
 
 Os componentes trocam mensagens por ligações que as atrasam e as perdem; os testes dizem
 o que deve acontecer de uma ponta à outra:

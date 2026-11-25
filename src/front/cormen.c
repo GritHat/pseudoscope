@@ -33,6 +33,19 @@ typedef struct {
     bool array;          /* made as an array */
 } Seen;
 
+/* A number an array has beside it (A.heap-size, S.top): kept in a name of its
+ * own, which goes wherever the array goes. */
+typedef struct {
+    int proc, param;
+    char name[24];
+} Companion;
+
+/* Something named with a dot after a name: an attribute of an array, if the name is one. */
+typedef struct {
+    int context;
+    char base[32], name[24];
+} Dotted;
+
 /* A call: who makes it, and the names it hands on. */
 typedef struct {
     char name[64];
@@ -63,6 +76,11 @@ typedef struct {
     Call *calls;
     int call_count;
     StrBuf shared;       /* the names the procedures share */
+    Companion *companions;
+    int companion_count;
+    Dotted *dotted;
+    int dotted_count;
+    const char *was;     /* "if the call of RELAX decreased v.d", on the line after this one: what to remember */
     const char *targets; /* (a, b) = F(x): where what F gives back goes */
 } Rewriter;
 
@@ -121,7 +139,24 @@ static const char *closing(const char *s, const char *end) {
     return NULL;
 }
 
-enum { MAX_SEEN = 768, MAX_CALLS = 192 };
+enum { MAX_SEEN = 768, MAX_CALLS = 192, MAX_COMPANIONS = 96, MAX_DOTTED = 256 };
+
+static bool add_companion(Rewriter *r, int proc, int param, const char *name) {
+    for (int i = 0; i < r->companion_count; i++)
+        if (r->companions[i].proc == proc && r->companions[i].param == param && strcmp(r->companions[i].name, name) == 0) return false;
+    if (r->companion_count == MAX_COMPANIONS) return false;
+    Companion *c = &r->companions[r->companion_count++];
+    c->proc = proc;
+    c->param = param;
+    snprintf(c->name, sizeof c->name, "%s", name);
+    return true;
+}
+
+static bool has_companions(const Rewriter *r, const Proc *proc) {
+    for (int i = 0; i < r->companion_count; i++)
+        if (r->companions[i].proc == (int)(proc - r->procs)) return true;
+    return false;
+}
 
 /* Whether something is ever put in this name, anywhere: else, in capitals, it is a word that stands for itself (WHITE). */
 static bool ever_written(const Rewriter *r, const char *name) {
@@ -156,6 +191,10 @@ static size_t operand_start(const StrBuf *out) {
             }
         } else if (i && (is_word(out->data[i - 1]) || out->data[i - 1] == '@' || out->data[i - 1] == '.')) {
             while (i && (is_word(out->data[i - 1]) || out->data[i - 1] == '@' || out->data[i - 1] == '.')) i--;
+        } else if (i && out->data[i - 1] == '"' && i == out->length) { /* a text */
+            size_t open = i - 1;
+            while (open && out->data[open - 1] != '"') open--;
+            return open ? open - 1 : i;
         } else {
             return i;
         }
@@ -268,6 +307,24 @@ static const char *expression(Rewriter *r, const char *s, size_t n) {
             s = stop;
             continue;
         }
+        static const char *const INSIDE[] = {"\xe2\x8a\x86", "\xe2\x8a\x82", "\xe2\x8a\x87", "\xe2\x8a\x83"};
+        int inside = -1;
+        for (int i = 0; i < 4 && s + 3 <= end; i++)
+            if (strncmp(s, INSIDE[i], 3) == 0) inside = i;
+        if (inside >= 0) { /* A ⊆ B, A ⊂ B, and the other way round */
+            while (out.length && out.data[out.length - 1] == ' ') out.data[--out.length] = '\0';
+            size_t from = operand_start(&out);
+            const char *left = arena_strndup(r->arena, out.data + from, out.length - from);
+            out.length = from;
+            out.data[from] = '\0';
+            s += 3;
+            const char *stop = operand_end(s, end), *right = expression(r, s, (size_t)(stop - s));
+            const char *small = inside < 2 ? left : right, *large = inside < 2 ? right : left;
+            if (inside % 2 == 0) strbuf_printf(&out, "inside_(%s, %s)", small, large);
+            else strbuf_printf(&out, "(inside_(%s, %s) Y count_(%s) < count_(%s))", small, large, small, large);
+            s = stop;
+            continue;
+        }
         if (*s == '{') { /* a set, written out */
             const char *stop = operand_end(s, end);
             strbuf_puts(&out, "set_of_(");
@@ -329,8 +386,13 @@ static const char *expression(Rewriter *r, const char *s, size_t n) {
                     for (int i = 0; r->proc && i < r->proc->param_count; i++)
                         array |= (r->proc->arrays & (1u << i)) && strcmp(r->proc->params[i], base) == 0;
                 }
-                if (array) problem(r, "an array has no attributes here ('%s'): keep that number in a name of its own, and hand it on beside the array",
-                                   arena_strndup(r->arena, name, length));
+                if (array) { /* A.heap-size: the number the array has beside it */
+                    out.data[out.length] = '\0';
+                    strbuf_puts(&out, "_");
+                    for (size_t i = 0; i < length; i++) strbuf_append(&out, name[i] == '-' ? "_" : name + i, 1);
+                    s = name + length;
+                    continue;
+                }
                 strbuf_puts(&out, ".@");
                 for (size_t i = 0; i < length; i++) strbuf_append(&out, name[i] == '-' ? "_" : name + i, 1);
             }
@@ -373,10 +435,10 @@ static const char *expression(Rewriter *r, const char *s, size_t n) {
         }
         /* a procedure that asks for the length of what it takes, or gives back more than one value */
         const Proc *called = s < end && *s == '(' ? proc_named(r, word) : NULL;
-        const char *shut = called && (called->lengths || called->values > 1) ? closing(s, end) : NULL;
+        const char *shut = called && (called->lengths || called->values > 1 || has_companions(r, called)) ? closing(s, end) : NULL;
         if (shut) {
             strbuf_printf(&out, "@%s(", word);
-            const char *from = s + 1, *lengths = "";
+            const char *from = s + 1, *lengths = "", *given[12] = {0};
             int depth = 0, index = 0;
             for (const char *c = s + 1; c <= shut; c++) {
                 if (*c == '[' || *c == '(') depth++;
@@ -384,6 +446,9 @@ static const char *expression(Rewriter *r, const char *s, size_t n) {
                 if (c < shut && !(*c == ',' && depth == 0)) continue;
                 while (from < c && *from == ' ') from++;
                 if (c > from) strbuf_printf(&out, "%s%s", index ? ", " : "", expression(r, from, (size_t)(c - from)));
+                size_t n3 = (size_t)(c - from);
+                while (n3 && from[n3 - 1] == ' ') n3--;
+                if (index < 12) given[index] = arena_strndup(r->arena, from, n3);
                 if (called->lengths & (1u << index)) {
                     size_t n2 = (size_t)(c - from);
                     while (n2 && from[n2 - 1] == ' ') n2--;
@@ -393,6 +458,15 @@ static const char *expression(Rewriter *r, const char *s, size_t n) {
                 }
                 from = c + 1;
                 index++;
+            }
+            for (int i = 0; i < r->companion_count; i++) { /* the numbers its arrays have beside them */
+                const Companion *with = &r->companions[i];
+                if (with->proc != (int)(called - r->procs)) continue;
+                const char *array = with->param < 12 && given[with->param] ? given[with->param] : "";
+                bool name = *array != '\0';
+                for (const char *c = array; *c; c++) name = name && is_word(*c);
+                if (!name) problem(r, "'%s' takes an array with a number beside it: hand it an array by its name", called->name);
+                lengths = arena_printf(r->arena, "%s, @%s_%s", lengths, name ? array : "x", with->name);
             }
             strbuf_printf(&out, "%s%s%s)", lengths, r->targets ? ", " : "", r->targets ? r->targets : "");
             r->targets = NULL;
@@ -460,6 +534,48 @@ static const char *word_in(const char *s, const char *word) {
 }
 
 static const char *statement(Rewriter *r, const char *s, int indent);
+
+/* "... into nonincreasing order by weight w": which way, and by what ("" by what each is). */
+static const char *sorting(Rewriter *r, const char *words, bool *down) {
+    *down = word_in(words, "nonincreasing") || word_in(words, "decreasing") || word_in(words, "descending") || word_in(words, "largest");
+    const char *by = word_in(words, "by");
+    if (!by) return "";
+    const char *end = by + strlen(by);
+    while (end > by && !is_word(end[-1])) end--;
+    const char *key = end;
+    while (key > by + 2 && (is_word(key[-1]) || key[-1] == '-')) key--;
+    char *name = arena_strndup(r->arena, key, (size_t)(end - key));
+    for (char *c = name; *c; c++)
+        if (*c == '-') *c = '_';
+    return strcmp(name, "weight") == 0 || strcmp(name, "weights") == 0 ? "w" : name; /* the book's name for them */
+}
+
+/* What a sentence speaks of: "the edges of G.E" is G.E, "the list of edges" the list made a line above, "list B[i]" is B[i]. */
+static const char *spoken_of(Rewriter *r, const char *words, size_t n) {
+    char *text = arena_strndup(r->arena, words, n);
+    const char *of = word_in(text, "of"), *in = word_in(text, "in"), *from = text, *rest;
+    if ((rest = after_word(from, "the"))) from = rest;
+    if (in) of = in;
+    if (of && of[2] && !word_in(from, "list")) from = of + 2;
+    else if (of && of[2] && (isupper((unsigned char)of[2 + strspn(of + 2, " ")]) || strchr(of + 2, '.'))) from = of + 2;
+    else if ((rest = after_word(from, "sorted"))) from = rest;
+    if ((rest = after_word(from, "list")) || (rest = after_word(from, "lists"))) {
+        if (!*rest || after_word(rest, "of") || !(isupper((unsigned char)*rest) || strchr(rest, '.') || strchr(rest, '['))) return "list_";
+        from = rest;
+    }
+    while (*from == ' ') from++;
+    const char *end = operand_end(from, from + strlen(from));
+    return end > from ? expression(r, from, (size_t)(end - from)) : NULL;
+}
+
+/* A line in words, with no sign in it: neither a call nor anything that is worked out. */
+static bool in_words(const char *s) {
+    size_t first = 0;
+    while (islower((unsigned char)s[first])) first++;
+    if (first < 2 || s[first] != ' ') return false;
+    size_t next = first + strspn(s + first, " ");
+    return isalpha((unsigned char)s[next]) && !strpbrk(s, "=<>+*/\xe2");
+}
 
 static void push(Rewriter *r, char kind, int indent) {
     if (r->depth < 64) r->open[r->depth++] = (Open){.indent = indent, .kind = kind};
@@ -549,15 +665,31 @@ static const char *statement(Rewriter *r, const char *s, int indent) {
         if (each || word_in(rest, "in") || strstr(rest, "\xe2\x88\x88")) { /* for each x in A: one after the other */
             const char *from = each ? each : rest, *in = word_in(from, "in"), *sign = strstr(from, "\xe2\x88\x88");
             const char *cut = sign && (!in || sign < in) ? sign : in;
+            const char *listed = strstr(from, " taken from "), *ordered = NULL; /* "for each edge (u, v) taken from the sorted list in order" */
+            if (!listed) listed = strstr(from, " from the ");
+            if (listed && (!sign || listed < sign) && strstr(listed, "list")) cut = listed;
+            else listed = NULL;
             if (cut) {
-                const char *array = cut + (cut == in ? 2 : 3);
+                const char *array = cut + (listed ? 0 : cut == in ? 2 : 3);
                 while (*array == ' ') array++;
                 array = arena_strndup(r->arena, array, without(array, strlen(array), "do"));
+                char *taken = listed ? NULL : (char *)strstr(array, ", taken"); /* "∈ G.E, taken in nondecreasing order by weight" */
+                if (!taken && !listed) taken = (char *)strstr(array, " taken in ");
+                if (!taken && !listed) taken = (char *)strstr(array, ", in ");
+                if (taken) {
+                    bool down;
+                    const char *by = sorting(r, taken, &down);
+                    *taken = '\0';
+                    const char *whole = all(r, array);
+                    ordered = *by ? arena_printf(r->arena, "sort_by_(copy_of_(%s), \"%s\", %d)", whole, by, down)
+                                  : arena_printf(r->arena, "sort_(copy_of_(%s), %d)", whole, down);
+                }
+                if (listed) ordered = "list_";
                 const char *end = cut;
                 while (end > from && end[-1] == ' ') end--;
                 const char *name = end;
                 while (name > from && (is_word(name[-1]) || name[-1] == '\'')) name--;
-                const char *known = name < end ? length_of(r, array) : NULL;
+                const char *known = name < end && !ordered ? length_of(r, array) : NULL;
                 if (known) {
                     const char *index = arena_printf(r->arena, "each_%d_", r->depth);
                     push(r, 'f', indent);
@@ -565,7 +697,7 @@ static const char *statement(Rewriter *r, const char *s, int indent) {
                                         all(r, arena_printf(r->arena, "%s[%s]", array, index)));
                 }
                 /* a collection: from its first to its last */
-                const char *at = arena_printf(r->arena, "at_%d_", r->depth), *through = all(r, array), *takes = NULL;
+                const char *at = arena_printf(r->arena, "at_%d_", r->depth), *through = ordered ? ordered : all(r, array), *takes = NULL;
                 if (name < end) {
                     takes = arena_printf(r->arena, "%s <- item_(%s, %s)", expression(r, name, (size_t)(end - name)), at, through);
                 } else if (end > from && end[-1] == ')') { /* for each edge (u, v) ∈ G.E */
@@ -573,8 +705,8 @@ static const char *statement(Rewriter *r, const char *s, int indent) {
                     while (open > from && *open != '(') open--;
                     const char *comma = pair_comma(open, (size_t)(end - open));
                     if (comma)
-                        takes = arena_printf(r->arena, "%s <- item_(%s); %s <- item2_(%s)", expression(r, open + 1, (size_t)(comma - open - 1)), at,
-                                             expression(r, comma + 1, (size_t)(end - 1 - comma - 1)), at);
+                        takes = arena_printf(r->arena, "%s <- item1_(%s, %s); %s <- item2_(%s, %s)", expression(r, open + 1, (size_t)(comma - open - 1)), at,
+                                             through, expression(r, comma + 1, (size_t)(end - 1 - comma - 1)), at, through);
                 }
                 if (takes) {
                     push(r, 'w', indent);
@@ -625,7 +757,17 @@ static const char *statement(Rewriter *r, const char *s, int indent) {
         if (otherwise) top->nested++;
         else push(r, 'i', indent);
         const char *then = word_in(rest, "then");
-        const char *condition = expression(r, rest, then ? (size_t)(then - rest) : strlen(rest));
+        const char *condition = NULL, *call = after_word(rest, "the");
+        if (call && (call = after_word(call, "call"))) { /* "if the call of RELAX decreased v.d": against what it was a line above */
+            static const char *const VERBS[][2] = {{"decreased", "<"}, {"increased", ">"}, {"changed", "<>"}};
+            for (int i = 0; i < 3 && !condition; i++) {
+                const char *verb = word_in(call, VERBS[i][0]);
+                if (!verb) continue;
+                const char *what = verb + strlen(VERBS[i][0]);
+                condition = arena_printf(r->arena, "%s %s was_", expression(r, what, then ? (size_t)(then - what) : strlen(what)), VERBS[i][1]);
+            }
+        }
+        if (!condition) condition = expression(r, rest, then ? (size_t)(then - rest) : strlen(rest));
         const char *same_line = then && then[4] && strspn(then + 4, " \t") < strlen(then + 4) ? then + 4 + strspn(then + 4, " \t") : NULL;
         int before = r->depth;
         const char *inner = same_line ? statement(r, same_line, indent + (int)(same_line - s)) : "";
@@ -682,7 +824,8 @@ static const char *statement(Rewriter *r, const char *s, int indent) {
         }
         return arena_printf(r->arena, "res_ <- %s; Retornar", all(r, rest));
     }
-    if ((rest = after_word(s, "error"))) return arena_printf(r->arena, "Escribir \"error: \", %s; Retornar", *rest ? all(r, rest) : "\"\"");
+    if ((rest = after_word(s, "error"))) /* and nothing comes back: what stands for nothing, of the kind that was to come */
+        return arena_printf(r->arena, "Escribir \"error: \", %s; %sRetornar", *rest ? all(r, rest) : "\"\"", r->value ? "res_ <- zero_(); " : "");
     if ((rest = after_word(s, "print"))) { /* one thing after the other, a blank between them */
         StrBuf out = {0};
         strbuf_puts(&out, "Escribir ");
@@ -720,6 +863,37 @@ static const char *statement(Rewriter *r, const char *s, int indent) {
         }
     }
     if ((rest = after_word(s, "let"))) return let(r, rest);
+    /* the sentences the book writes in words, where what they mean is one thing only */
+    if ((rest = after_word(s, "sort")) && in_words(s)) { /* "sort the edges of G.E into nondecreasing order by weight w" */
+        size_t about = strlen(rest);
+        static const char *const ENDS[] = {" into ", " in ", " by ", " with ", " using ", NULL};
+        for (int i = 0; ENDS[i]; i++) {
+            const char *end = strstr(rest, ENDS[i]);
+            if (end && (size_t)(end - rest) < about && !(i == 1 && (isupper((unsigned char)end[4]) || strchr(end + 4, '.')))) about = (size_t)(end - rest);
+        }
+        bool down;
+        const char *by = sorting(r, rest + about, &down), *what = spoken_of(r, rest, about);
+        if (what)
+            return *by ? arena_printf(r->arena, "%s <- sort_by_(%s, \"%s\", %d)", what, what, by, down)
+                       : arena_printf(r->arena, "%s <- sort_(%s, %d)", what, what, down);
+    }
+    if (((rest = after_word(s, "create")) || (rest = after_word(s, "make"))) && in_words(s) && word_in(rest, "list")) {
+        const char *what = spoken_of(r, rest, strlen(rest)); /* "create a single list of the edges in G.E" */
+        if (what && strcmp(what, "list_") != 0) return arena_printf(r->arena, "list_ <- copy_of_(%s)", what);
+    }
+    if ((rest = after_word(s, "insert")) || (rest = after_word(s, "add")) || (rest = after_word(s, "remove")) || (rest = after_word(s, "delete"))) {
+        bool taking = s[0] == 'r' || s[0] == 'd'; /* "insert x into list L", "add x to S", "remove x from S" */
+        const char *to = taking ? strstr(rest, " from ") : strstr(rest, " into ");
+        if (!to && !taking) to = strstr(rest, " onto ");
+        if (!to && !taking) to = strstr(rest, " to ");
+        const char *where = to ? spoken_of(r, strchr(to + 1, ' ') + 1, strlen(strchr(to + 1, ' ') + 1)) : NULL;
+        if (where && strcmp(where, "list_") != 0 && *rest != '(') {
+            const char *thing = element(r, rest, (size_t)(to - rest));
+            if (taking) return arena_printf(r->arena, "%s <- %s - set_of_(%s)", where, where, thing);
+            if (s[0] == 'a') return arena_printf(r->arena, "%s <- %s + set_of_(%s)", where, where, thing);
+            return arena_printf(r->arena, "%s <- put_last_(%s, %s)", where, where, thing);
+        }
+    }
     /* ENQUEUE(Q, x), PUSH(S, x): what is done with queues and stacks, if the writer has no procedure of that name */
     size_t named = 0;
     while (is_word(s[named]) || (s[named] == '-' && isalpha((unsigned char)s[named + 1]))) named++;
@@ -756,6 +930,10 @@ static const char *statement(Rewriter *r, const char *s, int indent) {
         } else if (depth == 0 && *c == '=' && c[1] != '=' && c > s && !strchr("<>!=", c[-1])) {
             cuts[count++] = c;
         }
+    }
+    if (!count && in_words(s)) { /* a line in words that says something else: it is not run */
+        diag_warning(r->diag, (Loc){r->line, 1}, "this line is in words, and is not one of the sentences that are read: it is not run, and stays to be done");
+        return "todo_";
     }
     if (!count) return all(r, s);
     if (count == 1 && *s == '(' && closing(s, cuts[0]) && closing(s, cuts[0]) + 1 + strspn(closing(s, cuts[0]) + 1, " ") == cuts[0]) {
@@ -1015,6 +1193,8 @@ static void line_names(Rewriter *r, int context, const char *s) {
 static void survey(Rewriter *r, const char *text) {
     Proc *now = NULL;
     int head_indent = 0;
+    r->companions = arena_alloc(r->arena, MAX_COMPANIONS * sizeof(Companion));
+    r->dotted = arena_alloc(r->arena, MAX_DOTTED * sizeof(Dotted));
     r->seen = arena_alloc(r->arena, MAX_SEEN * sizeof(Seen));
     r->calls = arena_alloc(r->arena, MAX_CALLS * sizeof(Call));
     for (const char *line = text; *line; line += strcspn(line, "\n") + (line[strcspn(line, "\n")] == '\n')) {
@@ -1051,6 +1231,21 @@ static void survey(Rewriter *r, const char *text) {
         }
         if (!now || indent <= head_indent) now = NULL;
         line_names(r, now ? (int)(now - r->procs) : -1, copy);
+        for (size_t i = 0; i < length; i++) { /* NAME.something: an attribute of an array, if NAME turns out to be one */
+            if (!isalpha((unsigned char)copy[i]) || (i && (is_word(copy[i - 1]) || copy[i - 1] == '.' || copy[i - 1] == '\''))) continue;
+            size_t k = i;
+            while (is_word(copy[k]) || copy[k] == '\'') k++;
+            if (copy[k] != '.' || !isalpha((unsigned char)copy[k + 1]) || k - i >= 32) continue;
+            size_t a = k + 1;
+            while (is_word(copy[a]) || (copy[a] == '-' && isalpha((unsigned char)copy[a + 1]))) a++;
+            if ((a - k - 1 == 6 && strncmp(copy + k + 1, "length", 6) == 0) || a - k - 1 >= 24 || r->dotted_count == MAX_DOTTED) continue;
+            Dotted *d = &r->dotted[r->dotted_count++];
+            d->context = now ? (int)(now - r->procs) : -1;
+            snprintf(d->base, sizeof d->base, "%.*s", (int)(k - i), copy + i);
+            snprintf(d->name, sizeof d->name, "%.*s", (int)(a - k - 1), copy + k + 1);
+            for (char *c = d->name; *c; c++)
+                if (*c == '-') *c = '_';
+        }
         for (size_t i = 0; now && i < length; i++) { /* what the body asks of what it takes */
             const char *rest;
             if ((i == 0 || !is_word(code[i - 1])) && (rest = after_word(copy + i, "return")) && *rest) {
@@ -1078,6 +1273,19 @@ static void survey(Rewriter *r, const char *text) {
         }
     }
     /* an array is what is indexed, or asked its length, or handed in by who has one */
+    for (bool changed = true; changed;) { /* what is handed to who looks inside it is looked inside */
+        changed = false;
+        for (int i = 0; i < r->call_count; i++) {
+            const Call *call = &r->calls[i];
+            const Proc *callee = proc_named(r, call->name);
+            Proc *caller = call->context >= 0 ? &r->procs[call->context] : NULL;
+            for (int k = 0; callee && caller && k < call->count && k < callee->param_count; k++) {
+                if (!((callee->indexed | callee->asked) & (1u << k))) continue;
+                for (int x = 0; x < caller->param_count; x++)
+                    if (strcmp(caller->params[x], call->args[k]) == 0 && !(caller->indexed & (1u << x))) caller->indexed |= 1u << x, changed = true;
+            }
+        }
+    }
     for (int i = 0; i < r->proc_count; i++) r->procs[i].arrays = r->procs[i].asked | r->procs[i].indexed;
     for (bool changed = true; changed;) {
         changed = false;
@@ -1096,6 +1304,26 @@ static void survey(Rewriter *r, const char *text) {
         }
     }
     for (int i = 0; i < r->proc_count; i++) r->procs[i].lengths = r->procs[i].asked | (r->procs[i].walked & r->procs[i].arrays);
+    /* the numbers arrays have beside them: wherever an array that has one is taken, and wherever it is handed on from */
+    for (int i = 0; i < r->dotted_count; i++) {
+        const Dotted *d = &r->dotted[i];
+        const Proc *in = d->context >= 0 ? &r->procs[d->context] : NULL;
+        for (int k = 0; in && k < in->param_count; k++)
+            if ((in->arrays & (1u << k)) && strcmp(in->params[k], d->base) == 0) add_companion(r, d->context, k, d->name);
+    }
+    for (bool changed = true; changed;) {
+        changed = false;
+        for (int i = 0; i < r->call_count; i++) {
+            const Call *call = &r->calls[i];
+            const Proc *callee = proc_named(r, call->name), *caller = call->context >= 0 ? &r->procs[call->context] : NULL;
+            for (int c = 0; callee && caller && c < r->companion_count; c++) {
+                if (r->companions[c].proc != (int)(callee - r->procs) || r->companions[c].param >= call->count) continue;
+                for (int x = 0; x < caller->param_count; x++)
+                    if (strcmp(caller->params[x], call->args[r->companions[c].param]) == 0)
+                        changed |= add_companion(r, call->context, x, r->companions[c].name);
+            }
+        }
+    }
     strbuf_puts(&r->shared, "");
     for (int i = 0; i < r->seen_count; i++) {
         const Seen *seen = &r->seen[i];
@@ -1216,6 +1444,9 @@ Source cormen_source(const Source *written, Config *config, Arena *arena, Diag *
                 for (int i = 0; r->proc && i < r->proc->param_count; i++) strbuf_printf(&head_text, "%s@%s", listed++ ? ", " : "", r->proc->params[i]);
                 for (int i = 0; r->proc && i < r->proc->param_count; i++)
                     if (r->proc->lengths & (1u << i)) strbuf_printf(&head_text, "%s@%s_length", listed++ ? ", " : "", r->proc->params[i]);
+                for (int i = 0; r->proc && i < r->companion_count; i++)
+                    if (r->companions[i].proc == (int)(r->proc - r->procs))
+                        strbuf_printf(&head_text, "%s@%s_%s Por Referencia", listed++ ? ", " : "", r->proc->params[r->companions[i].param], r->companions[i].name);
                 for (int i = 1; r->proc && r->proc->values > 1 && i <= r->proc->values; i++) strbuf_printf(&head_text, "%sout%d_ Por Referencia", listed++ ? ", " : "", i);
                 strbuf_puts(&head_text, ")");
                 said = arena_strndup(arena, head_text.data, head_text.length);
@@ -1231,6 +1462,24 @@ Source cormen_source(const Source *written, Config *config, Arena *arena, Diag *
                     strbuf_puts(&before, "Algoritmo principal ");
                 }
                 said = statement(r, text, indent);
+                for (const char *next = line + n + (line[n] == '\n'); *next; next += strcspn(next, "\n") + (next[strcspn(next, "\n")] == '\n')) {
+                    const char *c, *k, *rest;
+                    size_t l;
+                    measure(next, strcspn(next, "\n"), &c, &l, &k);
+                    if (!l) continue;
+                    char *after = arena_strndup(arena, c, l); /* "if the call of RELAX decreased v.d": remember v.d before the call */
+                    static const char *const VERBS[] = {"decreased", "increased", "changed"};
+                    if ((rest = after_word(after, "if")) && (rest = after_word(rest, "the")) && (rest = after_word(rest, "call"))) {
+                        for (int i = 0; i < 3; i++) {
+                            const char *verb = word_in(rest, VERBS[i]), *then = verb ? word_in(verb, "then") : NULL;
+                            if (!verb) continue;
+                            const char *what = verb + strlen(VERBS[i]);
+                            said = arena_printf(arena, "was_ <- %s; %s", expression(r, what, then ? (size_t)(then - what) : strlen(what)), said);
+                            break;
+                        }
+                    }
+                    break;
+                }
             }
             strbuf_printf(&r->out, "%s%s", before.data, said);
         }

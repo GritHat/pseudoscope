@@ -1,0 +1,90 @@
+// Arrays with a number beside them, as in "Introduction to Algorithms": the top
+// of a stack, the head and the tail of a queue, the size of a heap. The number
+// is kept in a name of its own (S.top is listed as S_top) and goes wherever the
+// array goes.
+STACK-EMPTY(S)
+    if S.top == 0
+        return TRUE
+    else return FALSE
+
+PUSH(S, x)
+    S.top = S.top + 1
+    S[S.top] = x
+
+POP(S)
+    if STACK-EMPTY(S)
+        error "underflow"
+    else S.top = S.top − 1
+        return S[S.top + 1]
+
+ENQUEUE(Q, x)
+    Q[Q.tail] = x
+    if Q.tail == Q.size
+        Q.tail = 1
+    else Q.tail = Q.tail + 1
+
+DEQUEUE(Q)
+    x = Q[Q.head]
+    if Q.head == Q.size
+        Q.head = 1
+    else Q.head = Q.head + 1
+    return x
+
+PARENT(i)
+    return ⌊i / 2⌋
+
+LEFT(i)
+    return 2 · i
+
+RIGHT(i)
+    return 2 · i + 1
+
+MAX-HEAPIFY(A, i)
+    l = LEFT(i)
+    r = RIGHT(i)
+    if l ≤ A.heap-size and A[l] > A[i]
+        largest = l
+    else largest = i
+    if r ≤ A.heap-size and A[r] > A[largest]
+        largest = r
+    if largest ≠ i
+        exchange A[i] with A[largest]
+        MAX-HEAPIFY(A, largest)
+
+BUILD-MAX-HEAP(A, n)
+    A.heap-size = n
+    for i = ⌊n / 2⌋ downto 1
+        MAX-HEAPIFY(A, i)
+
+HEAPSORT(A, n)
+    BUILD-MAX-HEAP(A, n)
+    for i = n downto 2
+        exchange A[1] with A[i]
+        A.heap-size = A.heap-size − 1
+        MAX-HEAPIFY(A, 1)
+
+let S[1:6] be a new array
+S.top = 0
+PUSH(S, 15)
+PUSH(S, 6)
+PUSH(S, 2)
+a = POP(S)
+b = POP(S)
+print a, b, S.top, STACK-EMPTY(S)
+let Q[1:5] be a new array
+Q.size = 5
+Q.head = 1
+Q.tail = 1
+for i = 1 to 4
+    ENQUEUE(Q, i * 3)
+a = DEQUEUE(Q)
+ENQUEUE(Q, 99)
+ENQUEUE(Q, 100)
+b = DEQUEUE(Q)
+print a, b, Q.head, Q.tail
+let A[1:10] be a new array
+for i = 1 to 10
+    A[i] = (i * 7) mod 11
+HEAPSORT(A, 10)
+for i = 1 to 10
+    print A[i]

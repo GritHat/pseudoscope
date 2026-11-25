@@ -262,8 +262,8 @@ msgid "the length of '%s' is not known here: it is neither made here nor taken b
 msgstr "qui la lunghezza di '%s' non è nota: non è creato qui né ricevuto dalla procedura"
 
 #: src/front/cormen.c
-msgid "an array has no attributes here ('%s'): keep that number in a name of its own, and hand it on beside the array"
-msgstr "qui un array non ha attributi ('%s'): tieni quel numero in un nome suo, e passalo insieme all'array"
+msgid "'%s' takes an array with a number beside it: hand it an array by its name"
+msgstr "'%s' prende un array con un numero accanto: passagli un array col suo nome"
 
 #: src/front/cormen.c
 msgid "an array begins at 0 or at 1 here, not at '%s'"
@@ -284,6 +284,10 @@ msgstr "'%s' non ha niente sopra a cui legarsi"
 #: src/front/cormen.c
 msgid "'%s' gives back a different number of values here than elsewhere"
 msgstr "qui '%s' restituisce un numero di valori diverso che altrove"
+
+#: src/front/cormen.c
+msgid "this line is in words, and is not one of the sentences that are read: it is not run, and stays to be done"
+msgstr "questa riga è a parole, e non è una delle frasi che si leggono: non viene eseguita, e resta da fare"
 
 #: src/front/cormen.c
 msgid "several values at once come from a procedure that gives back several%.0s"
@@ -314,12 +318,24 @@ msgid "unexpected byte 0x%02x"
 msgstr "carattere non previsto (0x%02x)"
 
 #: src/front/foreign.inc
-msgid "a collection holds whole numbers and objects, and is indexed by them: nothing else"
-msgstr "una collezione contiene numeri interi e oggetti, e ha per indici quelli: nient'altro"
+msgid "this cannot be kept in a collection, nor be an index"
+msgstr "questo non può stare in una collezione, né fare da indice"
 
 #: src/front/foreign.inc
 msgid "what is indexed by anything takes one index, or two"
 msgstr "ciò che ha per indice qualunque cosa prende un indice, o due"
+
+#: src/front/foreign.inc
+msgid "a collection is sorted in words like these: an array is sorted by a procedure"
+msgstr "con parole come queste si ordina una collezione: un array lo ordina una procedura"
+
+#: src/front/foreign.inc
+msgid "collections are sorted by whole numbers, or by reals: not by both in one program"
+msgstr "le collezioni si ordinano per numeri interi, o per reali: non per entrambi nello stesso programma"
+
+#: src/front/foreign.inc
+msgid "to sort by '%s' it must be what the objects have, or where a number is kept for each: and one only in a program"
+msgstr "per ordinare secondo '%s' deve essere un attributo degli oggetti, o il posto dove c'è un numero per ciascuno: e uno solo per programma"
 
 #: src/front/foreign.inc
 msgid "whether something is in a collection can be asked: this is not a collection"
@@ -334,16 +350,16 @@ msgid "the least of a collection of objects is the one with the least 'key', or 
 msgstr "il minimo di una collezione di oggetti è quello con 'key', o 'd', più piccolo: questi non hanno né l'uno né l'altro"
 
 #: src/front/foreign.inc
+msgid "the least and the greatest are of numbers, or of objects with a 'key'"
+msgstr "il minimo e il massimo sono di numeri, o di oggetti con un 'key'"
+
+#: src/front/foreign.inc
 msgid "this is not something done with a collection"
 msgstr "questo non si fa con una collezione"
 
 #: src/front/foreign.inc
 msgid "collections are joined, met, taken away from one another and compared: nothing else"
 msgstr "le collezioni si uniscono, si intersecano, si sottraggono e si confrontano: nient'altro"
-
-#: src/front/foreign.inc
-msgid "a collection is printed one thing at a time: go through it with 'for each'"
-msgstr "una collezione si stampa un elemento alla volta: scorrila con 'for each'"
 
 #: src/front/foreign.inc src/front/parser.c
 msgid "a variable name"
