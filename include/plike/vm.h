@@ -190,6 +190,8 @@ const Type *vm_slot_type(const Config *config, const Type *type, int slot, int *
 void vm_format(const Vm *vm, const Value *value, const Type *type, char *out, size_t size);
 /* "A[3]", "p.x": the name of a place in memory. */
 void vm_place_name(const Vm *vm, Pointer at, char *out, size_t size);
+/* The same, but always down to the single slot: "p.x" also for the first field. */
+void vm_slot_name(const Vm *vm, Pointer at, char *out, size_t size);
 
 /* Prints an expression as pseudocode. When `evals` is given, the first `count`
  * evaluated parts are replaced by their values, and the newest one is put

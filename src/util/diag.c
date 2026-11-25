@@ -22,6 +22,13 @@ static void print_source_line(Diag *diag, Loc loc) {
 
 static void report(Diag *diag, Loc loc, const char *label, const char *color,
                    const char *format, va_list args) {
+    format = diag_text(diag, format);
+    if (diag->sink) {
+        char message[512];
+        vsnprintf(message, sizeof message, format, args);
+        diag->sink(diag->sink_context, loc, color[1] == '5', message);
+        return;
+    }
     fprintf(diag->out, "%s:", diag->source->name);
     if (loc.line > 0) fprintf(diag->out, "%d:%d:", loc.line, loc.column);
     if (diag->color) fprintf(diag->out, " \033[1;%sm%s:\033[0m ", color, label);
@@ -42,11 +49,11 @@ void diag_error(Diag *diag, Loc loc, const char *format, ...) {
     diag->last_error = loc;
     va_list args;
     va_start(args, format);
-    report(diag, loc, "error", "31", format, args);
+    report(diag, loc, diag->italian ? "errore" : "error", "31", format, args);
     va_end(args);
     if (diag->errors >= DIAG_MAX_ERRORS) {
         diag->too_many = true;
-        fputs("too many errors, stopping here\n", diag->out);
+        if (!diag->sink) fputs("too many errors, stopping here\n", diag->out);
     }
 }
 
@@ -55,6 +62,6 @@ void diag_warning(Diag *diag, Loc loc, const char *format, ...) {
     diag->warnings++;
     va_list args;
     va_start(args, format);
-    report(diag, loc, "warning", "35", format, args);
+    report(diag, loc, diag->italian ? "avviso" : "warning", "35", format, args);
     va_end(args);
 }

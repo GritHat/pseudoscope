@@ -21,13 +21,22 @@ typedef struct {
     FILE *out;
     bool color;
     bool silent_warnings;
+    bool italian;
     int errors;
     int warnings;
     bool too_many;
     Loc last_error;
+    /* when set, gets the messages instead of `out` */
+    void (*sink)(void *context, Loc loc, bool warning, const char *message);
+    void *sink_context;
 } Diag;
 
 #define DIAG_MAX_ERRORS 20
+
+/* The message in the language of diag. */
+const char *diag_text(const Diag *diag, const char *english);
+extern const char *const ITALIAN_MESSAGES[][2];
+extern const int ITALIAN_MESSAGE_COUNT;
 
 void diag_error(Diag *diag, Loc loc, const char *format, ...)
     __attribute__((format(printf, 3, 4)));

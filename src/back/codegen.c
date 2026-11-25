@@ -12,6 +12,7 @@ typedef struct {
     bool uses_fail;
     bool uses_math;
     bool uses_abs;
+    LineMap *map;
 } Gen;
 
 /* C operator precedence; higher binds tighter. */
@@ -421,9 +422,15 @@ static void gen_body(Gen *g, const Stmt *body) {
     put(g, "}");
 }
 
+static int line_count(const Gen *g);
+static void map_lines(Gen *g, const Stmt *stmt, int first, int last);
+
 static void gen_if(Gen *g, const Stmt *stmt) {
     for (const Stmt *branch = stmt; branch; branch = branch->otherwise) {
-        if (branch != stmt) put(g, " else ");
+        if (branch != stmt) {
+            if (g->map) map_lines(g, branch, line_count(g), line_count(g));
+            put(g, " else ");
+        }
         if (branch->kind == ST_IF) {
             put(g, "if (");
             gen_expr(g, branch->value, P_LOWEST);
@@ -538,7 +545,34 @@ static void gen_return(Gen *g, const Stmt *stmt) {
     }
 }
 
+static int line_count(const Gen *g) {
+    int count = 0;
+    for (size_t i = 0; i < g->out->length; i++) count += g->out->data[i] == '\n';
+    return count;
+}
+
+static void map_lines(Gen *g, const Stmt *stmt, int first, int last) {
+    LineMap *map = g->map;
+    if (!map) return;
+    if (map->count == map->capacity) {
+        int capacity = map->capacity ? map->capacity * 2 : 64;
+        LineSpan *items = arena_alloc(g->arena, (size_t)capacity * sizeof(LineSpan));
+        if (map->count) memcpy(items, map->items, (size_t)map->count * sizeof(LineSpan));
+        map->items = items;
+        map->capacity = capacity;
+    }
+    map->items[map->count++] = (LineSpan){stmt, first, last};
+}
+
+static void gen_one_statement(Gen *g, const Stmt *stmt);
+
 static void gen_statement(Gen *g, const Stmt *stmt) {
+    int first = g->map ? line_count(g) : 0;
+    gen_one_statement(g, stmt);
+    if (g->map) map_lines(g, stmt, first, line_count(g) - 1);
+}
+
+static void gen_one_statement(Gen *g, const Stmt *stmt) {
     if (stmt->kind == ST_VAR) {
         for (const VarDecl *v = stmt->vars; v; v = v->next) gen_variable(g, v, "");
         return;
@@ -749,4 +783,18 @@ bool has_main(const Program *program) {
     for (const Function *f = program->functions; f; f = f->next)
         if (f->symbol && is_main(f->symbol)) return true;
     return false;
+}
+
+void generate_function(const Program *program, const Config *config, Arena *arena,
+                       const Function *function, StrBuf *out, LineMap *map) {
+    Gen gen = {.program = program, .config = config, .arena = arena, .out = out, .map = map};
+    strbuf_puts(out, "");
+    gen_function(&gen, function);
+}
+
+void generate_record(const Program *program, const Config *config, Arena *arena,
+                     const Record *record, StrBuf *out) {
+    Gen gen = {.program = program, .config = config, .arena = arena, .out = out};
+    strbuf_puts(out, "");
+    gen_record(&gen, record);
 }

@@ -666,6 +666,10 @@ static void index_into(Vm *vm, const Instr *in) {
     }
     if (in->symbol) {
         const Var *var = var_of(vm, in->symbol);
+        if (var->rank < in->b + rank) { /* used by the bounds of another parameter */
+            fail(vm, "the size of the array is not valid");
+            return;
+        }
         bounds = vm->s.bounds.items + var->bounds + in->b;
     } else { /* inside a record: constant */
         for (int i = 0; i < rank; i++) {
@@ -688,6 +692,11 @@ static void index_into(Vm *vm, const Instr *in) {
         long index = as_int(vm, indices[i]);
         if (index < bounds[i].lo || index > bounds[i].hi) {
             fail(vm, "array index out of bounds");
+            LogEntry *entry = &vm->log[(vm->s.log_count - 1) % LOG_SIZE];
+            snprintf(entry->target, sizeof entry->target, "%.40s",
+                     in->symbol ? in->symbol->name : "");
+            snprintf(entry->value, sizeof entry->value, "%ld", index);
+            snprintf(entry->old, sizeof entry->old, "%ld..%ld", bounds[i].lo, bounds[i].hi);
             return;
         }
         p.offset += (int32_t)((index - bounds[i].lo) * strides[i]);
@@ -826,6 +835,19 @@ static void read_statement(Vm *vm, const Instr *in) {
 }
 
 /* ---- one instruction ---- */
+
+static const char *spelling(TokenKind op);
+
+/* The value an operand had, or the operand itself when it is a constant. */
+static void operand_text(const Vm *vm, const Expr *expr, char *text, size_t size) {
+    int count;
+    const Eval *evals = vm_evals(vm, &count);
+    StrBuf buffer = {0};
+    strbuf_puts(&buffer, "");
+    print_expr(vm, expr, evals, count, "", "", "", "", &buffer);
+    snprintf(text, size, "%s", buffer.data);
+    strbuf_free(&buffer);
+}
 
 static void store(Vm *vm, const Instr *in) {
     Pointer p = pop(vm).as.p;
@@ -974,6 +996,20 @@ static void step(Vm *vm) {
         case OP_CONDITION: {
             LogEntry entry = {.kind = LOG_CONDITION, .stmt = in->stmt, .expr = in->expr,
                               .truth = truth(s->stack.items[s->stack.count - 1])};
+            const Expr *test = in->expr;
+            if (in->stmt->kind == ST_FOR) {
+                int count;
+                const Eval *evals = vm_evals(vm, &count);
+                for (int i = count - 1; i >= 0; i--) /* the limit, or the variable */
+                    if (evals[i].expr == in->stmt->target)
+                        vm_format(vm, &evals[i].value, in->stmt->target->type, entry.target, sizeof entry.target);
+                operand_text(vm, in->stmt->limit, entry.value, sizeof entry.value);
+            } else if (test && test->kind == EX_BINARY && test->op != TOK_AND && test->op != TOK_OR) {
+                char left[20], right[20];
+                operand_text(vm, test->base, left, sizeof left);
+                operand_text(vm, test->right, right, sizeof right);
+                snprintf(entry.value, sizeof entry.value, "%s %s %s", left, spelling(test->op), right);
+            }
             add_log(vm, entry);
             break;
         }
@@ -1092,6 +1128,8 @@ Level vm_run(Vm *vm, Level level, long limit) {
             vm->last_stop = vm->event;
             return vm->event;
         }
+        /* a long run ends up showing what its last statement did */
+        if (vm->event == LEVEL_STATEMENT) vm->touched.count = 0;
     }
     return LEVEL_NONE;
 }
@@ -1537,7 +1575,7 @@ static void place_inside(const Vm *vm, const Type *type, const Bounds *bounds, i
     }
 }
 
-void vm_place_name(const Vm *vm, Pointer p, char *out, size_t size) {
+static void name_place(const Vm *vm, Pointer p, bool whole, char *out, size_t size) {
     const Object *object = object_of(vm, p);
     out[0] = '\0';
     if (!object) {
@@ -1546,8 +1584,11 @@ void vm_place_name(const Vm *vm, Pointer p, char *out, size_t size) {
     }
     snprintf(out, size, "%s", object->symbol ? object->symbol->name : object->is_temporary ? "(temporary)" : "\"...\"");
     if (object->symbol && object->type)
-        place_inside(vm, object->type, vm->s.bounds.items + object->bounds, object->rank, p.offset, true, out, size);
+        place_inside(vm, object->type, vm->s.bounds.items + object->bounds, object->rank, p.offset, whole, out, size);
 }
+
+void vm_place_name(const Vm *vm, Pointer at, char *out, size_t size) { name_place(vm, at, true, out, size); }
+void vm_slot_name(const Vm *vm, Pointer at, char *out, size_t size) { name_place(vm, at, false, out, size); }
 
 static bool find_eval(const Eval *evals, int count, const Expr *expr, Value *out, bool *newest) {
     for (int i = count - 1; i >= 0; i--) {

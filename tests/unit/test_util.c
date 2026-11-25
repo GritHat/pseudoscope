@@ -50,7 +50,36 @@ static void test_diag(void) {
     free(text);
 }
 
+/* The conversions of a format, without widths and precisions. */
+static void conversions(const char *format, char *out) {
+    for (; *format; format++) {
+        if (*format != '%') continue;
+        format++;
+        if (*format == '%') continue;
+        while (strchr(".0123456789*", *format)) {
+            if (*format == '*') *out++ = '*';
+            format++;
+        }
+        *out++ = *format;
+    }
+    *out = '\0';
+}
+
+static void test_italian(void) {
+    for (int i = 0; i < ITALIAN_MESSAGE_COUNT; i++) {
+        char english[32], italian[32];
+        conversions(ITALIAN_MESSAGES[i][0], english);
+        conversions(ITALIAN_MESSAGES[i][1], italian);
+        CHECK_STR(italian, english);
+    }
+    Diag diag = {.italian = true};
+    CHECK_STR(diag_text(&diag, "unknown type '%s'"), "il tipo '%s' non esiste");
+    diag.italian = false;
+    CHECK_STR(diag_text(&diag, "unknown type '%s'"), "unknown type '%s'");
+}
+
 void test_util(void) {
+    test_italian();
     test_arena();
     test_strbuf();
     test_diag();

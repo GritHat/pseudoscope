@@ -55,13 +55,14 @@ static void syntax_error(Parser *p, const char *expected) {
     if (p->panic) return;
     p->panic = true;
     const Token *token = cur(p);
+    expected = diag_text(p->diag, expected);
     switch (token->kind) {
         case TOK_IDENT: case TOK_INT: case TOK_FLOAT:
             diag_error(p->diag, token->loc, "expected %s, found '%s'", expected, token->text);
             break;
         default: {
             char found[40];
-            snprintf(found, sizeof found, "%s", token_kind_name(token->kind));
+            snprintf(found, sizeof found, "%s", diag_text(p->diag, token_kind_name(token->kind)));
             diag_error(p->diag, token->loc, "expected %s, found %s", expected, found);
         }
     }
@@ -541,7 +542,7 @@ static void parse_params(Parser *p, Function *function) {
 static void parse_function_end(Parser *p, Function *function) {
     const char *closer = function->is_procedure ? "endprocedure" : "endfunction";
     TokenKind kind = function->is_procedure ? TOK_ENDPROCEDURE : TOK_ENDFUNCTION;
-    const char *expected = arena_printf(p->arena, "'%s' or 'end %s'", closer, function->name);
+    const char *expected = arena_printf(p->arena, diag_text(p->diag, "'%s' or 'end %s'"), closer, function->name);
 
     bool ended = match(p, TOK_END);
     if (match(p, kind) || (ended && match(p, TOK_END)) || ended) {
