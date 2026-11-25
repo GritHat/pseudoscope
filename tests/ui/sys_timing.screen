@@ -15,7 +15,7 @@
 │ nodes[5]      Follower                                                                               │               │
 │                                                                                                      │               │
 │                                                                                                                      │
-│ Node   Follower   Candidate   Leader                                                                                 │
+│ Node   Follower   Candidate   Leader   Crashed                                                                       │
 │                                                                                                                      │
 │                                                                                                                      │
 │                                                                                                                      │

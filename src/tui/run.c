@@ -197,8 +197,11 @@ static void sentence(const LogEntry *e, char *out, size_t size) {
                      L("è solo progettato: qui ci andrà il codice", "is only designed: the code will go here"));
             break;
         case LOG_STATE:
-            snprintf(out, size, M_FOCUS "◆ " M_RESET M_BOLD "%s" M_RESET " %s " M_CHIP_FOCUS " %s " M_RESET M_DIM "  %s %s", e->target,
-                     L("passa a", "becomes"), e->value, L("prima era", "it was"), e->old);
+            if (strcmp(e->old, e->value) == 0)
+                snprintf(out, size, M_FOCUS "◆ " M_RESET M_BOLD "%s" M_RESET " %s " M_CHIP_FOCUS " %s ", e->target, L("resta", "remains"), e->value);
+            else
+                snprintf(out, size, M_FOCUS "◆ " M_RESET M_BOLD "%s" M_RESET " %s " M_CHIP_FOCUS " %s " M_RESET M_DIM "  %s %s", e->target,
+                         L("passa a", "becomes"), e->value, L("prima era", "it was"), e->old);
             break;
         case LOG_END:
             snprintf(out, size, M_WRITE M_BOLD "✓ %s", L("programma terminato", "the program is over"));

@@ -6,24 +6,24 @@
 │                                                                                                                                          │
 │  nodes[1]  Node                                                    │ nodes[2]  Node                                                      │
 │                                                                    │                                                                     │
-│  ╭───────────╮                                                     │ ╭───────────╮                                                       │
-│  │ Follower  │── Timeout ──▶ Candidate                             │ │ Follower  │── Timeout ──▶ Candidate                               │
-│  ╰───────────╯                                                     │ ╰───────────╯                                                       │
+│  ╭───────────╮── Timeout ──▶ Candidate                             │ ╭───────────╮── Timeout ──▶ Candidate                               │
+│  │ Follower  │── RequestVote ──▶ Follower                          │ │ Follower  │── RequestVote ──▶ Follower                            │
+│  ╰───────────╯── Heartbeat ──▶ Follower                            │ ╰───────────╯── Heartbeat ──▶ Follower                              │
+│               ── Crash ──▶ Crashed                                 │              ── Crash ──▶ Crashed                                   │
+│                                                                    │                                                                     │
 │  ╭───────────╮── Timeout ──▶ Candidate                             │ ╭───────────╮── Timeout ──▶ Candidate                               │
 │  │ Candidate │── RequestVote ──▶ Follower                          │ │ Candidate │── RequestVote ──▶ Follower                            │
 │  ╰───────────╯── Vote ──▶ Leader                                   │ ╰───────────╯── Vote ──▶ Leader                                     │
 │               ── Heartbeat ──▶ Follower                            │              ── Heartbeat ──▶ Follower                              │
+│               ── Crash ──▶ Crashed                                 │              ── Crash ──▶ Crashed                                   │
 │                                                                    │                                                                     │
 │  ╭───────────╮── RequestVote ──▶ Follower                          │ ╭───────────╮── RequestVote ──▶ Follower                            │
 │  │  Leader   │── Heartbeat ──▶ Follower                            │ │  Leader   │── Heartbeat ──▶ Follower                              │
+│  ╰───────────╯── Crash ──▶ Crashed                                 │ ╰───────────╯── Crash ──▶ Crashed                                   │
+│                                                                    │                                                                     │
+│  ╭───────────╮                                                     │ ╭───────────╮                                                       │
+│  │  Crashed  │                                                     │ │  Crashed  │                                                       │
 │  ╰───────────╯                                                     │ ╰───────────╯                                                       │
-│                                                                    │                                                                     │
-│                                                                    │                                                                     │
-│                                                                    │                                                                     │
-│                                                                    │                                                                     │
-│                                                                    │                                                                     │
-│                                                                    │                                                                     │
-│                                                                    │                                                                     │
 │                                                                    │                                                                     │
 │                                                                    │                                                                     │
 │                                                                    │                                                                     │

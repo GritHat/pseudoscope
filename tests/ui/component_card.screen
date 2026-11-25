@@ -11,23 +11,23 @@
 │    → Vote                        ││        RequestVote ───▶│ term integer         │───▶ Vote               │
 │    → Beat                        ││               Vote ───▶│ votes integer        │───▶ Heartbeat          │
 │    → Heartbeat                   ││               Beat ───▶│ voted_for integer    │                        │
-│    → Crash                       ││          Heartbeat ───▶│ alive logical        │                        │
-│                                  ││              Crash ───▶│ deadline integer     │                        │
-│ Sottoprogrammi                   ││                        │──────────────────────│                        │
-│  ■ name_nodes                    ││                        │ wait_for_leader()    │                        │
-│  ƒ leader                        ││                        │ step_down()          │                        │
-│  ƒ leaders                       ││                        ╰──────────────────────╯                        │
-│  ƒ clashes                       ││                                                                        │
-│  ■ main  si parte da qui         ││  I suoi stati                                                          │
-│                                  ││  ╭───────────╮                                                         │
-│ Dati condivisi                   ││  │ Follower  │── Timeout ──▶ Candidate                                 │
-│  ● variabili globali             ││  ╰───────────╯                                                         │
-│                                  ││  ╭───────────╮── Timeout ──▶ Candidate                                 │
-│ Prove                            ││  │ Candidate │── RequestVote ──▶ Follower                              │
-│  ✓ one leader, and another one … ││  ╰───────────╯── Vote ──▶ Leader                                       │
-│  ✓ never two leaders in the sam… ││               ── Heartbeat ──▶ Follower                                │
+│    → Crash                       ││          Heartbeat ───▶│ deadline integer     │                        │
+│                                  ││              Crash ───▶│──────────────────────│                        │
+│ Sottoprogrammi                   ││                        │ wait_for_leader()    │                        │
+│  ■ name_nodes                    ││                        │ step_down()          │                        │
+│  ƒ leader                        ││                        ╰──────────────────────╯                        │
+│  ƒ leaders                       ││                                                                        │
+│  ƒ clashes                       ││  I suoi stati                                                          │
+│  ■ main  si parte da qui         ││  ╭───────────╮── Timeout ──▶ Candidate                                 │
+│                                  ││  │ Follower  │── RequestVote ──▶ Follower                              │
+│ Dati condivisi                   ││  ╰───────────╯── Heartbeat ──▶ Follower                                │
+│  ● variabili globali             ││               ── Crash ──▶ Crashed                                     │
 │                                  ││                                                                        │
-│                                  ││                                                                        │
+│ Prove                            ││  ╭───────────╮── Timeout ──▶ Candidate                                 │
+│  ✓ one leader, and another one … ││  │ Candidate │── RequestVote ──▶ Follower                              │
+│  ✓ never two leaders in the sam… ││  ╰───────────╯── Vote ──▶ Leader                                       │
+│                                  ││               ── Heartbeat ──▶ Follower                                │
+│                                  ││               ── Crash ──▶ Crashed                                     │
 │                                  ││                                                                        │
 ╰──────────────────────────────────╯╰────────────────────────────────────────────────────────────────────────╯
 

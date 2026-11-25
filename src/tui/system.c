@@ -99,7 +99,10 @@ static void draw_live_sequence(App *app, int x, int y, int w, int h) {
                 r->kind = SEQ_STATE;
                 snprintf(labels[n], sizeof labels[n], "%s", m->name);
                 break;
-            case MSG_STEP: r->kind = SEQ_STEP; break;
+            case MSG_STEP:
+                r->kind = SEQ_STEP;
+                snprintf(labels[n], sizeof labels[n], "%s", m->name);
+                break;
             case MSG_CHECK:
                 r->kind = SEQ_CHECK;
                 snprintf(labels[n], sizeof labels[n], "%s", m->args);

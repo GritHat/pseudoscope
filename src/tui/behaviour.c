@@ -23,7 +23,6 @@ void draw_timing(App *app, int x, int y, int w, int h) {
     long per = span > room ? (span + room - 1) / room : 1; /* time of one character */
     int scale = now > 0 && now * 3 < room ? 3 : now > 0 && now * 2 < room ? 2 : 1;
     int row = y + 2;
-    print_at(x, y, w, S_FAINT, "%s", per > 1 ? L("tempo compresso", "compressed time") : "");
     (void)span;
     long tick = 5 * per;
     while (tick * scale / per < 8) tick += 5 * per;

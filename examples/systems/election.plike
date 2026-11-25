@@ -3,14 +3,12 @@
 // that term, and proves to be alive with heartbeats.
 
 component Node
-    states Follower, Candidate, Leader
+    states Follower, Candidate, Leader, Crashed
     var id, term, votes, voted_for: integer
-    var alive: logical
     var deadline: integer
 
     on start
     begin
-        alive := true
         wait_for_leader()
     end start
 
@@ -31,33 +29,29 @@ component Node
 
     on Timeout when Follower, Candidate
     begin
-        if alive then
-            term := term + 1
-            voted_for := id
-            votes := 1
-            become Candidate
-            send RequestVote(term, id) to all Node
-            wait_for_leader()
-        endif
+        term := term + 1
+        voted_for := id
+        votes := 1
+        become Candidate
+        send RequestVote(term, id) to all Node
+        wait_for_leader()
     end Timeout
 
-    on RequestVote(in t: integer, in candidate: integer)
+    on RequestVote(in t: integer, in candidate: integer) when Follower, Candidate, Leader
     begin
-        if alive then
-            if t > term then
-                step_down(t)
-            endif
-            if t = term and (voted_for = 0 or voted_for = candidate) then
-                voted_for := candidate
-                send Vote(t) to sender
-                wait_for_leader()
-            endif
+        if t > term then
+            step_down(t)
+        endif
+        if t = term and (voted_for = 0 or voted_for = candidate) then
+            voted_for := candidate
+            send Vote(t) to sender
+            wait_for_leader()
         endif
     end RequestVote
 
     on Vote(in t: integer) when Candidate
     begin
-        if alive and t = term then
+        if t = term then
             votes := votes + 1
             if votes > 2 then
                 cancel Timeout
@@ -69,15 +63,13 @@ component Node
 
     on Beat when Leader
     begin
-        if alive then
-            send Heartbeat(term) to all Node
-            send Beat to self after 6
-        endif
+        send Heartbeat(term) to all Node
+        send Beat to self after 6
     end Beat
 
-    on Heartbeat(in t: integer)
+    on Heartbeat(in t: integer) when Follower, Candidate, Leader
     begin
-        if alive and t >= term then
+        if t >= term then
             if t > term or state = Candidate then
                 step_down(t)
             endif
@@ -87,7 +79,7 @@ component Node
 
     on Crash
     begin
-        alive := false
+        become Crashed
         cancel Timeout
         cancel Beat
     end Crash
@@ -108,7 +100,7 @@ var i: integer
 begin
     leader := 0
     for i := 1 to 5 do
-        if nodes[i].alive and nodes[i].state = Leader then leader := i endif
+        if nodes[i].state = Leader then leader := i endif
     endfor
 end leader
 
@@ -117,7 +109,7 @@ var i: integer
 begin
     leaders := 0
     for i := 1 to 5 do
-        if nodes[i].alive and nodes[i].state = Leader then leaders := leaders + 1 endif
+        if nodes[i].state = Leader then leaders := leaders + 1 endif
     endfor
 end leaders
 
